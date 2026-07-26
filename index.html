@@ -286,7 +286,7 @@ function renderGauge(c){
   const legendSegments=[...segments].sort((a,b)=>b.value-a.value);
 
   const wrap=$('gauge-wrap');
-  const W=Math.min(window.innerWidth-48,360), R=W*0.36, cx=W/2, cy=R+W*0.05, thick=W*0.115, GAP=0.026;
+  const W=Math.min(wrap.clientWidth || (window.innerWidth-64), 360), R=W*0.36, cx=W/2, cy=R+W*0.05, thick=W*0.115, GAP=0.026;
   let arcs='', pctLabels=''; let cumAngle=0;
 
   arcSegments.forEach((seg,idx)=>{
@@ -303,10 +303,10 @@ function renderGauge(c){
     cumAngle+=span;
   });
 
-  const legendRows=legendSegments.map(seg=>`<div style="display:flex;align-items:center;gap:8px;font-size:12.5px;padding:6px 0">
+  const legendRows=legendSegments.map(seg=>`<div style="display:flex;align-items:center;gap:8px;font-size:12.5px;padding:6px 0;min-width:0">
     <span style="width:9px;height:9px;border-radius:2px;background:${seg.color};display:inline-block;flex-shrink:0"></span>
-    <span style="color:var(--muted)">${seg.label}</span>
-    <span style="margin-left:auto;color:var(--text);font-family:'DM Mono',monospace;font-weight:600">${eur(seg.value)}</span>
+    <span style="color:var(--muted);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${seg.label}</span>
+    <span style="color:var(--text);font-family:'DM Mono',monospace;font-weight:600;flex-shrink:0;white-space:nowrap">${eur(seg.value)}</span>
   </div>`).join('');
 
   wrap.innerHTML=`<div style="width:${W}px;margin:0 auto">
