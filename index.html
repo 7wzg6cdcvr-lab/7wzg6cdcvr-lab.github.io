@@ -121,7 +121,7 @@ body{
 .owner-row-v{font-family:'DM Mono',monospace;font-size:12px}
 
 /* ── Charts / gauge ── */
-.chart-wrap{position:relative;width:100%;height:210px}
+.chart-wrap{position:relative;width:100%;height:280px}
 #gauge-wrap{display:flex;flex-direction:column;align-items:center;gap:12px}
 
 /* ── Bottom nav ── */
@@ -291,7 +291,7 @@ function renderGauge(c){
   const total=segments.reduce((s,x)=>s+x.value,0)||1;
 
   const wrap=$('gauge-wrap');
-  const W=Math.min(window.innerWidth-64,300), R=W*0.34, cx=W/2, cy=R+W*0.055, thick=W*0.10, GAP=0.028;
+  const W=Math.min(window.innerWidth-48,360), R=W*0.36, cx=W/2, cy=R+W*0.05, thick=W*0.115, GAP=0.026;
   let arcs='', pctLabels=''; let cumAngle=0;
 
   segments.forEach((seg,idx)=>{
@@ -300,39 +300,25 @@ function renderGauge(c){
     const sx=(cx+R*Math.cos(a0)).toFixed(1), sy=(cy-R*Math.sin(a0)).toFixed(1);
     const ex=(cx+R*Math.cos(a1)).toFixed(1), ey=(cy-R*Math.sin(a1)).toFixed(1);
     const large=span>Math.PI/2?1:0;
-    arcs+=`<path d="M${sx},${sy} A${R},${R} 0 ${large},0 ${ex},${ey}" fill="none" stroke="${seg.color}" stroke-width="${thick}" stroke-linecap="butt" style="cursor:pointer" onclick="showGaugeTip(${idx},event)"/>`;
+    arcs+=`<path d="M${sx},${sy} A${R},${R} 0 ${large},0 ${ex},${ey}" fill="none" stroke="${seg.color}" stroke-width="${thick}" stroke-linecap="butt"/>`;
     const amid=cumAngle+span/2;
     const lx=(cx+R*Math.cos(amid)).toFixed(1), ly=(cy-R*Math.sin(amid)).toFixed(1);
     const pctVal=(seg.value/total*100).toFixed(1);
-    if(span>0.12) pctLabels+=`<text x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="middle" font-size="10" font-weight="700" fill="#0A0D12" font-family="DM Sans,sans-serif" style="pointer-events:none">${pctVal}%</text>`;
+    if(span>0.12) pctLabels+=`<text x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="middle" font-size="12" font-weight="700" fill="#0A0D12" font-family="DM Sans,sans-serif" style="pointer-events:none">${pctVal}%</text>`;
     cumAngle+=span;
   });
 
-  const tipRows=segments.map((seg,i)=>`<div data-tip="${i}" style="display:none;align-items:center;gap:7px;font-size:12px">
-    <span style="width:8px;height:8px;border-radius:2px;background:${seg.color};display:inline-block;flex-shrink:0"></span>
+  const legendRows=segments.map(seg=>`<div style="display:flex;align-items:center;gap:8px;font-size:12.5px;padding:6px 0">
+    <span style="width:9px;height:9px;border-radius:2px;background:${seg.color};display:inline-block;flex-shrink:0"></span>
     <span style="color:var(--muted)">${seg.label}</span>
     <span style="margin-left:auto;color:var(--text);font-family:'DM Mono',monospace;font-weight:600">${(seg.value/total*100).toFixed(1)}%</span>
-    <span style="color:var(--muted);font-size:11px">${eur(seg.value)}</span>
+    <span style="color:var(--muted);font-size:11.5px;min-width:78px;text-align:right">${eur(seg.value)}</span>
   </div>`).join('');
 
-  wrap.innerHTML=`<div style="position:relative;width:${W}px;margin:0 auto">
-    <svg viewBox="0 0 ${W} ${cy+8}" width="${W}" style="overflow:visible;display:block">${arcs}${pctLabels}</svg>
-    <div id="gtip" style="display:none;position:absolute;top:6px;left:50%;transform:translateX(-50%);
-      background:var(--surface3);border:1px solid var(--border);border-radius:9px;padding:8px 12px;
-      min-width:190px;max-width:260px;box-shadow:0 8px 24px rgba(0,0,0,0.45);z-index:10;
-      flex-direction:column;gap:5px">${tipRows}</div>
+  wrap.innerHTML=`<div style="width:${W}px;margin:0 auto">
+    <svg viewBox="0 0 ${W} ${cy+8}" width="${W}" style="overflow:visible;display:block;margin:0 auto">${arcs}${pctLabels}</svg>
+    <div style="display:flex;flex-direction:column;margin-top:6px;border-top:1px solid var(--border-soft);padding-top:2px">${legendRows}</div>
   </div>`;
-}
-function showGaugeTip(idx, evt){
-  if(evt) evt.stopPropagation();
-  const tip=$('gtip'); if(!tip) return;
-  const row=tip.querySelector('[data-tip="'+idx+'"]');
-  const alreadyOpen=tip.style.display==='flex' && row && row.style.display==='flex';
-  tip.querySelectorAll('[data-tip]').forEach(r=>r.style.display='none');
-  if(alreadyOpen){ tip.style.display='none'; return; }
-  if(row) row.style.display='flex';
-  tip.style.display='flex';
-  setTimeout(()=>{ document.addEventListener('click', function h(e){ if(!tip.contains(e.target)){ tip.style.display='none'; document.removeEventListener('click',h); }}); }, 10);
 }
 
 /* ── SXR8 ── */
