@@ -1,7 +1,7 @@
 {
-  "name": "DM Investments Portfolio",
-  "short_name": "DM Portfolio",
-  "description": "Portefólio de investimentos — S&P 500 e Bitcoin",
+  "name": "DM",
+  "short_name": "DM",
+  "description": "Espaço pessoal — Portfolio, Carro Elétrico, Despesas",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
