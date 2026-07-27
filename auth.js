@@ -9,6 +9,7 @@ const Auth = (() => {
   const API_URL = "https://script.google.com/macros/s/AKfycbxzKI0lupG5gjLzuC3J1aR5AwVA1PIbSxTqA7Pjy3NWp_HaUbctCbNzhxjbuXx5GtqnJw/exec";
   const PIN_KEY  = 'dm_pin';
   const CRED_KEY = 'dm_cred_id';
+  const SESSION_KEY = 'dm_session_ok';
 
   const b64e = s => btoa(unescape(encodeURIComponent(s)));
   const b64d = s => decodeURIComponent(escape(atob(s)));
@@ -18,7 +19,7 @@ const Auth = (() => {
   function getStoredPin(){ const v = localStorage.getItem(PIN_KEY); return v ? b64d(v) : null; }
   function setStoredPin(pin){ localStorage.setItem(PIN_KEY, b64e(pin)); }
   function hasBiometric(){ return !!localStorage.getItem(CRED_KEY); }
-  function forget(){ localStorage.removeItem(PIN_KEY); localStorage.removeItem(CRED_KEY); }
+  function forget(){ localStorage.removeItem(PIN_KEY); localStorage.removeItem(CRED_KEY); sessionStorage.removeItem(SESSION_KEY); }
 
   async function verifyPinWithServer(pin){
     try {
@@ -106,7 +107,7 @@ const Auth = (() => {
       faceBtn.onclick = async () => {
         err.textContent = '';
         const ok = await authenticateBiometric();
-        if (ok) { box.remove(); onUnlock(getStoredPin()); }
+        if (ok) { sessionStorage.setItem(SESSION_KEY,'1'); box.remove(); onUnlock(getStoredPin()); }
         else { err.textContent = 'Não foi possível confirmar. Usa a password.'; }
       };
     }
@@ -127,6 +128,7 @@ const Auth = (() => {
           await registerBiometric();
         }
       }
+      sessionStorage.setItem(SESSION_KEY, '1');
       onUnlock(pin);
     }
     submit.onclick = trySubmit;
@@ -137,13 +139,22 @@ const Auth = (() => {
   // Chamar isto no topo de cada página: Auth.protect(pin => { ...mostra a página... })
   async function protect(onUnlock){
     const storedPin = getStoredPin();
+
+    // Já desbloqueado nesta sessão (mesma janela/separador ainda aberto) —
+    // não voltar a pedir Face ID nem password ao navegar entre páginas.
+    if (storedPin && sessionStorage.getItem(SESSION_KEY)) {
+      onUnlock(storedPin);
+      return;
+    }
+
     if (storedPin && hasBiometric()) {
       const ok = await authenticateBiometric();
-      if (ok) { onUnlock(storedPin); return; }
+      if (ok) { sessionStorage.setItem(SESSION_KEY, '1'); onUnlock(storedPin); return; }
       showPasswordScreen(onUnlock, { faceIdRetry:true });
       return;
     }
     if (storedPin && !hasBiometric()) {
+      sessionStorage.setItem(SESSION_KEY, '1');
       onUnlock(storedPin);
       return;
     }
