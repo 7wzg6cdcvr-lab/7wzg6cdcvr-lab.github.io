@@ -12,7 +12,7 @@
 <link rel="apple-touch-icon" href="icons/icon-180.png">
 <title>DM</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&family=Chakra+Petch:wght@600;700&display=swap');
 
 :root{
   --bg:#0A0D12; --surface:#12161D; --surface2:#181D26; --surface3:#212938;
@@ -25,11 +25,16 @@ html{background:var(--bg);-webkit-text-size-adjust:100%;text-size-adjust:100%}
 body{
   min-height:100vh;background:var(--bg);color:var(--text);
   font-family:'DM Sans',sans-serif;-webkit-font-smoothing:antialiased;
-  display:flex;flex-direction:column;align-items:center;
-  padding:calc(64px + env(safe-area-inset-top)) 20px calc(40px + env(safe-area-inset-bottom));
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:calc(24px + env(safe-area-inset-top)) 20px calc(40px + env(safe-area-inset-bottom));
 }
-.logo{width:min(240px,60vw);height:auto;margin-bottom:8px}
-.tagline{font-size:12px;color:var(--muted2);letter-spacing:.08em;text-transform:uppercase;margin-bottom:40px}
+.logo{display:block;width:min(380px,86vw);height:auto;margin:0 auto 18px}
+.tagline{
+  font-family:'Chakra Petch',sans-serif;font-weight:700;font-style:italic;
+  font-size:clamp(13px,4vw,16px);letter-spacing:.28em;text-transform:uppercase;
+  margin:0 0 44px;text-indent:.28em;
+  color:var(--muted);
+}
 
 .tiles{width:100%;max-width:420px;display:flex;flex-direction:column;gap:12px}
 .tile{
@@ -59,7 +64,7 @@ body{
 </head>
 <body>
 
-<svg class="logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2200 490" role="img" aria-label="DM logo">
+<svg class="logo" xmlns="http://www.w3.org/2000/svg" viewBox="90 95 1100 400" role="img" aria-label="DM logo">
   <defs>
     <linearGradient id="gld-d" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#F4D27A"/><stop offset="45%" stop-color="#D2A13A"/><stop offset="100%" stop-color="#8E641C"/>
@@ -73,7 +78,7 @@ body{
     <path fill="url(#gld-m)" d="M690 470 L690 150 L915 345 L1170 135 L1170 470 L1100 470 L1100 255 L940 385 L805 270 L805 470 Z"/>
   </g>
 </svg>
-<div class="tagline">Espaço Pessoal</div>
+<div class="tagline">Family</div>
 
 <div class="tiles">
   <a class="tile active" href="./portfolio.html">
