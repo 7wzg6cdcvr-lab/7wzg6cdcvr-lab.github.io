@@ -64,6 +64,7 @@ body{
 </head>
 <body>
 
+<div id="app-content" style="display:none">
 <svg class="logo" xmlns="http://www.w3.org/2000/svg" viewBox="90 95 1100 400" role="img" aria-label="DM logo">
   <defs>
     <linearGradient id="gld-d" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -109,5 +110,19 @@ body{
   </div>
 </div>
 
+<button onclick="if(confirm('Esquecer este dispositivo? Vais precisar da password para voltar a entrar.')){Auth.forget();location.reload();}"
+  style="margin-top:32px;background:none;border:none;color:var(--muted2);font-size:11.5px;cursor:pointer;font-family:inherit">
+  🔒 Bloquear este dispositivo
+</button>
+</div>
+
+<script src="auth.js"></script>
+<script>
+  Auth.protect(function(){
+    document.getElementById('app-content').style.display = 'flex';
+    document.getElementById('app-content').style.flexDirection = 'column';
+    document.getElementById('app-content').style.alignItems = 'center';
+  });
+</script>
 </body>
 </html>
