@@ -5,437 +5,104 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="DM Portfolio">
+<meta name="apple-mobile-web-app-title" content="DM">
 <meta name="theme-color" content="#0A0D12">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icons/icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
-<title>DM Investments</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<title>DM</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
 
 :root{
   --bg:#0A0D12; --surface:#12161D; --surface2:#181D26; --surface3:#212938;
   --border:rgba(255,255,255,0.08); --border-soft:rgba(255,255,255,0.05);
   --text:#F2F4F7; --muted:#8B95A5; --muted2:#5C6576;
   --gold:#D2A13A; --gold-light:#F4D27A;
-  --mint:#34D399; --coral:#FF6B5E;
-  --sapphire:#5B8DEF; --violet:#A78BFA; --amber:#F0A93A;
-  --r:16px; --r-sm:10px;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html{background:var(--bg);-webkit-text-size-adjust:100%;text-size-adjust:100%}
 body{
   min-height:100vh;background:var(--bg);color:var(--text);
-  font-family:'DM Sans',sans-serif;font-size:14px;-webkit-font-smoothing:antialiased;
-  padding-bottom:calc(72px + env(safe-area-inset-bottom));
-  overscroll-behavior-y:contain;
+  font-family:'DM Sans',sans-serif;-webkit-font-smoothing:antialiased;
+  display:flex;flex-direction:column;align-items:center;
+  padding:calc(64px + env(safe-area-inset-top)) 20px calc(40px + env(safe-area-inset-bottom));
 }
-@media(prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;transition-duration:.001ms!important}}
-.up{color:var(--mint)!important}.down{color:var(--coral)!important}
-.figure{font-family:'Fraunces',serif;font-optical-sizing:auto}
-::selection{background:var(--gold);color:#0A0D12}
+.logo{width:min(240px,60vw);height:auto;margin-bottom:8px}
+.tagline{font-size:12px;color:var(--muted2);letter-spacing:.08em;text-transform:uppercase;margin-bottom:40px}
 
-/* ── Topbar ── */
-.topbar{
-  position:sticky;top:0;z-index:60;background:#0D1117;
-  border-bottom:1px solid var(--border-soft);
-  padding:14px 16px;padding-top:calc(14px + env(safe-area-inset-top));
+.tiles{width:100%;max-width:420px;display:flex;flex-direction:column;gap:12px}
+.tile{
+  display:flex;align-items:center;gap:14px;
+  background:var(--surface);border:1px solid var(--border);border-radius:18px;
+  padding:18px;text-decoration:none;color:inherit;
+  transition:transform .15s ease, border-color .15s ease;
 }
-.topbar-inner{display:flex;flex-direction:column;gap:10px}
-.topbar-row1{display:flex;align-items:center;justify-content:space-between;gap:12px}
-.brand{display:flex;flex-direction:column;align-items:flex-start;min-width:0;flex:1;overflow:hidden}
-.brand svg{height:58px;width:auto;max-width:100%;flex-shrink:1}
-.updated-txt{font-size:10.5px;color:var(--muted2);margin-top:2px}
-.brand-status{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted2)}
-.pulse-dot{width:6px;height:6px;border-radius:50%;background:var(--mint);flex-shrink:0}
-.pulse-dot.busy{background:var(--gold);animation:pulse 1s ease-in-out infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
-
-.refresh-btn{
-  background:var(--surface3);color:var(--text);border:1px solid var(--border);
-  border-radius:10px;width:34px;height:34px;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+.tile:active{transform:scale(.98)}
+.tile.active:hover{border-color:var(--gold)}
+.tile-icon{
+  width:48px;height:48px;border-radius:13px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:22px;
 }
-.refresh-btn:active{transform:scale(.92)}
-.refresh-btn.spinning svg{animation:spin .7s linear infinite}
-.refresh-btn:disabled{opacity:.5}
-@keyframes spin{to{transform:rotate(360deg)}}
+.tile-text{flex:1;min-width:0}
+.tile-title{font-size:15.5px;font-weight:600}
+.tile-sub{font-size:12.5px;color:var(--muted);margin-top:2px}
+.tile-arrow{color:var(--muted2);font-size:18px;flex-shrink:0}
 
-/* ── Layout ── */
-.app{padding:16px 16px 24px}
-.tab{display:none;animation:fadein .2s ease}
-.tab.active{display:block}
-@keyframes fadein{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
-
-/* ── Skeleton ── */
-#skeleton{padding:16px}
-.skel-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
-.skel{height:78px;border-radius:var(--r-sm);background:linear-gradient(90deg,var(--surface) 25%,var(--surface2) 50%,var(--surface) 75%);
-  background-size:200% 100%;animation:shimmer 1.4s ease-in-out infinite}
-.skel.tall{height:220px}
-@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
-
-/* ── KPI ── */
-.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
-.kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px;position:relative;overflow:hidden;min-width:0}
-.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--sapphire)}
-.kpi.green::before{background:var(--mint)}
-.kpi.red::before{background:var(--coral)}
-.kpi-label{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:6px}
-.kpi-value{font-family:'DM Mono',monospace;font-size:clamp(16px,4.4vw,21px);font-weight:500;letter-spacing:-.2px;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.kpi-sub{font-size:11px;color:var(--muted);margin-top:5px;min-height:14px}
-.alloc-row{display:flex;justify-content:space-between;align-items:baseline;font-size:13.5px;margin-top:7px}
-.alloc-name{color:var(--muted)}
-.alloc-pct{font-family:'DM Mono',monospace;font-weight:600;color:var(--text)}
-
-/* ── Card ── */
-.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:12px}
-.card-title{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:14px}
-
-/* ── Info chips ── */
-.info-bar{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
-.info-chip{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);padding:11px 12px;min-width:0;overflow:hidden}
-.info-label{font-size:9px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted2);margin-bottom:3px}
-.info-value{font-family:'DM Mono',monospace;font-size:clamp(12px,3.6vw,14px);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-
-/* ── Owner accordion ── */
-.owner-list{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
-.owner-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);overflow:hidden}
-.owner-header{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;cursor:pointer;user-select:none}
-.owner-name-row{display:flex;align-items:center;gap:9px;min-width:0}
-.owner-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
-.owner-title{font-size:13px;font-weight:600;letter-spacing:.02em}
-.owner-right{display:flex;align-items:center;gap:8px;flex-shrink:0}
-.owner-pnl{font-family:'DM Mono',monospace;font-size:12px;font-weight:500;white-space:nowrap}
-.owner-arrow{font-size:10px;color:var(--muted2);transition:transform .2s}
-.owner-card.open .owner-arrow{transform:rotate(180deg)}
-.owner-body{max-height:0;overflow:hidden;transition:max-height .25s ease}
-.owner-card.open .owner-body{max-height:220px}
-.owner-body-inner{border-top:1px solid var(--border-soft);padding:10px 14px}
-.owner-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border-soft)}
-.owner-row:last-child{border:none}
-.owner-row-l{font-size:12px;color:var(--muted)}
-.owner-row-v{font-family:'DM Mono',monospace;font-size:12px}
-
-/* ── Charts / gauge ── */
-.chart-wrap{position:relative;width:100%;height:340px}
-#gauge-wrap{display:flex;flex-direction:column;align-items:center;gap:12px}
-
-/* ── Bottom nav ── */
-.bottomnav{
-  position:fixed;bottom:0;left:0;right:0;height:60px;
-  background:#12161D;border-top:1px solid var(--border-soft);display:flex;z-index:100;
-  padding-bottom:env(safe-area-inset-bottom);
+.tile.disabled{opacity:.45;cursor:default;pointer-events:none}
+.badge-soon{
+  font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;
+  color:var(--muted2);background:var(--surface3);border:1px solid var(--border);
+  border-radius:6px;padding:3px 7px;flex-shrink:0;
 }
-.navbtn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:none;background:none;color:var(--muted2);cursor:pointer;padding:6px 0}
-.navbtn.active{color:var(--gold-light)}
-.navbtn:active{opacity:.6}
-.nav-icon{font-size:19px;line-height:1}
-.nav-label{font-size:10px;font-weight:500}
 </style>
 </head>
 <body>
 
-<div class="topbar">
-  <div class="topbar-inner">
-    <div class="topbar-row1">
-      <div class="brand">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 3400 490" role="img" aria-label="DM Portfolio logo">
-          <defs>
-            <linearGradient id="gld-d" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stop-color="#F4D27A"/><stop offset="45%" stop-color="#D2A13A"/><stop offset="100%" stop-color="#8E641C"/>
-            </linearGradient>
-            <linearGradient id="gld-m" x1="100%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stop-color="#F4D27A"/><stop offset="45%" stop-color="#D2A13A"/><stop offset="100%" stop-color="#8E641C"/>
-            </linearGradient>
-          </defs>
-          <g>
-            <path fill="url(#gld-d)" fill-rule="evenodd" d="M120 470 L620 470 L620 120 Z M300 390 L520 390 L520 215 Z"/>
-            <path fill="url(#gld-m)" d="M690 470 L690 150 L915 345 L1170 135 L1170 470 L1100 470 L1100 255 L940 385 L805 270 L805 470 Z"/>
-            <text x="1300" y="430" font-family="'Futura','Century Gothic','Trebuchet MS',Arial,sans-serif" font-size="240" font-weight="300" letter-spacing="38" fill="#8B95A5">PORTFOLIO</text>
-          </g>
-        </svg>
-        <span class="updated-txt" id="updated-txt">a carregar…</span>
-      </div>
-      <button class="refresh-btn" id="refresh-btn" onclick="loadData()" title="Atualizar" aria-label="Atualizar">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-3-6.7M21 4v5h-5"/></svg>
-      </button>
+<svg class="logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2200 490" role="img" aria-label="DM logo">
+  <defs>
+    <linearGradient id="gld-d" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F4D27A"/><stop offset="45%" stop-color="#D2A13A"/><stop offset="100%" stop-color="#8E641C"/>
+    </linearGradient>
+    <linearGradient id="gld-m" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#F4D27A"/><stop offset="45%" stop-color="#D2A13A"/><stop offset="100%" stop-color="#8E641C"/>
+    </linearGradient>
+  </defs>
+  <g>
+    <path fill="url(#gld-d)" fill-rule="evenodd" d="M120 470 L620 470 L620 120 Z M300 390 L520 390 L520 215 Z"/>
+    <path fill="url(#gld-m)" d="M690 470 L690 150 L915 345 L1170 135 L1170 470 L1100 470 L1100 255 L940 385 L805 270 L805 470 Z"/>
+  </g>
+</svg>
+<div class="tagline">Espaço Pessoal</div>
+
+<div class="tiles">
+  <a class="tile active" href="./portfolio.html">
+    <div class="tile-icon" style="background:rgba(91,141,239,0.15);color:#5B8DEF">📊</div>
+    <div class="tile-text">
+      <div class="tile-title">Portfolio</div>
+      <div class="tile-sub">S&amp;P 500 &amp; Bitcoin</div>
     </div>
+    <div class="tile-arrow">›</div>
+  </a>
+
+  <div class="tile disabled">
+    <div class="tile-icon" style="background:rgba(52,211,153,0.15);color:#34D399">🚗</div>
+    <div class="tile-text">
+      <div class="tile-title">Carro Elétrico</div>
+      <div class="tile-sub">Em preparação</div>
+    </div>
+    <div class="badge-soon">Em breve</div>
+  </div>
+
+  <div class="tile disabled">
+    <div class="tile-icon" style="background:rgba(240,169,58,0.15);color:#F0A93A">💳</div>
+    <div class="tile-text">
+      <div class="tile-title">Despesas</div>
+      <div class="tile-sub">Em preparação</div>
+    </div>
+    <div class="badge-soon">Em breve</div>
   </div>
 </div>
 
-<div class="app">
-
-  <div id="skeleton">
-    <div class="skel-row"><div class="skel"></div><div class="skel"></div></div>
-    <div class="skel tall"></div>
-  </div>
-
-  <div id="dashboard" style="display:none">
-
-    <section id="tab-global" class="tab active">
-      <div class="kpi-grid">
-        <div class="kpi blue"><div class="kpi-label">Total Investido</div><div class="kpi-value" id="kpi-inv">—</div><div class="kpi-sub">&nbsp;</div></div>
-        <div class="kpi blue"><div class="kpi-label">Valor Atual</div><div class="kpi-value" id="kpi-val">—</div><div class="kpi-sub">&nbsp;</div></div>
-        <div class="kpi" id="kpi-pnl-c"><div class="kpi-label">Lucro / Perda</div><div class="kpi-value" id="kpi-pnl">—</div><div class="kpi-sub" id="kpi-pnl-s">—</div></div>
-        <div class="kpi blue" id="kpi-alloc-c"><div class="kpi-label">Alocação</div>
-          <div class="alloc-row"><span class="alloc-name">S&amp;P 500</span><span class="alloc-pct" id="kpi-alloc-sp">—</span></div>
-          <div class="alloc-row"><span class="alloc-name">Bitcoin</span><span class="alloc-pct" id="kpi-alloc-btc">—</span></div>
-        </div>
-      </div>
-      <div class="card"><div class="card-title">ALOCAÇÃO POR POSIÇÃO</div><div id="gauge-wrap"></div></div>
-    </section>
-
-    <section id="tab-sxr8" class="tab">
-      <div class="info-bar" id="sxr8-info"></div>
-      <div class="owner-list" id="sxr8-owners"></div>
-      <div class="card"><div class="card-title">MENSAL POR OWNER (€)</div><div class="chart-wrap"><canvas id="chart-sp-bar"></canvas></div></div>
-      <div class="card"><div class="card-title">CAPITAL ACUMULADO (€)</div><div class="chart-wrap"><canvas id="chart-sp-cum"></canvas></div></div>
-    </section>
-
-    <section id="tab-btc" class="tab">
-      <div class="info-bar" id="btc-info"></div>
-      <div class="owner-list" id="btc-owners"></div>
-      <div class="card"><div class="card-title">MENSAL (€)</div><div class="chart-wrap"><canvas id="chart-btc-bar"></canvas></div></div>
-      <div class="card"><div class="card-title">PREÇO DE COMPRA VS MÉDIA ACUMULADA</div><div class="chart-wrap"><canvas id="chart-btc-price"></canvas></div></div>
-    </section>
-
-  </div>
-</div>
-
-<nav class="bottomnav">
-  <button class="navbtn active" data-tab="global" onclick="setTab('global',this)"><span class="nav-icon">🌍</span><span class="nav-label">Global</span></button>
-  <button class="navbtn" data-tab="sxr8" onclick="setTab('sxr8',this)"><span class="nav-icon">📈</span><span class="nav-label">S&amp;P 500</span></button>
-  <button class="navbtn" data-tab="btc" onclick="setTab('btc',this)"><span class="nav-icon">₿</span><span class="nav-label">Bitcoin</span></button>
-</nav>
-
-<script>
-/* ── Utils ── */
-const eur=v=>'€'+Math.abs(v).toLocaleString('pt-PT',{minimumFractionDigits:2,maximumFractionDigits:2});
-const pct=v=>(v>=0?'+':'')+v.toFixed(2)+'%';
-const sgn=v=>(v>=0?'+':'')+eur(v);
-const cl =v=>v>=0?'up':'down';
-const COLORS={DM:'#5B8DEF',LCD:'#34D399',RCD:'#A78BFA'};
-const GRID='rgba(255,255,255,0.06)';
-const $=id=>document.getElementById(id);
-let ch={};
-const dc=id=>{if(ch[id]){ch[id].destroy();delete ch[id];}};
-
-Chart.defaults.color='#8B95A5';
-Chart.defaults.font.family="'DM Sans',sans-serif";
-
-/* ── Tabs ── */
-function setTab(name, el){
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  document.getElementById('tab-'+name).classList.add('active');
-  document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active', b.dataset.tab===name));
-}
-function toggleOwner(el){ el.closest('.owner-card').classList.toggle('open'); }
-
-/* ── Load ── */
-const API_URL = "https://script.google.com/macros/s/AKfycbxzKI0lupG5gjLzuC3J1aR5AwVA1PIbSxTqA7Pjy3NWp_HaUbctCbNzhxjbuXx5GtqnJw/exec";
-
-function loadData(){
-  const btn=$('refresh-btn');
-  btn.disabled=true; btn.classList.add('spinning');
-  fetch(API_URL + '?action=data')
-    .then(r => r.json())
-    .then(d => { if (d.error) throw new Error(d.error); onData(d); })
-    .catch(onError);
-}
-function onError(e){
-  const btn=$('refresh-btn');
-  btn.disabled=false; btn.classList.remove('spinning');
-  $('skeleton').innerHTML='<div class="card" style="border-color:var(--coral)"><div class="card-title">Erro</div><p style="color:var(--coral);font-size:13px">'+(e.message||e)+'</p></div>';
-  $('skeleton').style.display='block';
-  $('dashboard').style.display='none';
-}
-function onData(d){
-  $('skeleton').style.display='none';
-  $('dashboard').style.display='block';
-  const btn=$('refresh-btn');
-  btn.disabled=false; btn.classList.remove('spinning');
-  renderAll(d);
-}
-
-/* ── Render ── */
-function renderAll(d){
-  const c=d.calc;
-  $('updated-txt').textContent='Atualizado em '+d.updated;
-
-  const isUp=c.totPnl>=0;
-  $('kpi-inv').textContent=eur(c.totInv);
-  $('kpi-val').textContent=eur(c.totVal);
-  $('kpi-pnl-c').className='kpi '+(isUp?'green':'red');
-  $('kpi-pnl').className='kpi-value '+(isUp?'up':'down');
-  $('kpi-pnl').textContent=sgn(c.totPnl);
-  $('kpi-pnl-s').textContent=pct(c.totPnlPct);
-  const xtbAllocPct=c.totInv>0?pct((c.xtbInv/c.totInv)*100):'—';
-  const btcAllocPct=c.totInv>0?pct((c.btcTotalInvested/c.totInv)*100):'—';
-  $('kpi-alloc-sp').textContent=xtbAllocPct;
-  $('kpi-alloc-btc').textContent=btcAllocPct;
-
-  renderGauge(c);
-  renderSXR8(d);
-  renderBTC(d);
-}
-
-function renderGauge(c){
-  const segments=[];
-  ['DM','LCD','RCD'].forEach(o=>{ if(c.xtbOwners[o]) segments.push({label:'S&P 500 '+o, value:c.xtbOwners[o].currentValue, color:COLORS[o]}); });
-  segments.push({label:'Bitcoin', value:c.btcVal, color:'#F0A93A'});
-  const total=segments.reduce((s,x)=>s+x.value,0)||1;
-
-  // O arco desenha-se da direita para a esquerda à medida que avança, por
-  // isso ordenar do menor para o maior aqui resulta em maior→menor à vista,
-  // da esquerda para a direita.
-  const arcSegments=[...segments].sort((a,b)=>a.value-b.value);
-  const legendSegments=[...segments].sort((a,b)=>b.value-a.value);
-
-  const wrap=$('gauge-wrap');
-  const W=Math.min(wrap.clientWidth || (window.innerWidth-64), 360), R=W*0.36, cx=W/2, cy=R+W*0.05, thick=W*0.115, GAP=0.026;
-  let arcs='', pctLabels=''; let cumAngle=0;
-
-  arcSegments.forEach((seg,idx)=>{
-    const span=(seg.value/total)*Math.PI;
-    const a0=cumAngle+GAP/2, a1=cumAngle+span-GAP/2;
-    const sx=(cx+R*Math.cos(a0)).toFixed(1), sy=(cy-R*Math.sin(a0)).toFixed(1);
-    const ex=(cx+R*Math.cos(a1)).toFixed(1), ey=(cy-R*Math.sin(a1)).toFixed(1);
-    const large=span>Math.PI/2?1:0;
-    arcs+=`<path d="M${sx},${sy} A${R},${R} 0 ${large},0 ${ex},${ey}" fill="none" stroke="${seg.color}" stroke-width="${thick}" stroke-linecap="butt"/>`;
-    const amid=cumAngle+span/2;
-    const lx=(cx+R*Math.cos(amid)).toFixed(1), ly=(cy-R*Math.sin(amid)).toFixed(1);
-    const pctVal=(seg.value/total*100).toFixed(1);
-    if(span>0.12) pctLabels+=`<text x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="middle" font-size="12" font-weight="700" fill="#0A0D12" font-family="DM Sans,sans-serif" style="pointer-events:none">${pctVal}%</text>`;
-    cumAngle+=span;
-  });
-
-  const legendRows=legendSegments.map(seg=>`<div style="display:flex;align-items:center;gap:8px;font-size:12.5px;padding:6px 0;min-width:0">
-    <span style="width:9px;height:9px;border-radius:2px;background:${seg.color};display:inline-block;flex-shrink:0"></span>
-    <span style="color:var(--muted);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${seg.label}</span>
-    <span style="color:var(--text);font-family:'DM Mono',monospace;font-weight:600;flex-shrink:0;white-space:nowrap">${eur(seg.value)}</span>
-  </div>`).join('');
-
-  wrap.innerHTML=`<div style="width:${W}px;margin:0 auto">
-    <svg viewBox="0 0 ${W} ${cy+8}" width="${W}" style="overflow:visible;display:block;margin:0 auto">${arcs}${pctLabels}</svg>
-    <div style="display:flex;flex-direction:column;margin-top:6px;border-top:1px solid var(--border-soft);padding-top:2px">${legendRows}</div>
-  </div>`;
-}
-
-/* ── SXR8 ── */
-function renderSXR8(d){
-  const c=d.calc;
-  const owners=['DM','LCD','RCD'];
-  const totI=owners.reduce((s,o)=>s+(c.xtbOwners[o]?.invested||0),0);
-  const totV=owners.reduce((s,o)=>s+(c.xtbOwners[o]?.currentValue||0),0);
-  const totP=totV-totI;
-  const totShares=owners.reduce((s,o)=>s+(c.xtbOwners[o]?.shares||0),0);
-
-  $('sxr8-info').innerHTML=`
-    <div class="info-chip"><div class="info-label">Investido</div><div class="info-value">${eur(totI)}</div></div>
-    <div class="info-chip"><div class="info-label">Valor Atual</div><div class="info-value">${eur(totV)}</div></div>
-    <div class="info-chip"><div class="info-label">P&amp;L</div><div class="info-value ${cl(totP)}">${sgn(totP)}<span style="font-size:0.72em;opacity:0.8;margin-left:4px">(${pct((totP/totI)*100)})</span></div></div>
-    <div class="info-chip"><div class="info-label">Preço Médio</div><div class="info-value">€${(totI/totShares).toLocaleString('pt-PT',{minimumFractionDigits:2,maximumFractionDigits:2})}</div></div>`;
-
-  $('sxr8-owners').innerHTML=owners.map(o=>{
-    const ow=c.xtbOwners[o]; if(!ow) return '';
-    return `<div class="owner-card">
-      <div class="owner-header" onclick="toggleOwner(this)">
-        <div class="owner-name-row"><span class="owner-dot" style="background:${COLORS[o]}"></span><span class="owner-title">${o}</span></div>
-        <div class="owner-right"><span class="owner-pnl ${cl(ow.pnl)}">${sgn(ow.pnl)}</span><span class="owner-arrow">▼</span></div>
-      </div>
-      <div class="owner-body"><div class="owner-body-inner">
-        <div class="owner-row"><span class="owner-row-l">Investido</span><span class="owner-row-v">${eur(ow.invested)}</span></div>
-        <div class="owner-row"><span class="owner-row-l">Ações</span><span class="owner-row-v">${ow.shares.toFixed(4)}</span></div>
-        <div class="owner-row"><span class="owner-row-l">Preço Médio</span><span class="owner-row-v">${eur(ow.avgPrice)}</span></div>
-        <div class="owner-row"><span class="owner-row-l">Valor Atual</span><span class="owner-row-v">${eur(ow.currentValue)}</span></div>
-        <div class="owner-row"><span class="owner-row-l">Retorno</span><span class="owner-row-v ${cl(ow.pnlPct)}">${pct(ow.pnlPct)}</span></div>
-      </div></div>
-    </div>`;
-  }).join('');
-
-  const labels=d.xtbMonthly.map(m=>m.label);
-  const ds=[
-    {label:'DM', data:d.xtbMonthly.map(m=>m.DM), backgroundColor:'#5B8DEFcc',borderRadius:3},
-    {label:'LCD',data:d.xtbMonthly.map(m=>m.LCD),backgroundColor:'#34D399cc',borderRadius:3},
-    {label:'RCD',data:d.xtbMonthly.map(m=>m.RCD),backgroundColor:'#A78BFAcc',borderRadius:3}
-  ];
-  dc('chart-sp-bar'); ch['chart-sp-bar']=barChart('chart-sp-bar',labels,ds,true);
-  const cumDs=[{label:'Acumulado',data:d.xtbMonthly.map(m=>m.cum),borderColor:'#F4D27A',
-    backgroundColor:'#D2A13A22',borderWidth:2,pointRadius:2,fill:true,tension:0.3}];
-  dc('chart-sp-cum'); ch['chart-sp-cum']=lineChart('chart-sp-cum',labels,cumDs,v=>'€'+v.toLocaleString('pt-PT'));
-}
-
-/* ── BTC ── */
-function renderBTC(d){
-  const c=d.calc;
-  $('btc-info').innerHTML=`
-    <div class="info-chip"><div class="info-label">Investido</div><div class="info-value">${eur(c.btcTotalInvested)}</div></div>
-    <div class="info-chip"><div class="info-label">Valor Atual</div><div class="info-value">${eur(c.btcVal)}</div></div>
-    <div class="info-chip"><div class="info-label">P&amp;L</div><div class="info-value ${cl(c.btcPnl)}">${sgn(c.btcPnl)}<span style="font-size:0.72em;opacity:0.8;margin-left:4px">(${pct((c.btcPnl/c.btcTotalInvested)*100)})</span></div></div>
-    <div class="info-chip"><div class="info-label">Preço Médio</div><div class="info-value">€${c.btcAvgPrice.toLocaleString('pt-PT')}</div></div>`;
-
-  $('btc-owners').innerHTML=Object.entries(c.btcOwners).map(([o,ow])=>{
-    const col=COLORS[o]||'#F0A93A';
-    return `<div class="owner-card">
-      <div class="owner-header" onclick="toggleOwner(this)">
-        <div class="owner-name-row"><span class="owner-dot" style="background:${col}"></span><span class="owner-title">${o}</span></div>
-        <div class="owner-right"><span class="owner-pnl ${cl(ow.pnl)}">${sgn(ow.pnl)}</span><span class="owner-arrow">▼</span></div>
-      </div>
-      <div class="owner-body"><div class="owner-body-inner">
-        <div class="owner-row"><span class="owner-row-l">Investido</span><span class="owner-row-v">${eur(ow.invested)}</span></div>
-        <div class="owner-row"><span class="owner-row-l">Quantidade</span><span class="owner-row-v">${ow.qty.toFixed(6)} BTC</span></div>
-        <div class="owner-row"><span class="owner-row-l">Preço Médio</span><span class="owner-row-v">€${ow.avgPrice.toLocaleString('pt-PT')}</span></div>
-        <div class="owner-row"><span class="owner-row-l">Valor Atual</span><span class="owner-row-v">${eur(ow.currentValue)}</span></div>
-        <div class="owner-row"><span class="owner-row-l">Retorno</span><span class="owner-row-v ${cl(ow.pnlPct)}">${pct(ow.pnlPct)}</span></div>
-      </div></div>
-    </div>`;
-  }).join('');
-
-  const ph=d.btcPriceHistory;
-  const btcBarDs=[{label:'Investido',data:d.btcMonthly.map(m=>m.invested),backgroundColor:'#F0A93Acc',borderRadius:5}];
-  dc('chart-btc-bar'); ch['chart-btc-bar']=barChart('chart-btc-bar',d.btcMonthly.map(m=>m.label),btcBarDs,false);
-
-  const priceDs=[
-    {label:'Preço Pago',data:ph.map(p=>p.pricePaid),borderColor:'#F0A93A88',backgroundColor:'transparent',borderWidth:1.5,pointRadius:2.5,pointBackgroundColor:'#F0A93A',tension:0.15},
-    {label:'Média Acumulada',data:ph.map(p=>p.runAvg),borderColor:'#FF6B5E',backgroundColor:'transparent',borderWidth:2,pointRadius:0,borderDash:[5,3],tension:0.3}
-  ];
-  dc('chart-btc-price'); ch['chart-btc-price']=lineChart('chart-btc-price',ph.map(p=>p.label),priceDs,v=>'€'+(v/1000).toFixed(0)+'k');
-}
-
-/* ── Chart factories ── */
-function barChart(id,labels,datasets,stacked){
-  return new Chart($(id),{type:'bar',data:{labels,datasets},options:{responsive:true,maintainAspectRatio:false,
-    scales:{
-      x:{stacked,ticks:{color:'#8B95A5',font:{family:"'DM Sans'",size:9},maxRotation:55},grid:{display:false}},
-      y:{stacked,ticks:{color:'#8B95A5',font:{family:"'DM Mono'",size:9},callback:v=>'€'+v},grid:{color:GRID}}
-    },
-    plugins:{
-      legend:{labels:{color:'#8B95A5',font:{family:"'DM Sans'",size:11,weight:'500'},boxWidth:9,usePointStyle:true,padding:12}},
-      tooltip:{backgroundColor:'#212938',borderColor:'rgba(255,255,255,0.1)',borderWidth:1,
-        titleColor:'#8B95A5',bodyColor:'#F2F4F7',
-        callbacks:{label:c=>' '+c.dataset.label+': €'+c.raw.toFixed(0)}}
-    }
-  }});
-}
-function lineChart(id,labels,datasets,yFmt){
-  return new Chart($(id),{type:'line',data:{labels,datasets},options:{responsive:true,maintainAspectRatio:false,
-    scales:{
-      x:{ticks:{color:'#8B95A5',font:{family:"'DM Sans'",size:9},maxRotation:55},grid:{display:false}},
-      y:{ticks:{color:'#8B95A5',font:{family:"'DM Mono'",size:9},callback:yFmt},grid:{color:GRID}}
-    },
-    plugins:{
-      legend:{labels:{color:'#8B95A5',font:{family:"'DM Sans'",size:11,weight:'500'},boxWidth:16,padding:12}},
-      tooltip:{backgroundColor:'#212938',borderColor:'rgba(255,255,255,0.1)',borderWidth:1,
-        titleColor:'#8B95A5',bodyColor:'#F2F4F7',
-        callbacks:{label:c=>' '+c.dataset.label+': €'+c.raw.toLocaleString('pt-PT')}}
-    }
-  }});
-}
-
-window.onload=loadData;
-</script>
 </body>
 </html>
