@@ -138,6 +138,7 @@ body{
 </head>
 <body>
 
+<div id="app-content" style="display:none">
 <div class="topbar">
   <div class="topbar-inner">
     <div class="topbar-row1">
@@ -215,7 +216,9 @@ body{
   <button class="navbtn" data-tab="sxr8" onclick="setTab('sxr8',this)"><span class="nav-icon">📈</span><span class="nav-label">S&amp;P 500</span></button>
   <button class="navbtn" data-tab="btc" onclick="setTab('btc',this)"><span class="nav-icon">₿</span><span class="nav-label">Bitcoin</span></button>
 </nav>
+</div>
 
+<script src="auth.js"></script>
 <script>
 /* ── Utils ── */
 const eur=v=>'€'+Math.abs(v).toLocaleString('pt-PT',{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -240,12 +243,11 @@ function setTab(name, el){
 function toggleOwner(el){ el.closest('.owner-card').classList.toggle('open'); }
 
 /* ── Load ── */
-const API_URL = "https://script.google.com/macros/s/AKfycbxzKI0lupG5gjLzuC3J1aR5AwVA1PIbSxTqA7Pjy3NWp_HaUbctCbNzhxjbuXx5GtqnJw/exec";
-
 function loadData(){
   const btn=$('refresh-btn');
   btn.disabled=true; btn.classList.add('spinning');
-  fetch(API_URL + '?action=data')
+  const pin = Auth.getStoredPin() || '';
+  fetch(Auth.API_URL + '?action=data&pin=' + encodeURIComponent(pin))
     .then(r => r.json())
     .then(d => { if (d.error) throw new Error(d.error); onData(d); })
     .catch(onError);
@@ -440,7 +442,10 @@ function lineChart(id,labels,datasets,yFmt){
   }});
 }
 
-window.onload=loadData;
+Auth.protect(function(){
+  document.getElementById('app-content').style.display = 'block';
+  loadData();
+});
 </script>
 </body>
 </html>
