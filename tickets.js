@@ -12,6 +12,9 @@ const Tickets = (() => {
   const fmtDate = iso => new Date(iso).toLocaleDateString('pt-PT', { day:'2-digit', month:'short', year:'numeric' });
   const esc = s => (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
+  const STATUSES = ['Pendente', 'Em Progresso', 'Resolvido'];
+  const STATUS_COLOR = { 'Pendente':'#F0A93A', 'Em Progresso':'#5B8DEF', 'Resolvido':'#34D399' };
+
   function shellHTML(){
     return `
     <div id="dm-ticket" style="position:fixed;inset:0;background:#0A0D12;z-index:9998;display:flex;flex-direction:column;font-family:'DM Sans',sans-serif">
@@ -66,10 +69,10 @@ const Tickets = (() => {
 
     body.innerHTML = cache.map(t => `
       <div class="dm-t-row" data-n="${t.number}" style="display:flex;align-items:center;gap:10px;padding:13px 4px;border-bottom:1px solid rgba(255,255,255,0.06);cursor:pointer">
-        <span style="width:8px;height:8px;border-radius:50%;flex-shrink:0;background:${t.state==='open'?'#34D399':'#5C6576'}"></span>
+        <span style="width:8px;height:8px;border-radius:50%;flex-shrink:0;background:${STATUS_COLOR[t.status]||'#5C6576'}"></span>
         <div style="flex:1;min-width:0">
           <div style="font-size:14px;color:#F2F4F7;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(t.title)}</div>
-          <div style="font-size:11.5px;color:#5C6576;margin-top:2px">#${t.number} · ${fmtDate(t.updatedAt)}${t.comments?' · '+t.comments+' resposta'+(t.comments>1?'s':''):''}</div>
+          <div style="font-size:11.5px;color:#5C6576;margin-top:2px">${esc(t.status)} · #${t.number} · ${fmtDate(t.updatedAt)}${t.comments?' · '+t.comments+' resposta'+(t.comments>1?'s':''):''}</div>
         </div>
         <span style="color:#5C6576;font-size:16px;flex-shrink:0">›</span>
       </div>`).join('');
@@ -97,20 +100,35 @@ const Tickets = (() => {
       </div>`).join('');
 
     body.innerHTML = `
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-        <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:3px 8px;border-radius:6px;background:${t.state==='open'?'rgba(52,211,153,0.15)':'rgba(92,101,118,0.2)'};color:${t.state==='open'?'#34D399':'#8B95A5'}">${t.state==='open'?'Aberto':'Fechado'}</span>
+      <div style="display:flex;gap:6px;margin-bottom:14px">
+        ${STATUSES.map(s => `
+          <button class="dm-t-status-btn" data-s="${esc(s)}" style="flex:1;padding:9px 4px;border-radius:9px;font-size:11.5px;font-weight:600;cursor:pointer;font-family:inherit;
+            border:1px solid ${t.status===s ? STATUS_COLOR[s] : 'rgba(255,255,255,0.08)'};
+            background:${t.status===s ? STATUS_COLOR[s]+'22' : '#181D26'};
+            color:${t.status===s ? STATUS_COLOR[s] : '#8B95A5'}">${esc(s)}</button>
+        `).join('')}
       </div>
       <div style="font-size:16px;font-weight:600;color:#F2F4F7;margin-bottom:10px">${esc(t.title)}</div>
       ${t.body ? `<div style="font-size:13.5px;color:#B8C0CC;white-space:pre-wrap;line-height:1.5;margin-bottom:18px">${esc(t.body)}</div>` : ''}
       ${commentsHTML}
       <div style="margin-top:16px">
         <textarea id="dm-t-reply" placeholder="Escrever uma resposta…" rows="3" style="width:100%;padding:11px;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#181D26;color:#F2F4F7;font-size:14px;font-family:inherit;resize:vertical;box-sizing:border-box;margin-bottom:8px"></textarea>
-        <div style="display:flex;gap:8px">
-          <button id="dm-t-send" style="flex:1;padding:12px;border:none;border-radius:9px;background:#D2A13A;color:#1a1305;font-weight:700;font-size:13.5px;cursor:pointer;font-family:inherit">Responder</button>
-          <button id="dm-t-toggle" style="padding:12px 14px;border:1px solid rgba(255,255,255,0.08);border-radius:9px;background:#181D26;color:#8B95A5;font-size:13px;cursor:pointer;font-family:inherit;white-space:nowrap">${t.state==='open'?'Fechar':'Reabrir'}</button>
-        </div>
+        <button id="dm-t-send" style="width:100%;padding:12px;border:none;border-radius:9px;background:#D2A13A;color:#1a1305;font-weight:700;font-size:13.5px;cursor:pointer;font-family:inherit">Responder</button>
         <div id="dm-t-detail-msg" style="margin-top:8px;font-size:12px;text-align:center;min-height:15px"></div>
       </div>`;
+
+    body.querySelectorAll('.dm-t-status-btn').forEach(btn => {
+      btn.onclick = async () => {
+        if (btn.dataset.s === t.status) return;
+        body.querySelectorAll('.dm-t-status-btn').forEach(b => b.disabled = true);
+        const res = await api('setStatus', { number, status: btn.dataset.s }, 'POST');
+        if (res.ok) renderDetail(number);
+        else {
+          body.querySelectorAll('.dm-t-status-btn').forEach(b => b.disabled = false);
+          document.getElementById('dm-t-detail-msg').textContent = 'Erro: ' + (res.error||'desconhecido');
+        }
+      };
+    });
 
     document.getElementById('dm-t-send').onclick = async () => {
       const btn = document.getElementById('dm-t-send');
@@ -123,16 +141,6 @@ const Tickets = (() => {
       btn.disabled = false; btn.textContent = 'Responder';
       if (res.ok) { renderDetail(number); }
       else { msg.style.color = '#FF6B5E'; msg.textContent = 'Erro: ' + (res.error||'desconhecido'); }
-    };
-
-    document.getElementById('dm-t-toggle').onclick = async () => {
-      const btn = document.getElementById('dm-t-toggle');
-      btn.disabled = true;
-      const newState = t.state === 'open' ? 'closed' : 'open';
-      const res = await api('setState', { number, state: newState }, 'POST');
-      btn.disabled = false;
-      if (res.ok) renderDetail(number);
-      else document.getElementById('dm-t-detail-msg').textContent = 'Erro: ' + (res.error||'desconhecido');
     };
   }
 
