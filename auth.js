@@ -10,6 +10,7 @@ const Auth = (() => {
   const PIN_KEY  = 'dm_pin';
   const CRED_KEY = 'dm_cred_id';
   const SESSION_KEY = 'dm_session_ok';
+  const USER_KEY = 'dm_user';
 
   const b64e = s => btoa(unescape(encodeURIComponent(s)));
   const b64d = s => decodeURIComponent(escape(atob(s)));
@@ -18,13 +19,15 @@ const Auth = (() => {
 
   function getStoredPin(){ const v = localStorage.getItem(PIN_KEY); return v ? b64d(v) : null; }
   function setStoredPin(pin){ localStorage.setItem(PIN_KEY, b64e(pin)); }
+  function getStoredUser(){ return localStorage.getItem(USER_KEY); }
   function hasBiometric(){ return !!localStorage.getItem(CRED_KEY); }
-  function forget(){ localStorage.removeItem(PIN_KEY); localStorage.removeItem(CRED_KEY); sessionStorage.removeItem(SESSION_KEY); }
+  function forget(){ localStorage.removeItem(PIN_KEY); localStorage.removeItem(CRED_KEY); localStorage.removeItem(USER_KEY); sessionStorage.removeItem(SESSION_KEY); }
 
   async function verifyPinWithServer(pin){
     try {
       const r = await fetch(API_URL + '?action=checkpin&pin=' + encodeURIComponent(pin));
       const d = await r.json();
+      if (d.ok && d.user) localStorage.setItem(USER_KEY, d.user);
       return !!d.ok;
     } catch(e){ return false; }
   }
@@ -161,5 +164,5 @@ const Auth = (() => {
     showPasswordScreen(onUnlock, {});
   }
 
-  return { protect, forget, getStoredPin, API_URL };
+  return { protect, forget, getStoredPin, getStoredUser, API_URL };
 })();
