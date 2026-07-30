@@ -85,7 +85,8 @@ body{
     <path fill="url(#gld-m)" d="M690 470 L690 150 L915 345 L1170 135 L1170 470 L1100 470 L1100 255 L940 385 L805 270 L805 470 Z"/>
   </g>
 </svg>
-<div class="tagline">Family</div>
+<div class="tagline" id="tagline">Family</div>
+<div id="greeting" style="font-size:13px;color:var(--muted);margin:-32px 0 44px;min-height:16px"></div>
 
 <div class="tiles">
   <a class="tile active" href="./portfolio.html">
@@ -136,6 +137,8 @@ body{
     document.getElementById('app-content').style.display = 'flex';
     document.getElementById('app-content').style.flexDirection = 'column';
     document.getElementById('app-content').style.alignItems = 'center';
+    const user = Auth.getStoredUser();
+    if (user) document.getElementById('greeting').textContent = 'Olá, ' + user;
   });
 </script>
 </body>
