@@ -12,9 +12,28 @@ const Tickets = (() => {
   const fmtDate = iso => new Date(iso).toLocaleDateString('pt-PT', { day:'2-digit', month:'short', year:'numeric' });
   const esc = s => (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
+  // Transforma "![nome](url)" e "[📎 nome](url)" em imagens/links a sério,
+  // escapando tudo o resto normalmente (só usamos markdown para anexos).
+  function renderRich(raw){
+    const tokens = [];
+    let text = (raw || '').replace(/!\[(.*?)\]\((.*?)\)/g, (m, alt, url) => {
+      tokens.push(`<a href="${url}" target="_blank" rel="noopener"><img src="${url}" alt="${esc(alt)}" style="max-width:100%;border-radius:10px;margin-top:8px;display:block"></a>`);
+      return `\u0000${tokens.length-1}\u0000`;
+    });
+    text = text.replace(/\[📎 (.*?)\]\((.*?)\)/g, (m, name, url) => {
+      tokens.push(`<a href="${url}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;margin-top:8px;padding:8px 12px;background:#181D26;border:1px solid rgba(255,255,255,0.08);border-radius:9px;color:#F4D27A;font-size:12.5px;text-decoration:none">📎 ${esc(name)}</a>`);
+      return `\u0000${tokens.length-1}\u0000`;
+    });
+    let out = esc(text);
+    out = out.replace(/\u0000(\d+)\u0000/g, (m, i) => tokens[i]);
+    return out;
+  }
+
   const STATUSES = ['Pendente', 'Em Progresso', 'Resolvido'];
   const STATUS_COLOR = { 'Pendente':'#F0A93A', 'Em Progresso':'#5B8DEF', 'Resolvido':'#34D399' };
   const CATEGORIES = ['Casa', 'Família', 'Saúde', 'Website'];
+
+  let pendingFile = null; // { filename, mimeType, dataBase64 } — anexo escolhido antes de enviar
 
   function shellHTML(){
     return `
@@ -50,6 +69,23 @@ const Tickets = (() => {
     const url = Auth.API_URL + '?' + new URLSearchParams(Object.assign({ action, pin }, params||{})).toString();
     const r = await fetch(url, { method: method || 'GET' });
     return r.json();
+  }
+
+  // Anexos vão no corpo do pedido (podem ser maiores do que um URL aguenta).
+  async function apiUpload(number, filename, mimeType, dataBase64){
+    const pin = Auth.getStoredPin() || '';
+    const url = Auth.API_URL + '?action=uploadAttachment';
+    const r = await fetch(url, { method:'POST', body: JSON.stringify({ pin, number, filename, mimeType, dataBase64 }) });
+    return r.json();
+  }
+
+  function readFileAsBase64(file){
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result).split(',')[1] || '');
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
   }
 
   function rowHTML(t){
@@ -106,11 +142,16 @@ const Tickets = (() => {
     if (!d.ok) { body.innerHTML = `<div style="color:#FF6B5E;font-size:13px;text-align:center;padding:20px 0">Erro: ${esc(d.error||'desconhecido')}</div>`; return; }
     const t = d.ticket;
 
-    const commentsHTML = t.comments.map(c => `
+    const commentsHTML = t.comments.map(c => {
+      const m = c.body.match(/^\*\*(.+?):\*\*\n\n([\s\S]*)$/);
+      const who = m ? m[1] : c.author;
+      const text = m ? m[2] : c.body;
+      return `
       <div style="background:#12161D;border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:12px 14px;margin-bottom:8px">
-        <div style="font-size:11px;color:#5C6576;margin-bottom:5px">${esc(c.author)} · ${fmtDate(c.createdAt)}</div>
-        <div style="font-size:13.5px;color:#F2F4F7;white-space:pre-wrap;line-height:1.45">${esc(c.body)}</div>
-      </div>`).join('');
+        <div style="font-size:11.5px;color:#8B95A5;font-weight:600;margin-bottom:5px">${esc(who)} <span style="color:#5C6576;font-weight:400">· ${fmtDate(c.createdAt)}</span></div>
+        <div style="font-size:13.5px;color:#F2F4F7;white-space:pre-wrap;line-height:1.45">${renderRich(text)}</div>
+      </div>`;
+    }).join('');
 
     body.innerHTML = `
       <div style="display:flex;gap:6px;margin-bottom:10px">
@@ -125,12 +166,26 @@ const Tickets = (() => {
         <option value="">Sem categoria</option>
         ${CATEGORIES.map(c => `<option value="${esc(c)}" ${t.category===c?'selected':''}>${esc(c)}</option>`).join('')}
       </select>
-      <div style="font-size:16px;font-weight:600;color:#F2F4F7;margin-bottom:10px">${esc(t.title)}</div>
-      ${t.body ? `<div style="font-size:13.5px;color:#B8C0CC;white-space:pre-wrap;line-height:1.5;margin-bottom:18px">${esc(t.body)}</div>` : ''}
+      <div style="font-size:16px;font-weight:600;color:#F2F4F7;margin-bottom:4px">${esc(t.title)}</div>
+      ${(() => {
+        const m = t.body.match(/^([\s\S]*?)\n*_Criado por (.+?) a partir da app DM\._\s*$/);
+        const cleanBody = m ? m[1].trim() : t.body;
+        const creator = m ? m[2] : null;
+        return (creator ? `<div style="font-size:11.5px;color:#5C6576;margin-bottom:14px">Criado por ${esc(creator)}</div>` : '') +
+               (cleanBody ? `<div style="font-size:13.5px;color:#B8C0CC;white-space:pre-wrap;line-height:1.5;margin-bottom:18px">${renderRich(cleanBody)}</div>` : '');
+      })()}
       ${commentsHTML}
       <div style="margin-top:16px">
         <textarea id="dm-t-reply" placeholder="Escrever uma resposta…" rows="3" style="width:100%;padding:11px;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#181D26;color:#F2F4F7;font-size:14px;font-family:inherit;resize:vertical;box-sizing:border-box;margin-bottom:8px"></textarea>
-        <button id="dm-t-send" style="width:100%;padding:12px;border:none;border-radius:9px;background:#D2A13A;color:#1a1305;font-weight:700;font-size:13.5px;cursor:pointer;font-family:inherit">Responder</button>
+        <div id="dm-t-attach-preview" style="display:none;align-items:center;gap:8px;margin-bottom:8px;padding:8px 10px;background:#181D26;border:1px solid rgba(255,255,255,0.08);border-radius:9px">
+          <span style="font-size:12.5px;color:#8B95A5;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" id="dm-t-attach-name"></span>
+          <button id="dm-t-attach-remove" style="background:none;border:none;color:#5C6576;font-size:16px;cursor:pointer;line-height:1">×</button>
+        </div>
+        <div style="display:flex;gap:8px">
+          <input type="file" id="dm-t-file" accept="image/*,.pdf,.doc,.docx,.txt" style="display:none">
+          <button id="dm-t-attach-btn" title="Anexar ficheiro" style="width:44px;flex-shrink:0;padding:12px 0;border:1px solid rgba(255,255,255,0.08);border-radius:9px;background:#181D26;color:#8B95A5;font-size:16px;cursor:pointer">📎</button>
+          <button id="dm-t-send" style="flex:1;padding:12px;border:none;border-radius:9px;background:#D2A13A;color:#1a1305;font-weight:700;font-size:13.5px;cursor:pointer;font-family:inherit">Responder</button>
+        </div>
         <div id="dm-t-detail-msg" style="margin-top:8px;font-size:12px;text-align:center;min-height:15px"></div>
       </div>`;
 
@@ -157,15 +212,54 @@ const Tickets = (() => {
       if (!res.ok) document.getElementById('dm-t-detail-msg').textContent = 'Erro: ' + (res.error||'desconhecido');
     };
 
+    pendingFile = null;
+    const fileInput   = document.getElementById('dm-t-file');
+    const attachBtn   = document.getElementById('dm-t-attach-btn');
+    const preview     = document.getElementById('dm-t-attach-preview');
+    const previewName = document.getElementById('dm-t-attach-name');
+
+    attachBtn.onclick = () => fileInput.click();
+    fileInput.onchange = () => {
+      const f = fileInput.files[0];
+      if (!f) return;
+      if (f.size > 1500000) {
+        document.getElementById('dm-t-detail-msg').textContent = 'Ficheiro demasiado grande (máx. ~1,4 MB).';
+        fileInput.value = '';
+        return;
+      }
+      pendingFile = f;
+      previewName.textContent = '📎 ' + f.name;
+      preview.style.display = 'flex';
+    };
+    document.getElementById('dm-t-attach-remove').onclick = () => {
+      pendingFile = null; fileInput.value = ''; preview.style.display = 'none';
+    };
+
     document.getElementById('dm-t-send').onclick = async () => {
       const btn = document.getElementById('dm-t-send');
       const ta  = document.getElementById('dm-t-reply');
       const msg = document.getElementById('dm-t-detail-msg');
-      const val = ta.value.trim();
-      if (!val) { msg.style.color = '#FF6B5E'; msg.textContent = 'Escreve algo primeiro.'; return; }
-      btn.disabled = true; btn.textContent = 'A enviar...';
+      let val = ta.value.trim();
+
+      if (!val && !pendingFile) { msg.style.color = '#FF6B5E'; msg.textContent = 'Escreve algo ou anexa um ficheiro.'; return; }
+
+      btn.disabled = true; attachBtn.disabled = true;
+
+      if (pendingFile) {
+        btn.textContent = 'A enviar anexo...';
+        const b64 = await readFileAsBase64(pendingFile);
+        const up = await apiUpload(number, pendingFile.name, pendingFile.type, b64);
+        if (!up.ok) {
+          btn.disabled = false; attachBtn.disabled = false; btn.textContent = 'Responder';
+          msg.style.color = '#FF6B5E'; msg.textContent = 'Erro no anexo: ' + (up.error||'desconhecido');
+          return;
+        }
+        val = val ? val + '\n\n' + up.markdown : up.markdown;
+      }
+
+      btn.textContent = 'A enviar...';
       const res = await api('addComment', { number, body: val }, 'POST');
-      btn.disabled = false; btn.textContent = 'Responder';
+      btn.disabled = false; attachBtn.disabled = false; btn.textContent = 'Responder';
       if (res.ok) { renderDetail(number); }
       else { msg.style.color = '#FF6B5E'; msg.textContent = 'Erro: ' + (res.error||'desconhecido'); }
     };
