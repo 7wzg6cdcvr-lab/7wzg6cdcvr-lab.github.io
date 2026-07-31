@@ -56,7 +56,21 @@ const Tickets = (() => {
     document.getElementById('dm-t-back').onclick = () => renderList();
     renderList();
   }
-  function close(){ const el = document.getElementById('dm-ticket'); if (el) el.remove(); }
+  function close(){ const el = document.getElementById('dm-ticket'); if (el) el.remove(); refreshBadge(); }
+
+  // Mostra quantos tickets estão "Novo" num pequeno selo sobre o botão
+  // "🎫 Tickets" da página principal (id="dm-t-badge", se existir na página).
+  async function refreshBadge(){
+    const badge = document.getElementById('dm-t-badge');
+    if (!badge) return;
+    try {
+      const d = await api('listTickets', {});
+      if (!d.ok) return;
+      const n = d.tickets.filter(t => t.status === 'Novo').length;
+      if (n > 0) { badge.textContent = n > 9 ? '9+' : String(n); badge.style.display = 'flex'; }
+      else { badge.style.display = 'none'; }
+    } catch (e) { /* sem rede, sem selo — não é crítico */ }
+  }
 
   function setChrome({ title, back, showNew }){
     document.getElementById('dm-t-title').textContent = title;
@@ -310,5 +324,5 @@ const Tickets = (() => {
     };
   }
 
-  return { open, close };
+  return { open, close, refreshBadge };
 })();
