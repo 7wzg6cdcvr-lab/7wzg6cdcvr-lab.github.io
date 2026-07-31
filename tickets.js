@@ -29,8 +29,8 @@ const Tickets = (() => {
     return out;
   }
 
-  const STATUSES = ['Pendente', 'Em Progresso', 'Resolvido'];
-  const STATUS_COLOR = { 'Pendente':'#F0A93A', 'Em Progresso':'#5B8DEF', 'Resolvido':'#34D399' };
+  const STATUSES = ['Novo', 'Pendente', 'Em Progresso', 'Resolvido'];
+  const STATUS_COLOR = { 'Novo':'#A78BFA', 'Pendente':'#F0A93A', 'Em Progresso':'#5B8DEF', 'Resolvido':'#34D399' };
   const CATEGORIES = ['Casa', 'Família', 'Saúde', 'Website'];
 
   let pendingFile = null; // { filename, mimeType, dataBase64 } — anexo escolhido antes de enviar
@@ -51,7 +51,7 @@ const Tickets = (() => {
   function open(){
     if (document.getElementById('dm-ticket')) return;
     document.body.insertAdjacentHTML('beforeend', shellHTML());
-    document.getElementById('dm-t-close').onclick = close;
+    document.getElementById('dm-t-close').onclick = () => { screen === 'list' ? close() : renderList(); };
     document.getElementById('dm-t-new').onclick = () => renderNew();
     document.getElementById('dm-t-back').onclick = () => renderList();
     renderList();
@@ -154,9 +154,9 @@ const Tickets = (() => {
     }).join('');
 
     body.innerHTML = `
-      <div style="display:flex;gap:6px;margin-bottom:10px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px">
         ${STATUSES.map(s => `
-          <button class="dm-t-status-btn" data-s="${esc(s)}" style="flex:1;padding:9px 4px;border-radius:9px;font-size:11.5px;font-weight:600;cursor:pointer;font-family:inherit;
+          <button class="dm-t-status-btn" data-s="${esc(s)}" style="padding:9px 4px;border-radius:9px;font-size:11.5px;font-weight:600;cursor:pointer;font-family:inherit;
             border:1px solid ${t.status===s ? STATUS_COLOR[s] : 'rgba(255,255,255,0.08)'};
             background:${t.status===s ? STATUS_COLOR[s]+'22' : '#181D26'};
             color:${t.status===s ? STATUS_COLOR[s] : '#8B95A5'}">${esc(s)}</button>
