@@ -122,9 +122,24 @@ const Tickets = (() => {
     body.innerHTML = `
       <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:#8B95A5;margin-bottom:4px">Em Aberto${abertos.length?' ('+abertos.length+')':''}</div>
       ${abertos.length ? abertos.map(rowHTML).join('') : '<div style="color:#5C6576;font-size:12.5px;padding:10px 0 18px">Nada em aberto.</div>'}
-      <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:#8B95A5;margin:18px 0 4px">Resolvidos${resolvidos.length?' ('+resolvidos.length+')':''}</div>
-      ${resolvidos.length ? resolvidos.map(rowHTML).join('') : '<div style="color:#5C6576;font-size:12.5px;padding:10px 0">Ainda nenhum.</div>'}
+
+      <button id="dm-t-resolved-toggle" style="width:100%;display:flex;align-items:center;justify-content:space-between;
+        background:none;border:none;padding:14px 4px;margin-top:8px;border-top:1px solid rgba(255,255,255,0.06);cursor:pointer;font-family:inherit">
+        <span style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:#8B95A5">Resolvidos${resolvidos.length?' ('+resolvidos.length+')':''}</span>
+        <span id="dm-t-resolved-arrow" style="color:#5C6576;font-size:11px;transition:transform .2s">▼</span>
+      </button>
+      <div id="dm-t-resolved-list" style="display:none">
+        ${resolvidos.length ? resolvidos.map(rowHTML).join('') : '<div style="color:#5C6576;font-size:12.5px;padding:10px 0">Ainda nenhum.</div>'}
+      </div>
     `;
+
+    document.getElementById('dm-t-resolved-toggle').onclick = () => {
+      const list  = document.getElementById('dm-t-resolved-list');
+      const arrow = document.getElementById('dm-t-resolved-arrow');
+      const open  = list.style.display === 'block';
+      list.style.display = open ? 'none' : 'block';
+      arrow.style.transform = open ? 'rotate(0deg)' : 'rotate(180deg)';
+    };
 
     body.querySelectorAll('.dm-t-row').forEach(row => {
       row.onclick = () => renderDetail(parseInt(row.dataset.n, 10));
