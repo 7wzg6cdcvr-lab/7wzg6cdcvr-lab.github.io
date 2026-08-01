@@ -132,7 +132,7 @@ body{
   🔔 Ativar notificações
 </button>
 
-<button onclick="if(confirm('Esquecer este dispositivo? Vais precisar da password para voltar a entrar.')){Auth.forget();location.reload();}"
+<button onclick="if(confirm('Esquecer este dispositivo? Vais precisar da password para voltar a entrar.')){Auth.forget();Push.reset();location.reload();}"
   style="margin-top:14px;background:none;border:none;color:var(--muted2);font-size:11.5px;cursor:pointer;font-family:inherit">
   🔒 Bloquear este dispositivo
 </button>
