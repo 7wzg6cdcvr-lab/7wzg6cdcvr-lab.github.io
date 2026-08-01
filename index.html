@@ -10,6 +10,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icons/icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
+<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 <title>DM</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
@@ -127,22 +128,41 @@ body{
     font-size:11px;font-weight:700;align-items:center;justify-content:center;border:2px solid var(--bg)"></span>
 </button>
 
+<button id="dm-push-btn" onclick="enablePush()" style="display:none;margin-top:20px;background:none;border:1px solid var(--border);color:var(--gold-light);font-size:12.5px;cursor:pointer;font-family:inherit;padding:9px 16px;border-radius:10px">
+  🔔 Ativar notificações
+</button>
+
 <button onclick="if(confirm('Esquecer este dispositivo? Vais precisar da password para voltar a entrar.')){Auth.forget();location.reload();}"
-  style="margin-top:20px;background:none;border:none;color:var(--muted2);font-size:11.5px;cursor:pointer;font-family:inherit">
+  style="margin-top:14px;background:none;border:none;color:var(--muted2);font-size:11.5px;cursor:pointer;font-family:inherit">
   🔒 Bloquear este dispositivo
 </button>
 </div>
 
 <script src="auth.js"></script>
 <script src="tickets.js"></script>
+<script src="push.js"></script>
 <script>
-  Auth.protect(function(){
+  async function enablePush(){
+    const btn = document.getElementById('dm-push-btn');
+    btn.disabled = true; btn.textContent = 'A pedir permissão...';
+    const perm = await Push.requestPermission();
+    if (perm === 'granted' || perm === true) { btn.style.display = 'none'; }
+    else { btn.disabled = false; btn.textContent = '🔔 Ativar notificações'; }
+  }
+
+  Auth.protect(async function(){
     document.getElementById('app-content').style.display = 'flex';
     document.getElementById('app-content').style.flexDirection = 'column';
     document.getElementById('app-content').style.alignItems = 'center';
     const user = Auth.getStoredUser();
     if (user) document.getElementById('greeting').textContent = 'Olá, ' + user;
     Tickets.refreshBadge();
+
+    Push.init();
+    if (Push.isSupported()) {
+      const state = await Push.permissionState();
+      if (state === 'default') document.getElementById('dm-push-btn').style.display = 'block';
+    }
   });
 </script>
 </body>
