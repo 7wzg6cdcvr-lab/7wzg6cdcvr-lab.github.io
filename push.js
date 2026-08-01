@@ -6,7 +6,7 @@
    (Settings → Keys & IDs → OneSignal App ID).
    ══════════════════════════════════════════════════════════════ */
 const Push = (() => {
-  const APP_ID = "2b2162eb-3c8d-4fde-a89a-237c23973af6";
+  const APP_ID = "e8a84e88-ebba-41ff-9bdb-d3bcb0820cd5";
   const ENABLED_KEY = 'dm_push_enabled';
 
   let readyResolve;
