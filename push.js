@@ -7,6 +7,7 @@
    ══════════════════════════════════════════════════════════════ */
 const Push = (() => {
   const APP_ID = "2b2162eb-3c8d-4fde-a89a-237c23973af6";
+  const ENABLED_KEY = 'dm_push_enabled';
 
   let readyResolve;
   const ready = new Promise(res => { readyResolve = res; });
@@ -26,10 +27,18 @@ const Push = (() => {
     return 'serviceWorker' in navigator && window.isSecureContext;
   }
 
-  // true/false/'default' — usa para decidir se mostras o botão "Ativar notificações".
-  // Espera mesmo pelo init() terminar antes de ler o estado — sem isto, lia sempre
-  // "por decidir" mesmo depois de já teres aceitado, porque o SDK ainda não estava pronto.
+  // No Safari em iOS, ler o estado da permissão a cada abertura da app
+  // (Notification.permission, usado por baixo do SDK) é conhecido por
+  // devolver valores errados dentro de apps instaladas no ecrã principal
+  // — por isso, em vez de perguntar ao browser, guardamos localmente que
+  // já ativaste, na primeira vez que resulta.
+  function alreadyEnabled(){
+    return localStorage.getItem(ENABLED_KEY) === '1';
+  }
+
+  // 'granted' | 'default' | 'unsupported' — só chamado quando alreadyEnabled() é false.
   async function permissionState(){
+    if (alreadyEnabled()) return 'granted';
     const OneSignal = await ready;
     if (!OneSignal) return 'unsupported';
     return OneSignal.Notifications.permission ? 'granted' : 'default';
@@ -39,8 +48,12 @@ const Push = (() => {
     const OneSignal = await ready;
     if (!OneSignal) return 'unsupported';
     await OneSignal.Notifications.requestPermission();
-    return OneSignal.Notifications.permission;
+    const result = OneSignal.Notifications.permission ? 'granted' : 'default';
+    if (result === 'granted') localStorage.setItem(ENABLED_KEY, '1');
+    return result;
   }
 
-  return { init, isSupported, permissionState, requestPermission };
+  function reset(){ localStorage.removeItem(ENABLED_KEY); }
+
+  return { init, isSupported, permissionState, requestPermission, alreadyEnabled, reset };
 })();
