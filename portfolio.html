@@ -10,6 +10,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icons/icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
+<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 <title>DM Investments</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <style>
@@ -219,6 +220,8 @@ body{
 </div>
 
 <script src="auth.js"></script>
+<script src="tickets.js"></script>
+<script src="push.js"></script>
 <script>
 /* ── Utils ── */
 const eur=v=>'€'+Math.abs(v).toLocaleString('pt-PT',{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -445,6 +448,8 @@ function lineChart(id,labels,datasets,yFmt){
 Auth.protect(function(){
   document.getElementById('app-content').style.display = 'block';
   loadData();
+  Tickets.refreshBadge();
+  Push.init();
 });
 </script>
 </body>
