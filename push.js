@@ -6,7 +6,7 @@
    (Settings → Keys & IDs → OneSignal App ID).
    ══════════════════════════════════════════════════════════════ */
 const Push = (() => {
-  const APP_ID = 2b2162eb-3c8d-4fde-a89a-237c23973af6;
+  const APP_ID = "2b2162eb-3c8d-4fde-a89a-237c23973af6";
 
   function init(){
     if (!isSupported() || APP_ID.indexOf('COLOCA_AQUI') === 0) return;
