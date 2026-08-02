@@ -1,6 +1,6 @@
 {
-  "name": "DM",
-  "short_name": "DM",
+  "name": "DC Family",
+  "short_name": "DC Family",
   "description": "Espaço pessoal — Portfolio, Carro Elétrico, Despesas",
   "start_url": "./index.html",
   "scope": "./",
