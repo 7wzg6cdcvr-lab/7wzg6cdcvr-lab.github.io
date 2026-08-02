@@ -1,5 +1,5 @@
 /* ══════════════════════════════════════════════════════════════
-   DM — notificações push (OneSignal)
+   DC Family — notificações push (OneSignal)
    Liga este dispositivo ao nome de quem entrou (Diogo/Marla), para
    o Code.gs conseguir mandar a notificação à pessoa certa.
    Preenche APP_ID depois de criares a app no dashboard do OneSignal
