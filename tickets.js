@@ -1,5 +1,5 @@
 /* ══════════════════════════════════════════════════════════════
-   DM — painel de Tickets
+   DC Family — painel de Tickets
    Lista (separada em Aberto/Resolvidos), abre, responde, muda
    estado e categoria — tudo a partir do site. O pedido passa
    sempre pelo Code.gs (autenticado com o PIN da app) — o token do
@@ -62,13 +62,21 @@ const Tickets = (() => {
   // "🎫 Tickets" da página principal (id="dm-t-badge", se existir na página).
   async function refreshBadge(){
     const badge = document.getElementById('dm-t-badge');
-    if (!badge) return;
     try {
       const d = await api('listTickets', {});
       if (!d.ok) return;
       const n = d.tickets.filter(t => t.status === 'Novo').length;
-      if (n > 0) { badge.textContent = n > 9 ? '9+' : String(n); badge.style.display = 'flex'; }
-      else { badge.style.display = 'none'; }
+
+      if (badge) {
+        if (n > 0) { badge.textContent = n > 9 ? '9+' : String(n); badge.style.display = 'flex'; }
+        else { badge.style.display = 'none'; }
+      }
+
+      // Selo no ícone do ecrã principal (só funciona com a app instalada/standalone).
+      if ('setAppBadge' in navigator) {
+        if (n > 0) navigator.setAppBadge(n).catch(()=>{});
+        else navigator.clearAppBadge().catch(()=>{});
+      }
     } catch (e) { /* sem rede, sem selo — não é crítico */ }
   }
 
@@ -197,7 +205,7 @@ const Tickets = (() => {
       </select>
       <div style="font-size:16px;font-weight:600;color:#F2F4F7;margin-bottom:4px">${esc(t.title)}</div>
       ${(() => {
-        const m = t.body.match(/^([\s\S]*?)\n*_Criado por (.+?) a partir da app DM\._\s*$/);
+        const m = t.body.match(/^([\s\S]*?)\n*_Criado por (.+?) a partir da app DC Family\._\s*$/);
         const cleanBody = m ? m[1].trim() : t.body;
         const creator = m ? m[2] : null;
         return (creator ? `<div style="font-size:11.5px;color:#5C6576;margin-bottom:14px">Criado por ${esc(creator)}</div>` : '') +
