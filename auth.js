@@ -78,14 +78,7 @@ const Auth = (() => {
   function lockScreenHTML(){
     return `
     <div id="dm-lock" style="position:fixed;inset:0;background:#0A0D12;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;font-family:'DM Sans',sans-serif">
-      <svg width="76" height="27.6" viewBox="90 95 1100 400" style="margin-bottom:26px">
-        <defs>
-          <linearGradient id="lockgd" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#F4D27A"/><stop offset="45%" stop-color="#D2A13A"/><stop offset="100%" stop-color="#8E641C"/></linearGradient>
-          <linearGradient id="lockgm" x1="100%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#F4D27A"/><stop offset="45%" stop-color="#D2A13A"/><stop offset="100%" stop-color="#8E641C"/></linearGradient>
-        </defs>
-        <path fill="url(#lockgd)" fill-rule="evenodd" d="M120 470 L620 470 L620 120 Z M300 390 L520 390 L520 215 Z"/>
-        <path fill="none" stroke="url(#lockgm)" stroke-width="130" stroke-linecap="butt" d="M1027.5,434.3 A170,170 0 1,1 1027.5,155.7"/>
-      </svg>
+      <img src="logo.png" alt="DC logo" style="width:140px;height:auto;margin-bottom:26px">
       <div id="dm-lock-msg" style="color:#8B95A5;font-size:13px;margin-bottom:18px">Introduz a password</div>
       <input id="dm-lock-pin" type="password" inputmode="numeric" autocomplete="off" placeholder="••••" style="width:180px;text-align:center;font-size:24px;letter-spacing:8px;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.08);background:#181D26;color:#F2F4F7;margin-bottom:14px">
       <button id="dm-lock-submit" style="width:180px;padding:12px;border:none;border-radius:10px;background:#D2A13A;color:#1a1305;font-weight:700;font-size:14px;cursor:pointer;margin-bottom:10px;font-family:inherit">Entrar</button>
