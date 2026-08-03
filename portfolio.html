@@ -47,7 +47,8 @@ body{
 .topbar-inner{display:flex;flex-direction:column;gap:10px}
 .topbar-row1{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .brand{display:flex;flex-direction:column;align-items:flex-start;min-width:0;flex:1;overflow:hidden}
-.brand svg{height:58px;width:auto;max-width:100%;flex-shrink:1}
+.brand img.brand-logo{height:58px;width:auto;max-width:70%;flex-shrink:1;display:block}
+.brand-portfolio-txt{font-family:'Futura','Century Gothic','Trebuchet MS',Arial,sans-serif;font-size:13px;font-weight:300;letter-spacing:.14em;color:var(--muted);margin-left:8px;flex-shrink:0}
 .updated-txt{font-size:10.5px;color:var(--muted2);margin-top:2px}
 .brand-status{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted2)}
 .pulse-dot{width:6px;height:6px;border-radius:50%;background:var(--mint);flex-shrink:0}
@@ -144,21 +145,10 @@ body{
   <div class="topbar-inner">
     <div class="topbar-row1">
       <div class="brand">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 3400 490" role="img" aria-label="DC Portfolio logo">
-          <defs>
-            <linearGradient id="gld-d" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stop-color="#F4D27A"/><stop offset="45%" stop-color="#D2A13A"/><stop offset="100%" stop-color="#8E641C"/>
-            </linearGradient>
-            <linearGradient id="gld-m" x1="100%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stop-color="#F4D27A"/><stop offset="45%" stop-color="#D2A13A"/><stop offset="100%" stop-color="#8E641C"/>
-            </linearGradient>
-          </defs>
-          <g>
-            <path fill="url(#gld-d)" fill-rule="evenodd" d="M120 470 L620 470 L620 120 Z M300 390 L520 390 L520 215 Z"/>
-            <path fill="none" stroke="url(#gld-m)" stroke-width="130" stroke-linecap="butt" d="M1027.5,434.3 A170,170 0 1,1 1027.5,155.7"/>
-            <text x="1300" y="430" font-family="'Futura','Century Gothic','Trebuchet MS',Arial,sans-serif" font-size="240" font-weight="300" letter-spacing="38" fill="#8B95A5">PORTFOLIO</text>
-          </g>
-        </svg>
+        <div style="display:flex;align-items:center">
+          <img class="brand-logo" src="logo.png" alt="DC logo">
+          <span class="brand-portfolio-txt">PORTFOLIO</span>
+        </div>
         <span class="updated-txt" id="updated-txt">a carregar…</span>
       </div>
       <div style="display:flex;gap:8px;flex-shrink:0">
