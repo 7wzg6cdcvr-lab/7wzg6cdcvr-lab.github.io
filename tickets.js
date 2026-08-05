@@ -56,6 +56,18 @@ const Tickets = (() => {
     document.getElementById('dm-t-back').onclick = () => renderList();
     renderList();
   }
+
+  // Abre o painel já diretamente num ticket (usado quando se chega por
+  // uma notificação, via ?ticket=N no URL).
+  function openTicket(number){
+    if (document.getElementById('dm-ticket')) { renderDetail(number); return; }
+    document.body.insertAdjacentHTML('beforeend', shellHTML());
+    document.getElementById('dm-t-close').onclick = () => { screen === 'list' ? close() : renderList(); };
+    document.getElementById('dm-t-new').onclick = () => renderNew();
+    document.getElementById('dm-t-back').onclick = () => renderList();
+    renderDetail(number);
+  }
+
   function close(){ const el = document.getElementById('dm-ticket'); if (el) el.remove(); refreshBadge(); }
 
   // Mostra quantos tickets estão "Novo" num pequeno selo sobre o botão
@@ -138,8 +150,9 @@ const Tickets = (() => {
       return;
     }
 
-    const abertos    = cache.filter(t => t.status !== 'Resolvido');
-    const resolvidos = cache.filter(t => t.status === 'Resolvido');
+    const abertos    = cache.filter(t => t.status !== 'Resolvido' && !t.archived);
+    const resolvidos = cache.filter(t => t.status === 'Resolvido' && !t.archived);
+    const arquivados = cache.filter(t => t.archived);
 
     body.innerHTML = `
       <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:#8B95A5;margin-bottom:4px">Em Aberto${abertos.length?' ('+abertos.length+')':''}</div>
@@ -153,11 +166,27 @@ const Tickets = (() => {
       <div id="dm-t-resolved-list" style="display:none">
         ${resolvidos.length ? resolvidos.map(rowHTML).join('') : '<div style="color:#5C6576;font-size:12.5px;padding:10px 0">Ainda nenhum.</div>'}
       </div>
+
+      <button id="dm-t-archived-toggle" style="width:100%;display:flex;align-items:center;justify-content:space-between;
+        background:none;border:none;padding:14px 4px;margin-top:4px;border-top:1px solid rgba(255,255,255,0.06);cursor:pointer;font-family:inherit">
+        <span style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:#8B95A5">Arquivados${arquivados.length?' ('+arquivados.length+')':''}</span>
+        <span id="dm-t-archived-arrow" style="color:#5C6576;font-size:11px;transition:transform .2s">▼</span>
+      </button>
+      <div id="dm-t-archived-list" style="display:none">
+        ${arquivados.length ? arquivados.map(rowHTML).join('') : '<div style="color:#5C6576;font-size:12.5px;padding:10px 0">Ainda nenhum. Tickets resolvidos há mais de 30 dias aparecem aqui automaticamente.</div>'}
+      </div>
     `;
 
     document.getElementById('dm-t-resolved-toggle').onclick = () => {
       const list  = document.getElementById('dm-t-resolved-list');
       const arrow = document.getElementById('dm-t-resolved-arrow');
+      const open  = list.style.display === 'block';
+      list.style.display = open ? 'none' : 'block';
+      arrow.style.transform = open ? 'rotate(0deg)' : 'rotate(180deg)';
+    };
+    document.getElementById('dm-t-archived-toggle').onclick = () => {
+      const list  = document.getElementById('dm-t-archived-list');
+      const arrow = document.getElementById('dm-t-archived-arrow');
       const open  = list.style.display === 'block';
       list.style.display = open ? 'none' : 'block';
       arrow.style.transform = open ? 'rotate(0deg)' : 'rotate(180deg)';
@@ -332,5 +361,5 @@ const Tickets = (() => {
     };
   }
 
-  return { open, close, refreshBadge };
+  return { open, close, refreshBadge, openTicket };
 })();
