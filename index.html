@@ -150,6 +150,9 @@ body{
       const state = await Push.permissionState();
       if (state === 'default') document.getElementById('dm-push-btn').style.display = 'block';
     }
+
+    const ticketNum = new URLSearchParams(location.search).get('ticket');
+    if (ticketNum) Tickets.openTicket(parseInt(ticketNum, 10));
   });
 </script>
 </body>
