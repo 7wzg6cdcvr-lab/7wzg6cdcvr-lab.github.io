@@ -10,6 +10,8 @@ const Tickets = (() => {
   let cache = [];
 
   const fmtDate = iso => new Date(iso).toLocaleDateString('pt-PT', { day:'2-digit', month:'short', year:'numeric' });
+  const fmtDateTime = iso => new Date(iso).toLocaleDateString('pt-PT', { day:'2-digit', month:'short', year:'numeric' }) +
+    ' às ' + new Date(iso).toLocaleTimeString('pt-PT', { hour:'2-digit', minute:'2-digit' });
   const esc = s => (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
   // Transforma "![nome](url)" e "[📎 nome](url)" em imagens/links a sério,
@@ -128,7 +130,7 @@ const Tickets = (() => {
         <span style="width:8px;height:8px;border-radius:50%;flex-shrink:0;background:${STATUS_COLOR[t.status]||'#5C6576'}"></span>
         <div style="flex:1;min-width:0">
           <div style="font-size:14px;color:#F2F4F7;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(t.title)}</div>
-          <div style="font-size:11.5px;color:#5C6576;margin-top:2px">${esc(t.status)}${t.category?' · '+esc(t.category):''} · #${t.number} · ${fmtDate(t.updatedAt)}${t.comments?' · '+t.comments+' resposta'+(t.comments>1?'s':''):''}</div>
+          <div style="font-size:11.5px;color:#5C6576;margin-top:2px">${esc(t.status)}${t.category?' · '+esc(t.category):''} · #${t.number} · ${fmtDate(t.createdAt)}${t.comments?' · '+t.comments+' resposta'+(t.comments>1?'s':''):''}</div>
         </div>
         <span style="color:#5C6576;font-size:16px;flex-shrink:0">›</span>
       </div>`;
@@ -214,7 +216,7 @@ const Tickets = (() => {
       const text = m ? m[2] : c.body;
       return `
       <div style="background:#12161D;border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:12px 14px;margin-bottom:8px">
-        <div style="font-size:11.5px;color:#8B95A5;font-weight:600;margin-bottom:5px">${esc(who)} <span style="color:#5C6576;font-weight:400">· ${fmtDate(c.createdAt)}</span></div>
+        <div style="font-size:11.5px;color:#8B95A5;font-weight:600;margin-bottom:5px">${esc(who)} <span style="color:#5C6576;font-weight:400">· ${fmtDateTime(c.createdAt)}</span></div>
         <div style="font-size:13.5px;color:#F2F4F7;white-space:pre-wrap;line-height:1.45">${renderRich(text)}</div>
       </div>`;
     }).join('');
@@ -237,7 +239,8 @@ const Tickets = (() => {
         const m = t.body.match(/^([\s\S]*?)\n*_Criado por (.+?) a partir da app DC Family\._\s*$/);
         const cleanBody = m ? m[1].trim() : t.body;
         const creator = m ? m[2] : null;
-        return (creator ? `<div style="font-size:11.5px;color:#5C6576;margin-bottom:14px">Criado por ${esc(creator)}</div>` : '') +
+        const createdLine = 'Criado ' + (creator ? 'por ' + esc(creator) + ' ' : '') + '· ' + fmtDateTime(t.createdAt);
+        return `<div style="font-size:11.5px;color:#5C6576;margin-bottom:14px">${createdLine}</div>` +
                (cleanBody ? `<div style="font-size:13.5px;color:#B8C0CC;white-space:pre-wrap;line-height:1.5;margin-bottom:18px">${renderRich(cleanBody)}</div>` : '');
       })()}
       ${commentsHTML}
@@ -255,16 +258,24 @@ const Tickets = (() => {
         <div id="dm-t-detail-msg" style="margin-top:8px;font-size:12px;text-align:center;min-height:15px"></div>
       </div>`;
 
+    let selectedStatus = t.status;
+    let statusChanged = false;
+
+    function paintStatusButtons(){
+      body.querySelectorAll('.dm-t-status-btn').forEach(b => {
+        const s = b.dataset.s;
+        const active = s === selectedStatus;
+        b.style.border = '1px solid ' + (active ? STATUS_COLOR[s] : 'rgba(255,255,255,0.08)');
+        b.style.background = active ? STATUS_COLOR[s]+'22' : '#181D26';
+        b.style.color = active ? STATUS_COLOR[s] : '#8B95A5';
+      });
+    }
+
     body.querySelectorAll('.dm-t-status-btn').forEach(btn => {
-      btn.onclick = async () => {
-        if (btn.dataset.s === t.status) return;
-        body.querySelectorAll('.dm-t-status-btn').forEach(b => b.disabled = true);
-        const res = await api('setStatus', { number, status: btn.dataset.s }, 'POST');
-        if (res.ok) renderDetail(number);
-        else {
-          body.querySelectorAll('.dm-t-status-btn').forEach(b => b.disabled = false);
-          document.getElementById('dm-t-detail-msg').textContent = 'Erro: ' + (res.error||'desconhecido');
-        }
+      btn.onclick = () => {
+        selectedStatus = btn.dataset.s;
+        statusChanged = (selectedStatus !== t.status);
+        paintStatusButtons();
       };
     });
 
@@ -307,7 +318,7 @@ const Tickets = (() => {
       const msg = document.getElementById('dm-t-detail-msg');
       let val = ta.value.trim();
 
-      if (!val && !pendingFile) { msg.style.color = '#FF6B5E'; msg.textContent = 'Escreve algo ou anexa um ficheiro.'; return; }
+      if (!val && !pendingFile && !statusChanged) { msg.style.color = '#FF6B5E'; msg.textContent = 'Escreve algo, anexa um ficheiro ou muda o estado.'; return; }
 
       btn.disabled = true; attachBtn.disabled = true;
 
@@ -324,7 +335,9 @@ const Tickets = (() => {
       }
 
       btn.textContent = 'A enviar...';
-      const res = await api('addComment', { number, body: val }, 'POST');
+      const params = { number, body: val };
+      if (statusChanged) params.status = selectedStatus;
+      const res = await api('addComment', params, 'POST');
       btn.disabled = false; attachBtn.disabled = false; btn.textContent = 'Responder';
       if (res.ok) { renderDetail(number); }
       else { msg.style.color = '#FF6B5E'; msg.textContent = 'Erro: ' + (res.error||'desconhecido'); }
@@ -342,22 +355,65 @@ const Tickets = (() => {
         <option value="">Sem categoria</option>
         ${CATEGORIES.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('')}
       </select>
-      <textarea id="dm-t-new-body" placeholder="Descreve o que aconteceu ou o que gostavas de ver (opcional)" rows="5" style="width:100%;padding:11px;margin-bottom:12px;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#181D26;color:#F2F4F7;font-size:14px;font-family:inherit;resize:vertical;box-sizing:border-box"></textarea>
-      <button id="dm-t-new-send" style="width:100%;padding:13px;border:none;border-radius:9px;background:#D2A13A;color:#1a1305;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit">Criar ticket</button>
+      <textarea id="dm-t-new-body" placeholder="Descreve o que aconteceu ou o que gostavas de ver (opcional)" rows="5" style="width:100%;padding:11px;margin-bottom:10px;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#181D26;color:#F2F4F7;font-size:14px;font-family:inherit;resize:vertical;box-sizing:border-box"></textarea>
+      <div id="dm-t-new-attach-preview" style="display:none;align-items:center;gap:8px;margin-bottom:10px;padding:8px 10px;background:#181D26;border:1px solid rgba(255,255,255,0.08);border-radius:9px">
+        <span style="font-size:12.5px;color:#8B95A5;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" id="dm-t-new-attach-name"></span>
+        <button id="dm-t-new-attach-remove" style="background:none;border:none;color:#5C6576;font-size:16px;cursor:pointer;line-height:1">×</button>
+      </div>
+      <div style="display:flex;gap:8px">
+        <input type="file" id="dm-t-new-file" accept="image/*,.pdf,.doc,.docx,.txt" style="display:none">
+        <button id="dm-t-new-attach-btn" title="Anexar ficheiro" style="width:44px;flex-shrink:0;padding:12px 0;border:1px solid rgba(255,255,255,0.08);border-radius:9px;background:#181D26;color:#8B95A5;font-size:16px;cursor:pointer">📎</button>
+        <button id="dm-t-new-send" style="flex:1;padding:13px;border:none;border-radius:9px;background:#D2A13A;color:#1a1305;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit">Criar ticket</button>
+      </div>
       <div id="dm-t-new-msg" style="margin-top:10px;font-size:12.5px;text-align:center;min-height:16px"></div>`;
+
+    let pendingNewFile = null;
+    const fileInput   = document.getElementById('dm-t-new-file');
+    const attachBtn   = document.getElementById('dm-t-new-attach-btn');
+    const preview     = document.getElementById('dm-t-new-attach-preview');
+    const previewName = document.getElementById('dm-t-new-attach-name');
+    const msg         = document.getElementById('dm-t-new-msg');
+
+    attachBtn.onclick = () => fileInput.click();
+    fileInput.onchange = () => {
+      const f = fileInput.files[0];
+      if (!f) return;
+      if (f.size > 1500000) { msg.textContent = 'Ficheiro demasiado grande (máx. ~1,4 MB).'; fileInput.value = ''; return; }
+      pendingNewFile = f;
+      previewName.textContent = '📎 ' + f.name;
+      preview.style.display = 'flex';
+    };
+    document.getElementById('dm-t-new-attach-remove').onclick = () => {
+      pendingNewFile = null; fileInput.value = ''; preview.style.display = 'none';
+    };
 
     document.getElementById('dm-t-new-send').onclick = async () => {
       const title    = document.getElementById('dm-t-new-title').value.trim();
       const desc     = document.getElementById('dm-t-new-body').value.trim();
       const category = document.getElementById('dm-t-new-category').value;
       const btn = document.getElementById('dm-t-new-send');
-      const msg = document.getElementById('dm-t-new-msg');
       if (!title) { msg.style.color = '#FF6B5E'; msg.textContent = 'Escreve pelo menos um título.'; return; }
-      btn.disabled = true; btn.textContent = 'A criar...';
+      btn.disabled = true; attachBtn.disabled = true; btn.textContent = 'A criar...';
+
       const res = await api('submitTicket', { title, body: desc, category }, 'POST');
-      btn.disabled = false; btn.textContent = 'Criar ticket';
-      if (res.ok) { renderDetail(res.number); }
-      else { msg.style.color = '#FF6B5E'; msg.textContent = 'Erro: ' + (res.error||'desconhecido'); }
+      if (!res.ok) {
+        btn.disabled = false; attachBtn.disabled = false; btn.textContent = 'Criar ticket';
+        msg.style.color = '#FF6B5E'; msg.textContent = 'Erro: ' + (res.error||'desconhecido');
+        return;
+      }
+
+      if (pendingNewFile) {
+        btn.textContent = 'A enviar anexo...';
+        const b64 = await readFileAsBase64(pendingNewFile);
+        const up = await apiUpload(res.number, pendingNewFile.name, pendingNewFile.type, b64);
+        if (up.ok) {
+          await api('addComment', { number: res.number, body: up.markdown }, 'POST');
+        } else {
+          msg.style.color = '#FF6B5E'; msg.textContent = 'Ticket criado, mas o anexo falhou: ' + (up.error||'desconhecido');
+        }
+      }
+
+      renderDetail(res.number);
     };
   }
 
