@@ -1,4 +1,4 @@
-/* ══════════════════════════════════════════════════════════════
+//* ══════════════════════════════════════════════════════════════
    DC Family — bloqueio de acesso
    Password verdadeira, verificada no Apps Script (Code.gs).
    Face ID / Touch ID é só um atalho local para não teres de
@@ -9,8 +9,17 @@ const Auth = (() => {
   const API_URL = "https://script.google.com/macros/s/AKfycbxzKI0lupG5gjLzuC3J1aR5AwVA1PIbSxTqA7Pjy3NWp_HaUbctCbNzhxjbuXx5GtqnJw/exec";
   const PIN_KEY  = 'dm_pin';
   const CRED_KEY = 'dm_cred_id';
-  const SESSION_KEY = 'dm_session_ok';
+  const SESSION_KEY = 'dm_session_until'; // agora guarda um prazo (timestamp), não um simples sim/não
   const USER_KEY = 'dm_user';
+  const SESSION_DAYS = 7;
+
+  function markSessionUnlocked(){
+    localStorage.setItem(SESSION_KEY, String(Date.now() + SESSION_DAYS*24*60*60*1000));
+  }
+  function isSessionStillValid(){
+    const until = parseInt(localStorage.getItem(SESSION_KEY) || '0', 10);
+    return Date.now() < until;
+  }
 
   const b64e = s => btoa(unescape(encodeURIComponent(s)));
   const b64d = s => decodeURIComponent(escape(atob(s)));
@@ -21,7 +30,7 @@ const Auth = (() => {
   function setStoredPin(pin){ localStorage.setItem(PIN_KEY, b64e(pin)); }
   function getStoredUser(){ return localStorage.getItem(USER_KEY); }
   function hasBiometric(){ return !!localStorage.getItem(CRED_KEY); }
-  function forget(){ localStorage.removeItem(PIN_KEY); localStorage.removeItem(CRED_KEY); localStorage.removeItem(USER_KEY); sessionStorage.removeItem(SESSION_KEY); }
+  function forget(){ localStorage.removeItem(PIN_KEY); localStorage.removeItem(CRED_KEY); localStorage.removeItem(USER_KEY); localStorage.removeItem(SESSION_KEY); }
 
   async function verifyPinWithServer(pin){
     try {
@@ -78,7 +87,13 @@ const Auth = (() => {
   function lockScreenHTML(){
     return `
     <div id="dm-lock" style="position:fixed;inset:0;background:#0A0D12;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;font-family:'DM Sans',sans-serif">
-      <img src="logo.png" alt="DC logo" style="width:140px;height:auto;margin-bottom:26px">
+      <svg width="80" height="57" viewBox="90 95 560 400" style="margin-bottom:10px">
+        <defs>
+          <linearGradient id="lockgd" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#F4D27A"/><stop offset="45%" stop-color="#D2A13A"/><stop offset="100%" stop-color="#8E641C"/></linearGradient>
+        </defs>
+        <path fill="url(#lockgd)" fill-rule="evenodd" d="M120 470 L620 470 L620 120 Z M300 390 L520 390 L520 215 Z"/>
+      </svg>
+      <div style="font-family:'Cybertruck',sans-serif;font-size:13px;letter-spacing:.12em;color:#F4D27A;margin-bottom:22px">FAMILY</div>
       <div id="dm-lock-msg" style="color:#8B95A5;font-size:13px;margin-bottom:18px">Introduz a password</div>
       <input id="dm-lock-pin" type="password" inputmode="numeric" autocomplete="off" placeholder="••••" style="width:180px;text-align:center;font-size:24px;letter-spacing:8px;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.08);background:#181D26;color:#F2F4F7;margin-bottom:14px">
       <button id="dm-lock-submit" style="width:180px;padding:12px;border:none;border-radius:10px;background:#D2A13A;color:#1a1305;font-weight:700;font-size:14px;cursor:pointer;margin-bottom:10px;font-family:inherit">Entrar</button>
@@ -103,7 +118,7 @@ const Auth = (() => {
       faceBtn.onclick = async () => {
         err.textContent = '';
         const ok = await authenticateBiometric();
-        if (ok) { sessionStorage.setItem(SESSION_KEY,'1'); box.remove(); onUnlock(getStoredPin()); }
+        if (ok) { markSessionUnlocked(); box.remove(); onUnlock(getStoredPin()); }
         else { err.textContent = 'Não foi possível confirmar. Usa a password.'; }
       };
     }
@@ -124,7 +139,7 @@ const Auth = (() => {
           await registerBiometric();
         }
       }
-      sessionStorage.setItem(SESSION_KEY, '1');
+      markSessionUnlocked();
       onUnlock(pin);
     }
     submit.onclick = trySubmit;
@@ -136,21 +151,21 @@ const Auth = (() => {
   async function protect(onUnlock){
     const storedPin = getStoredPin();
 
-    // Já desbloqueado nesta sessão (mesma janela/separador ainda aberto) —
-    // não voltar a pedir Face ID nem password ao navegar entre páginas.
-    if (storedPin && sessionStorage.getItem(SESSION_KEY)) {
+    // Ainda dentro do prazo de 7 dias desde a última vez que confirmaste
+    // (password ou Face ID) — não voltar a pedir nada.
+    if (storedPin && isSessionStillValid()) {
       onUnlock(storedPin);
       return;
     }
 
     if (storedPin && hasBiometric()) {
       const ok = await authenticateBiometric();
-      if (ok) { sessionStorage.setItem(SESSION_KEY, '1'); onUnlock(storedPin); return; }
+      if (ok) { markSessionUnlocked(); onUnlock(storedPin); return; }
       showPasswordScreen(onUnlock, { faceIdRetry:true });
       return;
     }
     if (storedPin && !hasBiometric()) {
-      sessionStorage.setItem(SESSION_KEY, '1');
+      markSessionUnlocked();
       onUnlock(storedPin);
       return;
     }
