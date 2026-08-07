@@ -16,6 +16,12 @@
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
 
+@font-face{
+  font-family:'Cybertruck';
+  src:url('fonts/Cybertruck-Regular.ttf') format('truetype');
+  font-weight:400;font-style:normal;font-display:swap;
+}
+
 :root{
   --bg:#0A0D12; --surface:#12161D; --surface2:#181D26; --surface3:#212938;
   --border:rgba(255,255,255,0.08); --border-soft:rgba(255,255,255,0.05);
@@ -47,8 +53,9 @@ body{
 .topbar-inner{display:flex;flex-direction:column;gap:10px}
 .topbar-row1{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .brand{display:flex;flex-direction:column;align-items:flex-start;min-width:0;flex:1;overflow:hidden}
-.brand img.brand-logo{height:58px;width:auto;max-width:70%;flex-shrink:1;display:block}
-.brand-portfolio-txt{font-family:'Futura','Century Gothic','Trebuchet MS',Arial,sans-serif;font-size:13px;font-weight:300;letter-spacing:.14em;color:var(--muted);margin-left:8px;flex-shrink:0}
+.brand .brand-logo{height:58px;width:auto;max-width:70%;flex-shrink:1;display:block}
+.brand-portfolio-txt{font-family:'Futura','Century Gothic','Trebuchet MS',Arial,sans-serif;font-size:13px;font-weight:300;letter-spacing:.14em;color:var(--muted);flex-shrink:0}
+.brand-family-txt{font-family:'Cybertruck',sans-serif;font-size:11px;letter-spacing:.1em;color:var(--gold-light);flex-shrink:0;line-height:1.3}
 .updated-txt{font-size:10.5px;color:var(--muted2);margin-top:2px}
 .brand-status{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted2)}
 .pulse-dot{width:6px;height:6px;border-radius:50%;background:var(--mint);flex-shrink:0}
@@ -146,8 +153,18 @@ body{
     <div class="topbar-row1">
       <div class="brand">
         <div style="display:flex;align-items:center">
-          <img class="brand-logo" src="logo.png" alt="DC logo">
-          <span class="brand-portfolio-txt">PORTFOLIO</span>
+          <svg class="brand-logo" xmlns="http://www.w3.org/2000/svg" viewBox="90 95 560 400" role="img" aria-label="D logo">
+            <defs>
+              <linearGradient id="gld-d" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#F4D27A"/><stop offset="45%" stop-color="#D2A13A"/><stop offset="100%" stop-color="#8E641C"/>
+              </linearGradient>
+            </defs>
+            <path fill="url(#gld-d)" fill-rule="evenodd" d="M120 470 L620 470 L620 120 Z M300 390 L520 390 L520 215 Z"/>
+          </svg>
+          <div style="display:flex;flex-direction:column;margin-left:8px">
+            <span class="brand-family-txt">FAMILY</span>
+            <span class="brand-portfolio-txt">PORTFOLIO</span>
+          </div>
         </div>
         <span class="updated-txt" id="updated-txt">a carregar…</span>
       </div>
@@ -444,3 +461,4 @@ Auth.protect(function(){
 </script>
 </body>
 </html>
+   
