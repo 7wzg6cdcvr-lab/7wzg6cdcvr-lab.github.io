@@ -1,4 +1,4 @@
-//* ══════════════════════════════════════════════════════════════
+/* ══════════════════════════════════════════════════════════════
    DC Family — bloqueio de acesso
    Password verdadeira, verificada no Apps Script (Code.gs).
    Face ID / Touch ID é só um atalho local para não teres de
