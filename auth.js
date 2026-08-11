@@ -32,13 +32,15 @@ const Auth = (() => {
   function hasBiometric(){ return !!localStorage.getItem(CRED_KEY); }
   function forget(){ localStorage.removeItem(PIN_KEY); localStorage.removeItem(CRED_KEY); localStorage.removeItem(USER_KEY); localStorage.removeItem(SESSION_KEY); }
 
-  async function verifyPinWithServer(pin){
+  async function verifyPinWithServer(pin, claimedUser){
     try {
-      const r = await fetch(API_URL + '?action=checkpin&pin=' + encodeURIComponent(pin));
+      const url = API_URL + '?action=checkpin&pin=' + encodeURIComponent(pin) +
+        (claimedUser ? '&claimedUser=' + encodeURIComponent(claimedUser) : '');
+      const r = await fetch(url);
       const d = await r.json();
       if (d.ok && d.user) localStorage.setItem(USER_KEY, d.user);
-      return !!d.ok;
-    } catch(e){ return false; }
+      return d;
+    } catch(e){ return { ok:false, error:'Sem ligação à rede.' }; }
   }
 
   async function platformAuthAvailable(){
@@ -93,11 +95,21 @@ const Auth = (() => {
         </defs>
         <path fill="url(#lockgd)" fill-rule="evenodd" d="M120 470 L620 470 L620 120 Z M300 390 L520 390 L520 215 Z"/>
       </svg>
-      <div style="font-family:'Cybertruck',sans-serif;font-size:13px;letter-spacing:.12em;color:#F4D27A;margin-bottom:22px">FAMILY</div>
-      <div id="dm-lock-msg" style="color:#8B95A5;font-size:13px;margin-bottom:18px">Introduz a password</div>
-      <input id="dm-lock-pin" type="password" inputmode="numeric" autocomplete="off" placeholder="••••" style="width:180px;text-align:center;font-size:24px;letter-spacing:8px;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.08);background:#181D26;color:#F2F4F7;margin-bottom:14px">
-      <button id="dm-lock-submit" style="width:180px;padding:12px;border:none;border-radius:10px;background:#D2A13A;color:#1a1305;font-weight:700;font-size:14px;cursor:pointer;margin-bottom:10px;font-family:inherit">Entrar</button>
-      <button id="dm-lock-faceid" style="display:none;width:180px;padding:10px;border:1px solid rgba(255,255,255,0.08);border-radius:10px;background:transparent;color:#8B95A5;font-size:13px;cursor:pointer;font-family:inherit">🔓 Usar Face ID</button>
+      <div style="font-family:'Cybertruck',sans-serif;font-size:13px;letter-spacing:.12em;color:#F4D27A;margin-bottom:28px">FAMILY</div>
+
+      <div id="dm-lock-who" style="display:flex;flex-direction:column;align-items:center;gap:10px">
+        <div style="color:#8B95A5;font-size:13px;margin-bottom:8px">Quem és tu?</div>
+        <button class="dm-lock-name-btn" data-name="Diogo" style="width:200px;padding:14px;border:1px solid rgba(255,255,255,0.08);border-radius:12px;background:#181D26;color:#F2F4F7;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit">Diogo</button>
+        <button class="dm-lock-name-btn" data-name="Marla" style="width:200px;padding:14px;border:1px solid rgba(255,255,255,0.08);border-radius:12px;background:#181D26;color:#F2F4F7;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit">Marla</button>
+      </div>
+
+      <div id="dm-lock-pass" style="display:none;flex-direction:column;align-items:center">
+        <button id="dm-lock-back" style="background:none;border:none;color:#5C6576;font-size:12.5px;cursor:pointer;margin-bottom:14px;font-family:inherit">‹ Trocar pessoa</button>
+        <div id="dm-lock-msg" style="color:#8B95A5;font-size:13px;margin-bottom:18px"></div>
+        <input id="dm-lock-pin" type="password" inputmode="numeric" autocomplete="off" placeholder="••••" style="width:180px;text-align:center;font-size:24px;letter-spacing:8px;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.08);background:#181D26;color:#F2F4F7;margin-bottom:14px">
+        <button id="dm-lock-submit" style="width:180px;padding:12px;border:none;border-radius:10px;background:#D2A13A;color:#1a1305;font-weight:700;font-size:14px;cursor:pointer;margin-bottom:10px;font-family:inherit">Entrar</button>
+        <button id="dm-lock-faceid" style="display:none;width:180px;padding:10px;border:1px solid rgba(255,255,255,0.08);border-radius:10px;background:transparent;color:#8B95A5;font-size:13px;cursor:pointer;font-family:inherit">🔓 Usar Face ID</button>
+      </div>
       <div id="dm-lock-error" style="color:#FF6B5E;font-size:12.5px;margin-top:12px;min-height:16px;text-align:center"></div>
     </div>`;
   }
@@ -105,12 +117,42 @@ const Auth = (() => {
   function showPasswordScreen(onUnlock, opts){
     opts = opts || {};
     document.body.insertAdjacentHTML('beforeend', lockScreenHTML());
-    const box    = document.getElementById('dm-lock');
-    const input  = document.getElementById('dm-lock-pin');
-    const submit = document.getElementById('dm-lock-submit');
-    const err    = document.getElementById('dm-lock-error');
-    const faceBtn= document.getElementById('dm-lock-faceid');
-    const msg    = document.getElementById('dm-lock-msg');
+    const box     = document.getElementById('dm-lock');
+    const who     = document.getElementById('dm-lock-who');
+    const passBox = document.getElementById('dm-lock-pass');
+    const input   = document.getElementById('dm-lock-pin');
+    const submit  = document.getElementById('dm-lock-submit');
+    const err     = document.getElementById('dm-lock-error');
+    const faceBtn = document.getElementById('dm-lock-faceid');
+    const msg     = document.getElementById('dm-lock-msg');
+    let selectedName = getStoredUser() || null;
+
+    function showNameStep(){
+      who.style.display = 'flex';
+      passBox.style.display = 'none';
+      err.textContent = '';
+    }
+    function showPassStep(name){
+      selectedName = name;
+      who.style.display = 'none';
+      passBox.style.display = 'flex';
+      msg.textContent = 'Password de ' + name;
+      err.textContent = '';
+      setTimeout(()=>input.focus(), 50);
+    }
+
+    document.querySelectorAll('.dm-lock-name-btn').forEach(btn => {
+      btn.onclick = () => showPassStep(btn.dataset.name);
+    });
+    document.getElementById('dm-lock-back').onclick = showNameStep;
+
+    // Se já sabemos quem é (Face ID a repetir password, dispositivo já
+    // conhecido) avança logo para a password, sem perguntar o nome outra vez.
+    if (opts.faceIdRetry || selectedName) {
+      showPassStep(selectedName || getStoredUser());
+    } else {
+      showNameStep();
+    }
 
     if (opts.faceIdRetry) {
       msg.textContent = 'Confirma a tua identidade';
@@ -127,9 +169,13 @@ const Auth = (() => {
       const pin = input.value.trim();
       if (!pin) { err.textContent = 'Introduz a password.'; return; }
       submit.disabled = true; submit.textContent = 'A verificar...';
-      const ok = await verifyPinWithServer(pin);
+      const res = await verifyPinWithServer(pin, selectedName);
       submit.disabled = false; submit.textContent = 'Entrar';
-      if (!ok) { err.textContent = 'Password incorreta.'; input.value=''; input.focus(); return; }
+      if (!res.ok) {
+        err.textContent = res.error || 'Password incorreta.';
+        input.value=''; input.focus();
+        return;
+      }
 
       setStoredPin(pin);
       box.remove();
@@ -144,7 +190,6 @@ const Auth = (() => {
     }
     submit.onclick = trySubmit;
     input.addEventListener('keydown', e => { if (e.key === 'Enter') trySubmit(); });
-    setTimeout(()=>input.focus(), 50);
   }
 
   // Chamar isto no topo de cada página: Auth.protect(pin => { ...mostra a página... })
