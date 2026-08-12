@@ -89,28 +89,23 @@ const Auth = (() => {
   function lockScreenHTML(){
     return `
     <div id="dm-lock" style="position:fixed;inset:0;background:#0A0D12;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;font-family:'DM Sans',sans-serif">
-      <svg width="80" height="57" viewBox="90 95 560 400" style="margin-bottom:10px">
-        <defs>
-          <linearGradient id="lockgd" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#F4D27A"/><stop offset="45%" stop-color="#D2A13A"/><stop offset="100%" stop-color="#8E641C"/></linearGradient>
-        </defs>
-        <path fill="url(#lockgd)" fill-rule="evenodd" d="M120 470 L620 470 L620 120 Z M300 390 L520 390 L520 215 Z"/>
-      </svg>
-      <div style="font-family:'Cybertruck',sans-serif;font-size:13px;letter-spacing:.12em;color:#F4D27A;margin-bottom:28px">FAMILY</div>
+      <img src="logo.svg" alt="DC logo" style="width:110px;height:auto;margin-bottom:10px">
+      <div style="font-family:'Cybertruck',sans-serif;font-size:13px;letter-spacing:.12em;color:#F4D27A;margin-bottom:30px">FAMILY</div>
 
-      <div id="dm-lock-who" style="display:flex;flex-direction:column;align-items:center;gap:10px">
-        <div style="color:#8B95A5;font-size:13px;margin-bottom:8px">Quem és tu?</div>
-        <button class="dm-lock-name-btn" data-name="Diogo" style="width:200px;padding:14px;border:1px solid rgba(255,255,255,0.08);border-radius:12px;background:#181D26;color:#F2F4F7;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit">Diogo</button>
-        <button class="dm-lock-name-btn" data-name="Marla" style="width:200px;padding:14px;border:1px solid rgba(255,255,255,0.08);border-radius:12px;background:#181D26;color:#F2F4F7;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit">Marla</button>
-      </div>
+      <div style="width:100%;max-width:280px;background:#12161D;border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:22px">
+        <div style="color:#8B95A5;font-size:11px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Utilizador</div>
+        <div id="dm-lock-who" style="display:flex;gap:8px;margin-bottom:18px">
+          <button class="dm-lock-name-btn" data-name="Diogo" style="flex:1;padding:11px 4px;border:1px solid rgba(255,255,255,0.08);border-radius:10px;background:#181D26;color:#8B95A5;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">Diogo</button>
+          <button class="dm-lock-name-btn" data-name="Marla" style="flex:1;padding:11px 4px;border:1px solid rgba(255,255,255,0.08);border-radius:10px;background:#181D26;color:#8B95A5;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">Marla</button>
+        </div>
 
-      <div id="dm-lock-pass" style="display:none;flex-direction:column;align-items:center">
-        <button id="dm-lock-back" style="background:none;border:none;color:#5C6576;font-size:12.5px;cursor:pointer;margin-bottom:14px;font-family:inherit">‹ Trocar pessoa</button>
-        <div id="dm-lock-msg" style="color:#8B95A5;font-size:13px;margin-bottom:18px"></div>
-        <input id="dm-lock-pin" type="password" inputmode="numeric" autocomplete="off" placeholder="••••" style="width:180px;text-align:center;font-size:24px;letter-spacing:8px;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.08);background:#181D26;color:#F2F4F7;margin-bottom:14px">
-        <button id="dm-lock-submit" style="width:180px;padding:12px;border:none;border-radius:10px;background:#D2A13A;color:#1a1305;font-weight:700;font-size:14px;cursor:pointer;margin-bottom:10px;font-family:inherit">Entrar</button>
-        <button id="dm-lock-faceid" style="display:none;width:180px;padding:10px;border:1px solid rgba(255,255,255,0.08);border-radius:10px;background:transparent;color:#8B95A5;font-size:13px;cursor:pointer;font-family:inherit">🔓 Usar Face ID</button>
+        <div style="color:#8B95A5;font-size:11px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Password</div>
+        <input id="dm-lock-pin" type="password" inputmode="numeric" autocomplete="off" placeholder="••••" style="width:100%;box-sizing:border-box;text-align:center;font-size:22px;letter-spacing:6px;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.08);background:#181D26;color:#F2F4F7;margin-bottom:16px">
+
+        <button id="dm-lock-submit" style="width:100%;padding:13px;border:none;border-radius:10px;background:#D2A13A;color:#1a1305;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit">Entrar</button>
+        <button id="dm-lock-faceid" style="display:none;width:100%;margin-top:10px;padding:10px;border:1px solid rgba(255,255,255,0.08);border-radius:10px;background:transparent;color:#8B95A5;font-size:13px;cursor:pointer;font-family:inherit">🔓 Usar Face ID</button>
       </div>
-      <div id="dm-lock-error" style="color:#FF6B5E;font-size:12.5px;margin-top:12px;min-height:16px;text-align:center"></div>
+      <div id="dm-lock-error" style="color:#FF6B5E;font-size:12.5px;margin-top:14px;min-height:16px;text-align:center"></div>
     </div>`;
   }
 
@@ -118,44 +113,27 @@ const Auth = (() => {
     opts = opts || {};
     document.body.insertAdjacentHTML('beforeend', lockScreenHTML());
     const box     = document.getElementById('dm-lock');
-    const who     = document.getElementById('dm-lock-who');
-    const passBox = document.getElementById('dm-lock-pass');
     const input   = document.getElementById('dm-lock-pin');
     const submit  = document.getElementById('dm-lock-submit');
     const err     = document.getElementById('dm-lock-error');
     const faceBtn = document.getElementById('dm-lock-faceid');
-    const msg     = document.getElementById('dm-lock-msg');
     let selectedName = getStoredUser() || null;
 
-    function showNameStep(){
-      who.style.display = 'flex';
-      passBox.style.display = 'none';
-      err.textContent = '';
+    function paintNameButtons(){
+      document.querySelectorAll('.dm-lock-name-btn').forEach(b => {
+        const active = b.dataset.name === selectedName;
+        b.style.border = '1px solid ' + (active ? '#D2A13A' : 'rgba(255,255,255,0.08)');
+        b.style.background = active ? '#D2A13A22' : '#181D26';
+        b.style.color = active ? '#F4D27A' : '#8B95A5';
+      });
     }
-    function showPassStep(name){
-      selectedName = name;
-      who.style.display = 'none';
-      passBox.style.display = 'flex';
-      msg.textContent = 'Password de ' + name;
-      err.textContent = '';
-      setTimeout(()=>input.focus(), 50);
-    }
-
     document.querySelectorAll('.dm-lock-name-btn').forEach(btn => {
-      btn.onclick = () => showPassStep(btn.dataset.name);
+      btn.onclick = () => { selectedName = btn.dataset.name; err.textContent=''; paintNameButtons(); };
     });
-    document.getElementById('dm-lock-back').onclick = showNameStep;
-
-    // Se já sabemos quem é (Face ID a repetir password, dispositivo já
-    // conhecido) avança logo para a password, sem perguntar o nome outra vez.
-    if (opts.faceIdRetry || selectedName) {
-      showPassStep(selectedName || getStoredUser());
-    } else {
-      showNameStep();
-    }
+    paintNameButtons();
+    setTimeout(()=>input.focus(), 50);
 
     if (opts.faceIdRetry) {
-      msg.textContent = 'Confirma a tua identidade';
       faceBtn.style.display = 'block';
       faceBtn.onclick = async () => {
         err.textContent = '';
@@ -166,6 +144,7 @@ const Auth = (() => {
     }
 
     async function trySubmit(){
+      if (!selectedName) { err.textContent = 'Escolhe quem és.'; return; }
       const pin = input.value.trim();
       if (!pin) { err.textContent = 'Introduz a password.'; return; }
       submit.disabled = true; submit.textContent = 'A verificar...';
