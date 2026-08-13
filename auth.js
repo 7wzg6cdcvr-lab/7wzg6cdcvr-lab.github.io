@@ -89,8 +89,8 @@ const Auth = (() => {
   function lockScreenHTML(){
     return `
     <div id="dm-lock" style="position:fixed;inset:0;background:#0A0D12;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;font-family:'DM Sans',sans-serif">
-      <img src="logo.svg" alt="DC logo" style="width:110px;height:auto;margin-bottom:10px">
-      <div style="font-family:'Cybertruck',sans-serif;font-size:13px;letter-spacing:.12em;color:#F4D27A;margin-bottom:30px">FAMILY</div>
+      <img src="logo.svg" alt="DC logo" style="width:110px;height:auto;margin-bottom:4px">
+      <div style="font-family:'Cybertruck',sans-serif;font-size:22px;letter-spacing:.1em;color:#B0B5BD;margin-bottom:28px">FAMILY</div>
 
       <div style="width:100%;max-width:280px;background:#12161D;border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:22px">
         <div style="color:#8B95A5;font-size:11px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Utilizador</div>
