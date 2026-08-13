@@ -89,15 +89,12 @@ const Auth = (() => {
   function lockScreenHTML(){
     return `
     <div id="dm-lock" style="position:fixed;inset:0;background:#0A0D12;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;font-family:'DM Sans',sans-serif">
-      <img src="logo.svg" alt="DC logo" style="width:110px;height:auto;margin-bottom:4px">
-      <div style="font-family:'Cybertruck',sans-serif;font-size:22px;letter-spacing:.1em;color:#B0B5BD;margin-bottom:28px">FAMILY</div>
+      <img src="logo.svg" alt="DC logo" style="width:160px;height:auto;margin-bottom:0">
+      <div style="font-family:'Cybertruck',sans-serif;font-size:30px;letter-spacing:.08em;color:#B0B5BD;margin-top:-4px;margin-bottom:26px">FAMILY</div>
 
       <div style="width:100%;max-width:280px;background:#12161D;border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:22px">
         <div style="color:#8B95A5;font-size:11px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Utilizador</div>
-        <div id="dm-lock-who" style="display:flex;gap:8px;margin-bottom:18px">
-          <button class="dm-lock-name-btn" data-name="Diogo" style="flex:1;padding:11px 4px;border:1px solid rgba(255,255,255,0.08);border-radius:10px;background:#181D26;color:#8B95A5;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">Diogo</button>
-          <button class="dm-lock-name-btn" data-name="Marla" style="flex:1;padding:11px 4px;border:1px solid rgba(255,255,255,0.08);border-radius:10px;background:#181D26;color:#8B95A5;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">Marla</button>
-        </div>
+        <input id="dm-lock-user" type="text" autocomplete="off" autocapitalize="words" placeholder="O teu nome" style="width:100%;box-sizing:border-box;font-size:15px;padding:11px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.08);background:#181D26;color:#F2F4F7;margin-bottom:16px">
 
         <div style="color:#8B95A5;font-size:11px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Password</div>
         <input id="dm-lock-pin" type="password" inputmode="numeric" autocomplete="off" placeholder="••••" style="width:100%;box-sizing:border-box;text-align:center;font-size:22px;letter-spacing:6px;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.08);background:#181D26;color:#F2F4F7;margin-bottom:16px">
@@ -112,26 +109,16 @@ const Auth = (() => {
   function showPasswordScreen(onUnlock, opts){
     opts = opts || {};
     document.body.insertAdjacentHTML('beforeend', lockScreenHTML());
-    const box     = document.getElementById('dm-lock');
-    const input   = document.getElementById('dm-lock-pin');
-    const submit  = document.getElementById('dm-lock-submit');
-    const err     = document.getElementById('dm-lock-error');
-    const faceBtn = document.getElementById('dm-lock-faceid');
-    let selectedName = getStoredUser() || null;
+    const box       = document.getElementById('dm-lock');
+    const userInput = document.getElementById('dm-lock-user');
+    const input     = document.getElementById('dm-lock-pin');
+    const submit    = document.getElementById('dm-lock-submit');
+    const err       = document.getElementById('dm-lock-error');
+    const faceBtn   = document.getElementById('dm-lock-faceid');
 
-    function paintNameButtons(){
-      document.querySelectorAll('.dm-lock-name-btn').forEach(b => {
-        const active = b.dataset.name === selectedName;
-        b.style.border = '1px solid ' + (active ? '#D2A13A' : 'rgba(255,255,255,0.08)');
-        b.style.background = active ? '#D2A13A22' : '#181D26';
-        b.style.color = active ? '#F4D27A' : '#8B95A5';
-      });
-    }
-    document.querySelectorAll('.dm-lock-name-btn').forEach(btn => {
-      btn.onclick = () => { selectedName = btn.dataset.name; err.textContent=''; paintNameButtons(); };
-    });
-    paintNameButtons();
-    setTimeout(()=>input.focus(), 50);
+    const stored = getStoredUser();
+    if (stored) userInput.value = stored;
+    setTimeout(() => (stored ? input : userInput).focus(), 50);
 
     if (opts.faceIdRetry) {
       faceBtn.style.display = 'block';
@@ -144,11 +131,12 @@ const Auth = (() => {
     }
 
     async function trySubmit(){
-      if (!selectedName) { err.textContent = 'Escolhe quem és.'; return; }
+      const name = userInput.value.trim();
+      if (!name) { err.textContent = 'Escreve o teu nome.'; userInput.focus(); return; }
       const pin = input.value.trim();
       if (!pin) { err.textContent = 'Introduz a password.'; return; }
       submit.disabled = true; submit.textContent = 'A verificar...';
-      const res = await verifyPinWithServer(pin, selectedName);
+      const res = await verifyPinWithServer(pin, name);
       submit.disabled = false; submit.textContent = 'Entrar';
       if (!res.ok) {
         err.textContent = res.error || 'Password incorreta.';
@@ -169,6 +157,7 @@ const Auth = (() => {
     }
     submit.onclick = trySubmit;
     input.addEventListener('keydown', e => { if (e.key === 'Enter') trySubmit(); });
+    userInput.addEventListener('keydown', e => { if (e.key === 'Enter') input.focus(); });
   }
 
   // Chamar isto no topo de cada página: Auth.protect(pin => { ...mostra a página... })
