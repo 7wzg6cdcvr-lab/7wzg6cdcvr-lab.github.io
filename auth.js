@@ -69,23 +69,11 @@ const Auth = (() => {
     if (stored) userInput.value = stored;
     setTimeout(() => (stored ? input : userInput).focus(), 50);
 
-    // Começa a carregar o SDK de notificações já aqui, enquanto a pessoa
-    // escreve — assim, quando tocar em "Entrar", o pedido de permissão
-    // corre quase na hora, sem atraso extra a "gastar" a janela de toque.
-    if (window.Push) { try { Push.init(); } catch(e){} }
-
     async function trySubmit(){
       const name = userInput.value.trim();
       if (!name) { err.textContent = 'Escreve o teu nome.'; userInput.focus(); return; }
       const pin = input.value.trim();
       if (!pin) { err.textContent = 'Introduz a password.'; return; }
-
-      // Pede a permissão de notificações já aqui, em primeiro lugar —
-      // é o toque real no botão. Se isto ficar para depois de esperar
-      // pela rede (a confirmar a password), o Safari deixa de aceitar
-      // o pedido como resultado direto do toque.
-      if (window.Push) { try { Push.requestPermission(); } catch(e){} }
-
       submit.disabled = true; submit.style.opacity = '0.5';
       const res = await verifyPinWithServer(pin, name);
       submit.disabled = false; submit.style.opacity = '1';
