@@ -1,189 +1,157 @@
-/* ══════════════════════════════════════════════════════════════
-   DC Family — bloqueio de acesso
-   Password verdadeira, verificada no Apps Script (Code.gs).
-   Face ID / Touch ID é só um atalho local para não teres de
-   escrever a password sempre — nunca substitui a verificação
-   no servidor na primeira vez em cada dispositivo.
-   ══════════════════════════════════════════════════════════════ */
-const Auth = (() => {
-  const API_URL = "https://script.google.com/macros/s/AKfycbxzKI0lupG5gjLzuC3J1aR5AwVA1PIbSxTqA7Pjy3NWp_HaUbctCbNzhxjbuXx5GtqnJw/exec";
-  const PIN_KEY  = 'dm_pin';
-  const CRED_KEY = 'dm_cred_id';
-  const SESSION_KEY = 'dm_session_until'; // agora guarda um prazo (timestamp), não um simples sim/não
-  const USER_KEY = 'dm_user';
-  const SESSION_DAYS = 7;
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="DC Family">
+<meta name="theme-color" content="#0A0D12">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+<title>DC Family</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
 
-  function markSessionUnlocked(){
-    localStorage.setItem(SESSION_KEY, String(Date.now() + SESSION_DAYS*24*60*60*1000));
+@font-face{
+  font-family:'Cybertruck';
+  src:url('fonts/Cybertruck-Regular.ttf') format('truetype');
+  font-weight:400;font-style:normal;font-display:swap;
+}
+
+:root{
+  --bg:#0A0D12; --surface:#12161D; --surface2:#181D26; --surface3:#212938;
+  --border:rgba(255,255,255,0.08); --border-soft:rgba(255,255,255,0.05);
+  --text:#F2F4F7; --muted:#8B95A5; --muted2:#5C6576;
+  --gold:#D2A13A; --gold-light:#F4D27A;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{background:var(--bg);-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{
+  min-height:100vh;background:var(--bg);color:var(--text);
+  font-family:'DM Sans',sans-serif;-webkit-font-smoothing:antialiased;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:calc(24px + env(safe-area-inset-top)) 20px calc(40px + env(safe-area-inset-bottom));
+}
+.logo{display:block;width:min(220px,55vw);height:auto;margin:0 auto -14px}
+.tagline{
+  font-family:'Cybertruck','Chakra Petch',sans-serif;font-weight:400;
+  font-size:clamp(34px,11vw,50px);letter-spacing:.08em;text-transform:uppercase;
+  margin:0 0 44px;
+  color:var(--muted);
+}
+
+.tiles{width:100%;max-width:420px;display:flex;flex-direction:column;gap:12px}
+.tile{
+  display:flex;align-items:center;gap:14px;
+  background:var(--surface);border:1px solid var(--border);border-radius:18px;
+  padding:18px;text-decoration:none;color:inherit;
+  transition:transform .15s ease, border-color .15s ease;
+}
+.tile:active{transform:scale(.98)}
+.tile.active:hover{border-color:var(--gold)}
+.tile-icon{
+  width:48px;height:48px;border-radius:13px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:22px;
+}
+.tile-text{flex:1;min-width:0}
+.tile-title{font-size:15.5px;font-weight:600}
+.tile-sub{font-size:12.5px;color:var(--muted);margin-top:2px}
+.tile-arrow{color:var(--muted2);font-size:18px;flex-shrink:0}
+
+.tile.disabled{opacity:.45;cursor:default;pointer-events:none}
+.badge-soon{
+  font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;
+  color:var(--muted2);background:var(--surface3);border:1px solid var(--border);
+  border-radius:6px;padding:3px 7px;flex-shrink:0;
+}
+</style>
+</head>
+<body>
+
+<div id="app-content" style="display:none">
+<img class="logo" src="logo.svg" alt="DC logo">
+<div class="tagline" id="tagline">Family</div>
+
+<div class="tiles">
+  <a class="tile active" href="./portfolio.html">
+    <div class="tile-icon" style="background:rgba(91,141,239,0.15);color:#5B8DEF">📊</div>
+    <div class="tile-text">
+      <div class="tile-title">Portfolio</div>
+      <div class="tile-sub">S&amp;P 500 &amp; Bitcoin</div>
+    </div>
+    <div class="tile-arrow">›</div>
+  </a>
+
+  <a class="tile active" href="./carro.html">
+    <div class="tile-icon" style="background:rgba(52,211,153,0.15);color:#34D399">🚗</div>
+    <div class="tile-text">
+      <div class="tile-title">Carro Elétrico</div>
+      <div class="tile-sub">Carregamentos & custos</div>
+    </div>
+    <div class="tile-arrow">›</div>
+  </a>
+
+  <div class="tile disabled">
+    <div class="tile-icon" style="background:rgba(240,169,58,0.15);color:#F0A93A">💳</div>
+    <div class="tile-text">
+      <div class="tile-title">Despesas</div>
+      <div class="tile-sub">Em preparação</div>
+    </div>
+    <div class="badge-soon">Em breve</div>
+  </div>
+</div>
+
+<button onclick="Tickets.open()"
+  style="width:100%;max-width:420px;margin-top:22px;display:flex;align-items:center;justify-content:center;gap:9px;position:relative;
+  background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;
+  color:var(--text);font-size:15px;font-weight:600;cursor:pointer;font-family:inherit">
+  <span style="font-size:19px">🎫</span> Tickets
+  <span id="dm-t-badge" style="display:none;position:absolute;top:-7px;right:14px;
+    min-width:20px;height:20px;padding:0 5px;border-radius:10px;background:#FF6B5E;color:#1a0505;
+    font-size:11px;font-weight:700;align-items:center;justify-content:center;border:2px solid var(--bg)"></span>
+</button>
+
+<button id="dm-push-btn" onclick="enablePush()" style="display:none;margin-top:20px;background:none;border:1px solid var(--border);color:var(--gold-light);font-size:12.5px;cursor:pointer;font-family:inherit;padding:9px 16px;border-radius:10px">
+  🔔 Ativar notificações
+</button>
+
+<button onclick="if(confirm('Esquecer este dispositivo? Vais precisar da password para voltar a entrar.')){Auth.forget();Push.reset();location.reload();}"
+  style="margin-top:14px;background:none;border:none;color:var(--muted2);font-size:11.5px;cursor:pointer;font-family:inherit">
+  🔒 Bloquear este dispositivo
+</button>
+</div>
+
+<script src="auth.js"></script>
+<script src="tickets.js"></script>
+<script src="push.js"></script>
+<script>
+  async function enablePush(){
+    const btn = document.getElementById('dm-push-btn');
+    btn.disabled = true; btn.textContent = 'A pedir permissão...';
+    const perm = await Push.requestPermission();
+    if (perm === 'granted' || perm === true) { btn.style.display = 'none'; }
+    else { btn.disabled = false; btn.textContent = '🔔 Ativar notificações'; }
   }
-  function isSessionStillValid(){
-    const until = parseInt(localStorage.getItem(SESSION_KEY) || '0', 10);
-    return Date.now() < until;
-  }
 
-  const b64e = s => btoa(unescape(encodeURIComponent(s)));
-  const b64d = s => decodeURIComponent(escape(atob(s)));
-  const bufToB64 = buf => btoa(String.fromCharCode(...new Uint8Array(buf)));
-  const b64ToBuf = b64 => { const bin=atob(b64); const buf=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) buf[i]=bin.charCodeAt(i); return buf; };
+  Auth.protect(async function(){
+    document.getElementById('app-content').style.display = 'flex';
+    document.getElementById('app-content').style.flexDirection = 'column';
+    document.getElementById('app-content').style.alignItems = 'center';
+    const user = Auth.getStoredUser();
+    Tickets.refreshBadge();
 
-  function getStoredPin(){ const v = localStorage.getItem(PIN_KEY); return v ? b64d(v) : null; }
-  function setStoredPin(pin){ localStorage.setItem(PIN_KEY, b64e(pin)); }
-  function getStoredUser(){ return localStorage.getItem(USER_KEY); }
-  function hasBiometric(){ return !!localStorage.getItem(CRED_KEY); }
-  function forget(){ localStorage.removeItem(PIN_KEY); localStorage.removeItem(CRED_KEY); localStorage.removeItem(USER_KEY); localStorage.removeItem(SESSION_KEY); }
-
-  async function verifyPinWithServer(pin, claimedUser){
-    try {
-      const url = API_URL + '?action=checkpin&pin=' + encodeURIComponent(pin) +
-        (claimedUser ? '&claimedUser=' + encodeURIComponent(claimedUser) : '');
-      const r = await fetch(url);
-      const d = await r.json();
-      if (d.ok && d.user) localStorage.setItem(USER_KEY, d.user);
-      return d;
-    } catch(e){ return { ok:false, error:'Sem ligação à rede.' }; }
-  }
-
-  async function platformAuthAvailable(){
-    if (!window.PublicKeyCredential || !PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable) return false;
-    return PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable().catch(()=>false);
-  }
-
-  async function registerBiometric(){
-    try {
-      if (!(await platformAuthAvailable())) return false;
-      const challenge = crypto.getRandomValues(new Uint8Array(32));
-      const userId = crypto.getRandomValues(new Uint8Array(16));
-      const cred = await navigator.credentials.create({
-        publicKey: {
-          challenge,
-          rp: { name: 'DC Family' },
-          user: { id: userId, name: 'family', displayName: 'Family' },
-          pubKeyCredParams: [{ type:'public-key', alg:-7 }, { type:'public-key', alg:-257 }],
-          authenticatorSelection: { authenticatorAttachment:'platform', userVerification:'required' },
-          timeout: 60000
-        }
-      });
-      if (!cred) return false;
-      localStorage.setItem(CRED_KEY, bufToB64(cred.rawId));
-      return true;
-    } catch(e){ return false; }
-  }
-
-  async function authenticateBiometric(){
-    const credId = localStorage.getItem(CRED_KEY);
-    if (!credId || !window.PublicKeyCredential) return false;
-    try {
-      const challenge = crypto.getRandomValues(new Uint8Array(32));
-      const assertion = await navigator.credentials.get({
-        publicKey: {
-          challenge,
-          allowCredentials: [{ id: b64ToBuf(credId), type:'public-key' }],
-          userVerification:'required',
-          timeout: 60000
-        }
-      });
-      return !!assertion;
-    } catch(e){ return false; }
-  }
-
-  function lockScreenHTML(){
-    return `
-    <div id="dm-lock" style="position:fixed;inset:0;background:#0A0D12;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;font-family:'DM Sans',sans-serif">
-      <img src="logo.svg" alt="DC logo" style="width:160px;height:auto;margin-bottom:0">
-      <div style="font-family:'Cybertruck',sans-serif;font-size:30px;letter-spacing:.08em;color:#B0B5BD;margin-top:-4px;margin-bottom:26px">FAMILY</div>
-
-      <div style="width:100%;max-width:280px;background:#12161D;border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:22px">
-        <div style="color:#8B95A5;font-size:11px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Utilizador</div>
-        <input id="dm-lock-user" type="text" autocomplete="off" autocapitalize="words" placeholder="O teu nome" style="width:100%;box-sizing:border-box;font-size:15px;padding:11px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.08);background:#181D26;color:#F2F4F7;margin-bottom:16px">
-
-        <div style="color:#8B95A5;font-size:11px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Password</div>
-        <input id="dm-lock-pin" type="password" inputmode="numeric" autocomplete="off" placeholder="••••" style="width:100%;box-sizing:border-box;text-align:center;font-size:22px;letter-spacing:6px;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.08);background:#181D26;color:#F2F4F7;margin-bottom:16px">
-
-        <button id="dm-lock-submit" style="width:100%;padding:13px;border:none;border-radius:10px;background:#D2A13A;color:#1a1305;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit">Entrar</button>
-        <button id="dm-lock-faceid" style="display:none;width:100%;margin-top:10px;padding:10px;border:1px solid rgba(255,255,255,0.08);border-radius:10px;background:transparent;color:#8B95A5;font-size:13px;cursor:pointer;font-family:inherit">🔓 Usar Face ID</button>
-      </div>
-      <div id="dm-lock-error" style="color:#FF6B5E;font-size:12.5px;margin-top:14px;min-height:16px;text-align:center"></div>
-    </div>`;
-  }
-
-  function showPasswordScreen(onUnlock, opts){
-    opts = opts || {};
-    document.body.insertAdjacentHTML('beforeend', lockScreenHTML());
-    const box       = document.getElementById('dm-lock');
-    const userInput = document.getElementById('dm-lock-user');
-    const input     = document.getElementById('dm-lock-pin');
-    const submit    = document.getElementById('dm-lock-submit');
-    const err       = document.getElementById('dm-lock-error');
-    const faceBtn   = document.getElementById('dm-lock-faceid');
-
-    const stored = getStoredUser();
-    if (stored) userInput.value = stored;
-    setTimeout(() => (stored ? input : userInput).focus(), 50);
-
-    if (opts.faceIdRetry) {
-      faceBtn.style.display = 'block';
-      faceBtn.onclick = async () => {
-        err.textContent = '';
-        const ok = await authenticateBiometric();
-        if (ok) { markSessionUnlocked(); box.remove(); onUnlock(getStoredPin()); }
-        else { err.textContent = 'Não foi possível confirmar. Usa a password.'; }
-      };
+    Push.init();
+    if (Push.isSupported()) {
+      const state = await Push.permissionState();
+      if (state === 'default') document.getElementById('dm-push-btn').style.display = 'block';
     }
 
-    async function trySubmit(){
-      const name = userInput.value.trim();
-      if (!name) { err.textContent = 'Escreve o teu nome.'; userInput.focus(); return; }
-      const pin = input.value.trim();
-      if (!pin) { err.textContent = 'Introduz a password.'; return; }
-      submit.disabled = true; submit.textContent = 'A verificar...';
-      const res = await verifyPinWithServer(pin, name);
-      submit.disabled = false; submit.textContent = 'Entrar';
-      if (!res.ok) {
-        err.textContent = res.error || 'Password incorreta.';
-        input.value=''; input.focus();
-        return;
-      }
-
-      setStoredPin(pin);
-      box.remove();
-
-      if (!hasBiometric() && await platformAuthAvailable()) {
-        if (confirm('Queres usar Face ID/Touch ID para abrir mais depressa da próxima vez neste iPhone?')) {
-          await registerBiometric();
-        }
-      }
-      markSessionUnlocked();
-      onUnlock(pin);
-    }
-    submit.onclick = trySubmit;
-    input.addEventListener('keydown', e => { if (e.key === 'Enter') trySubmit(); });
-    userInput.addEventListener('keydown', e => { if (e.key === 'Enter') input.focus(); });
-  }
-
-  // Chamar isto no topo de cada página: Auth.protect(pin => { ...mostra a página... })
-  async function protect(onUnlock){
-    const storedPin = getStoredPin();
-
-    // Ainda dentro do prazo de 7 dias desde a última vez que confirmaste
-    // (password ou Face ID) — não voltar a pedir nada.
-    if (storedPin && isSessionStillValid()) {
-      onUnlock(storedPin);
-      return;
-    }
-
-    if (storedPin && hasBiometric()) {
-      const ok = await authenticateBiometric();
-      if (ok) { markSessionUnlocked(); onUnlock(storedPin); return; }
-      showPasswordScreen(onUnlock, { faceIdRetry:true });
-      return;
-    }
-    if (storedPin && !hasBiometric()) {
-      markSessionUnlocked();
-      onUnlock(storedPin);
-      return;
-    }
-    showPasswordScreen(onUnlock, {});
-  }
-
-  return { protect, forget, getStoredPin, getStoredUser, API_URL };
-})();
+    const ticketNum = new URLSearchParams(location.search).get('ticket');
+    if (ticketNum) Tickets.openTicket(parseInt(ticketNum, 10));
+  });
+</script>
+</body>
+</html>
