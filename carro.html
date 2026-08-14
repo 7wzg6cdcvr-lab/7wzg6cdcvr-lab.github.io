@@ -143,7 +143,7 @@ body{
       <div class="kpi"><div class="kpi-label">Total Gasto</div><div class="kpi-value" id="kpi-gasto">—</div><div class="kpi-sub" id="kpi-sessoes">&nbsp;</div></div>
       <div class="kpi"><div class="kpi-label">Total kWh</div><div class="kpi-value" id="kpi-kwh">—</div><div class="kpi-sub">&nbsp;</div></div>
       <div class="kpi"><div class="kpi-label">Custo Médio /kWh</div><div class="kpi-value" id="kpi-custo-kwh">—</div><div class="kpi-sub">&nbsp;</div></div>
-      <div class="kpi"><div class="kpi-label">Custo Médio /km</div><div class="kpi-value" id="kpi-custo-km">—</div><div class="kpi-sub" id="kpi-kms">&nbsp;</div></div>
+      <div class="kpi"><div class="kpi-label">Custo Médio /100km</div><div class="kpi-value" id="kpi-custo-km">—</div><div class="kpi-sub" id="kpi-kms">&nbsp;</div></div>
     </div>
 
     <div class="card">
@@ -200,7 +200,7 @@ function onData(d){
   $('kpi-sessoes').textContent=d.numSessoes+' carregamentos';
   $('kpi-kwh').textContent=d.totalKwh.toLocaleString('pt-PT',{minimumFractionDigits:1,maximumFractionDigits:1})+' kWh';
   $('kpi-custo-kwh').textContent='€'+d.custoMedioKwh.toFixed(3);
-  $('kpi-custo-km').textContent='€'+d.custoMedioKm.toFixed(3);
+  $('kpi-custo-km').textContent='€'+d.custoMedioKm.toFixed(2);
   $('kpi-kms').textContent=Math.round(d.totalKms).toLocaleString('pt-PT')+' km percorridos';
 
   renderChart(d.monthly);
