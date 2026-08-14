@@ -6,13 +6,16 @@
    (Settings → Keys & IDs → OneSignal App ID).
    ══════════════════════════════════════════════════════════════ */
 const Push = (() => {
-  const APP_ID = "COLOCA_AQUI_O_TEU_ONESIGNAL_APP_ID";
+  const APP_ID = "e8a84e88-ebba-41ff-9bdb-d3bcb0820cd5";
   const ENABLED_KEY = 'dm_push_enabled';
 
   let readyResolve;
   const ready = new Promise(res => { readyResolve = res; });
+  let started = false;
 
   function init(){
+    if (started) return;
+    started = true;
     if (!isSupported() || APP_ID.indexOf('COLOCA_AQUI') === 0) { readyResolve(null); return; }
     window.OneSignalDeferred = window.OneSignalDeferred || [];
     OneSignalDeferred.push(async function (OneSignal) {
