@@ -35,7 +35,7 @@ body{
   display:flex;flex-direction:column;align-items:center;justify-content:center;
   padding:calc(24px + env(safe-area-inset-top)) 20px calc(40px + env(safe-area-inset-bottom));
 }
-.logo{display:block;width:min(220px,55vw);height:auto;margin:0 auto 4px}
+.logo{display:block;width:min(220px,55vw);height:auto;margin:0 auto -6px}
 .tagline{
   font-family:'Cybertruck','Chakra Petch',sans-serif;font-weight:400;
   font-size:clamp(28px,9vw,40px);letter-spacing:.1em;text-transform:uppercase;
@@ -74,7 +74,6 @@ body{
 <div id="app-content" style="display:none">
 <img class="logo" src="logo.svg" alt="DC logo">
 <div class="tagline" id="tagline">Family</div>
-<div id="greeting" style="font-size:13px;color:var(--muted);margin:-32px 0 44px;min-height:16px"></div>
 
 <div class="tiles">
   <a class="tile active" href="./portfolio.html">
@@ -142,7 +141,6 @@ body{
     document.getElementById('app-content').style.flexDirection = 'column';
     document.getElementById('app-content').style.alignItems = 'center';
     const user = Auth.getStoredUser();
-    if (user) document.getElementById('greeting').textContent = 'Olá, ' + user;
     Tickets.refreshBadge();
 
     Push.init();
