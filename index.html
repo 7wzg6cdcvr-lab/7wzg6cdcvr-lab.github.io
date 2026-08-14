@@ -67,6 +67,14 @@ body{
   color:var(--muted2);background:var(--surface3);border:1px solid var(--border);
   border-radius:6px;padding:3px 7px;flex-shrink:0;
 }
+
+.icon-btn{
+  background:#212938;color:#F2F4F7;border:1px solid var(--border);
+  border-radius:10px;width:34px;height:34px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.icon-btn:active{transform:scale(.92)}
+.icon-btn:disabled{opacity:.5}
 </style>
 </head>
 <body>
@@ -114,14 +122,14 @@ body{
     font-size:11px;font-weight:700;align-items:center;justify-content:center;border:2px solid var(--bg)"></span>
 </button>
 
-<button id="dm-push-btn" onclick="enablePush()" style="display:none;margin-top:20px;background:none;border:1px solid var(--border);color:var(--gold-light);font-size:12.5px;cursor:pointer;font-family:inherit;padding:9px 16px;border-radius:10px">
-  🔔 Ativar notificações
-</button>
-
-<button onclick="if(confirm('Esquecer este dispositivo? Vais precisar da password para voltar a entrar.')){Auth.forget();Push.reset();location.reload();}"
-  style="margin-top:14px;background:none;border:none;color:var(--muted2);font-size:11.5px;cursor:pointer;font-family:inherit">
-  🔒 Bloquear este dispositivo
-</button>
+<div style="display:flex;gap:8px;margin-top:20px">
+  <button id="dm-push-btn" class="icon-btn" onclick="enablePush()" title="Ativar notificações" aria-label="Ativar notificações">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+  </button>
+  <button class="icon-btn" onclick="if(confirm('Sair? Vais precisar da password para voltar a entrar.')){Push.reset();Auth.logout();}" title="Sair" aria-label="Sair">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+  </button>
+</div>
 </div>
 
 <script src="auth.js"></script>
@@ -130,24 +138,17 @@ body{
 <script>
   async function enablePush(){
     const btn = document.getElementById('dm-push-btn');
-    btn.disabled = true; btn.textContent = 'A pedir permissão...';
-    const perm = await Push.requestPermission();
-    if (perm === 'granted' || perm === true) { btn.style.display = 'none'; }
-    else { btn.disabled = false; btn.textContent = '🔔 Ativar notificações'; }
+    btn.disabled = true;
+    await Push.requestPermission();
+    btn.disabled = false;
   }
 
   Auth.protect(async function(){
     document.getElementById('app-content').style.display = 'flex';
     document.getElementById('app-content').style.flexDirection = 'column';
     document.getElementById('app-content').style.alignItems = 'center';
-    const user = Auth.getStoredUser();
     Tickets.refreshBadge();
-
     Push.init();
-    if (Push.isSupported()) {
-      const state = await Push.permissionState();
-      if (state === 'default') document.getElementById('dm-push-btn').style.display = 'block';
-    }
 
     const ticketNum = new URLSearchParams(location.search).get('ticket');
     if (ticketNum) Tickets.openTicket(parseInt(ticketNum, 10));
