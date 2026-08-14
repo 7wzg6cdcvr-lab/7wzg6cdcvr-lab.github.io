@@ -138,8 +138,8 @@ body{
     document.getElementById('app-content').style.alignItems = 'center';
     Tickets.refreshBadge();
     Push.init();
-    // Notificações sempre ativas por defeito — sem botão, pede-se logo.
-    if (!Push.isEnabled()) Push.requestPermission();
+    // (o pedido de permissão em si acontece no toque do botão "Entrar",
+    // no auth.js — o iOS não deixa pedir sem um toque direto)
     const ticketNum = new URLSearchParams(location.search).get('ticket');
     if (ticketNum) Tickets.openTicket(parseInt(ticketNum, 10));
   });
