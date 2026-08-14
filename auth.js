@@ -84,6 +84,14 @@ const Auth = (() => {
       }
       setStoredPin(pin);
       box.remove();
+
+      // O iOS só deixa pedir permissão de notificações em resposta direta
+      // a um toque — este clique no "Entrar" é esse toque, por isso é
+      // aqui (e não mais tarde, já sem toque nenhum) que se pede.
+      if (window.Push) {
+        try { Push.init(); Push.requestPermission(); } catch (e) {}
+      }
+
       onUnlock(pin);
     }
     submit.onclick = trySubmit;
