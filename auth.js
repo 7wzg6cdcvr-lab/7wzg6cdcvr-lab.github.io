@@ -42,12 +42,16 @@ const Auth = (() => {
 
       <div style="width:100%;max-width:280px;background:#12161D;border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:22px">
         <div style="color:#8B95A5;font-size:11px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Utilizador</div>
-        <input id="dm-lock-user" type="text" autocomplete="off" autocapitalize="words" placeholder="O teu nome" style="width:100%;box-sizing:border-box;font-size:15px;padding:11px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.08);background:#181D26;color:#F2F4F7;margin-bottom:16px">
+        <input id="dm-lock-user" type="text" autocomplete="off" autocapitalize="words" style="width:100%;box-sizing:border-box;font-size:15px;padding:11px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.08);background:#181D26;color:#F2F4F7;margin-bottom:16px">
 
         <div style="color:#8B95A5;font-size:11px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Password</div>
-        <input id="dm-lock-pin" type="password" inputmode="numeric" autocomplete="off" placeholder="••••" style="width:100%;box-sizing:border-box;text-align:center;font-size:22px;letter-spacing:6px;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.08);background:#181D26;color:#F2F4F7;margin-bottom:16px">
+        <input id="dm-lock-pin" type="password" autocomplete="off" style="width:100%;box-sizing:border-box;font-size:15px;padding:11px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.08);background:#181D26;color:#F2F4F7;margin-bottom:16px">
 
-        <button id="dm-lock-submit" style="width:100%;padding:13px;border:none;border-radius:10px;background:#D2A13A;color:#1a1305;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit">Entrar</button>
+        <div style="display:flex;justify-content:center">
+          <button id="dm-lock-submit" title="Entrar" aria-label="Entrar" style="width:34px;height:34px;padding:0;border:none;border-radius:10px;background:#D2A13A;color:#1a1305;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg>
+          </button>
+        </div>
       </div>
       <div id="dm-lock-error" style="color:#FF6B5E;font-size:12.5px;margin-top:14px;min-height:16px;text-align:center"></div>
     </div>`;
@@ -70,9 +74,9 @@ const Auth = (() => {
       if (!name) { err.textContent = 'Escreve o teu nome.'; userInput.focus(); return; }
       const pin = input.value.trim();
       if (!pin) { err.textContent = 'Introduz a password.'; return; }
-      submit.disabled = true; submit.textContent = 'A verificar...';
+      submit.disabled = true; submit.style.opacity = '0.5';
       const res = await verifyPinWithServer(pin, name);
-      submit.disabled = false; submit.textContent = 'Entrar';
+      submit.disabled = false; submit.style.opacity = '1';
       if (!res.ok) {
         err.textContent = res.error || 'Password incorreta.';
         input.value=''; input.focus();
