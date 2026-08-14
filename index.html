@@ -125,21 +125,51 @@ body{
   <button class="icon-btn" onclick="if(confirm('Sair? Vais precisar da password para voltar a entrar.')){Auth.logout();}" title="Sair" aria-label="Sair">
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
   </button>
+  <button id="dm-push-btn" class="icon-btn" onclick="enablePush()" title="Ativar notificações" aria-label="Ativar notificações" style="display:none">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+  </button>
 </div>
+<div id="dm-push-msg" style="font-size:11.5px;color:var(--muted2);margin-top:10px;min-height:15px;text-align:center"></div>
 </div>
 
 <script src="auth.js"></script>
 <script src="tickets.js"></script>
 <script src="push.js"></script>
 <script>
+  function enablePush(){
+    // Chamado diretamente pelo clique, sem nada assíncrono antes —
+    // é este isolamento que faz o Safari aceitar o pedido.
+    const btn = document.getElementById('dm-push-btn');
+    const msg = document.getElementById('dm-push-msg');
+    btn.disabled = true;
+    Push.requestPermission().then(result => {
+      btn.disabled = false;
+      if (result === 'granted') {
+        msg.style.color = '#34D399'; msg.textContent = '✓ Notificações ativadas';
+        btn.style.display = 'none';
+      } else if (result === 'unsupported') {
+        msg.style.color = '#FF6B5E'; msg.textContent = 'Este dispositivo/browser não suporta notificações.';
+      } else {
+        msg.style.color = '#FF6B5E'; msg.textContent = 'Permissão não concedida. Tenta novamente.';
+      }
+      setTimeout(() => { msg.textContent = ''; }, 5000);
+    }).catch(e => {
+      btn.disabled = false;
+      msg.style.color = '#FF6B5E'; msg.textContent = 'Erro: ' + (e.message || e);
+    });
+  }
+
   Auth.protect(async function(){
     document.getElementById('app-content').style.display = 'flex';
     document.getElementById('app-content').style.flexDirection = 'column';
     document.getElementById('app-content').style.alignItems = 'center';
     Tickets.refreshBadge();
     Push.init();
-    // (o pedido de permissão em si acontece no toque do botão "Entrar",
-    // no auth.js — o iOS não deixa pedir sem um toque direto)
+
+    if (Push.isSupported() && !Push.alreadyEnabled()) {
+      document.getElementById('dm-push-btn').style.display = 'flex';
+    }
+
     const ticketNum = new URLSearchParams(location.search).get('ticket');
     if (ticketNum) Tickets.openTicket(parseInt(ticketNum, 10));
   });
