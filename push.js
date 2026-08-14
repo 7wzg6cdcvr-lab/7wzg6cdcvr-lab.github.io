@@ -6,7 +6,7 @@
    (Settings → Keys & IDs → OneSignal App ID).
    ══════════════════════════════════════════════════════════════ */
 const Push = (() => {
-  const APP_ID = "e8a84e88-ebba-41ff-9bdb-d3bcb0820cd5";
+  const APP_ID = "COLOCA_AQUI_O_TEU_ONESIGNAL_APP_ID";
   const ENABLED_KEY = 'dm_push_enabled';
 
   let readyResolve;
@@ -53,7 +53,27 @@ const Push = (() => {
     return result;
   }
 
+  function isEnabled(){
+    return alreadyEnabled();
+  }
+
+  // Liga/desliga as notificações. Para desligar, tenta mesmo cortar a
+  // subscrição no OneSignal (não só esconder o estado aqui) — se o SDK
+  // não tiver esse método disponível, pelo menos deixa de se marcar
+  // como "ativo" localmente.
+  async function toggle(){
+    if (isEnabled()) {
+      const OneSignal = await ready;
+      try { if (OneSignal && OneSignal.User && OneSignal.User.PushSubscription) await OneSignal.User.PushSubscription.optOut(); } catch(e){}
+      localStorage.removeItem(ENABLED_KEY);
+      return 'default';
+    }
+    const OneSignal = await ready;
+    try { if (OneSignal && OneSignal.User && OneSignal.User.PushSubscription) await OneSignal.User.PushSubscription.optIn(); } catch(e){}
+    return requestPermission();
+  }
+
   function reset(){ localStorage.removeItem(ENABLED_KEY); }
 
-  return { init, isSupported, permissionState, requestPermission, alreadyEnabled, reset };
+  return { init, isSupported, permissionState, requestPermission, alreadyEnabled, isEnabled, toggle, reset };
 })();
