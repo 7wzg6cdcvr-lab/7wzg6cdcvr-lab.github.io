@@ -112,24 +112,21 @@ body{
   </div>
 </div>
 
-<button onclick="Tickets.open()"
-  style="width:100%;max-width:420px;margin-top:22px;display:flex;align-items:center;justify-content:center;gap:9px;position:relative;
-  background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;
-  color:var(--text);font-size:15px;font-weight:600;cursor:pointer;font-family:inherit">
-  <span style="font-size:19px">🎫</span> Tickets
-  <span id="dm-t-badge" style="display:none;position:absolute;top:-7px;right:14px;
-    min-width:20px;height:20px;padding:0 5px;border-radius:10px;background:#FF6B5E;color:#1a0505;
-    font-size:11px;font-weight:700;align-items:center;justify-content:center;border:2px solid var(--bg)"></span>
-</button>
-
-<div style="display:flex;gap:8px;margin-top:20px">
-  <button id="dm-push-btn" class="icon-btn" onclick="enablePush()" title="Ativar notificações" aria-label="Ativar notificações">
+<div style="display:flex;gap:8px;margin-top:22px">
+  <button class="icon-btn" onclick="Tickets.open()" title="Tickets" aria-label="Tickets" style="position:relative">
+    <span style="font-size:15px;line-height:1">🎫</span>
+    <span id="dm-t-badge" style="display:none;position:absolute;top:-6px;right:-6px;
+      min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:#FF6B5E;color:#1a0505;
+      font-size:10px;font-weight:700;align-items:center;justify-content:center;border:2px solid var(--bg)"></span>
+  </button>
+  <button id="dm-push-btn" class="icon-btn" onclick="enablePush()" title="Ativar/desativar notificações" aria-label="Ativar/desativar notificações">
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
   </button>
   <button class="icon-btn" onclick="if(confirm('Sair? Vais precisar da password para voltar a entrar.')){Push.reset();Auth.logout();}" title="Sair" aria-label="Sair">
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
   </button>
 </div>
+<div id="dm-push-msg" style="font-size:11.5px;color:var(--muted2);margin-top:10px;min-height:15px;text-align:center"></div>
 </div>
 
 <script src="auth.js"></script>
@@ -138,9 +135,27 @@ body{
 <script>
   async function enablePush(){
     const btn = document.getElementById('dm-push-btn');
+    const msg = document.getElementById('dm-push-msg');
     btn.disabled = true;
-    await Push.requestPermission();
+    msg.style.color = 'var(--muted2)'; msg.textContent = 'A atualizar...';
+    try {
+      const result = await Push.toggle();
+      if (result === 'granted') {
+        msg.style.color = '#34D399'; msg.textContent = '🔔 Notificações ativadas';
+        btn.style.borderColor = '#34D399'; btn.style.color = '#34D399';
+      } else if (result === 'unsupported') {
+        msg.style.color = '#FF6B5E'; msg.textContent = 'Este dispositivo/browser não suporta notificações.';
+      } else if (result === 'default' && !Push.isEnabled()) {
+        msg.style.color = 'var(--muted)'; msg.textContent = '🔕 Notificações desativadas';
+        btn.style.borderColor = 'var(--border)'; btn.style.color = 'var(--text)';
+      } else {
+        msg.style.color = '#FF6B5E'; msg.textContent = 'Permissão não concedida. Tenta novamente.';
+      }
+    } catch (e) {
+      msg.style.color = '#FF6B5E'; msg.textContent = 'Erro: ' + (e.message || e);
+    }
     btn.disabled = false;
+    setTimeout(() => { msg.textContent = ''; }, 5000);
   }
 
   Auth.protect(async function(){
@@ -149,6 +164,9 @@ body{
     document.getElementById('app-content').style.alignItems = 'center';
     Tickets.refreshBadge();
     Push.init();
+
+    const bellBtn = document.getElementById('dm-push-btn');
+    if (Push.isEnabled()) { bellBtn.style.borderColor = '#34D399'; bellBtn.style.color = '#34D399'; }
 
     const ticketNum = new URLSearchParams(location.search).get('ticket');
     if (ticketNum) Tickets.openTicket(parseInt(ticketNum, 10));
