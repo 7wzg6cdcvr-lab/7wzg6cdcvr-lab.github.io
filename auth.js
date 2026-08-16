@@ -37,7 +37,7 @@ const Auth = (() => {
   function lockScreenHTML(){
     return `
     <div id="dm-lock" style="position:fixed;inset:0;background:#0A0D12;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;font-family:'DM Sans',sans-serif">
-      <img src="logo.png" alt="DC Family logo" style="width:180px;height:auto;margin-bottom:22px">
+      <img src="logo.png" alt="DC Family logo" style="width:280px;height:auto;margin-bottom:22px">
 
       <div style="width:100%;max-width:280px;background:#12161D;border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:22px">
         <div style="color:#8B95A5;font-size:11px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Utilizador</div>
