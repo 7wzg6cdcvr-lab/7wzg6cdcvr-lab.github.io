@@ -53,8 +53,9 @@ body{
 .tile:active{transform:scale(.98)}
 .tile.active:hover{border-color:var(--gold)}
 .tile-icon{
-  width:48px;height:48px;border-radius:13px;flex-shrink:0;
-  display:flex;align-items:center;justify-content:center;font-size:22px;
+  width:44px;height:44px;border-radius:10px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--surface3);border:1px solid var(--border);color:var(--muted);
 }
 .tile-text{flex:1;min-width:0}
 .tile-title{font-size:15.5px;font-weight:600}
@@ -85,7 +86,9 @@ body{
 
 <div class="tiles">
   <a class="tile active" href="./portfolio.html">
-    <div class="tile-icon" style="background:rgba(91,141,239,0.15);color:#5B8DEF">📊</div>
+    <div class="tile-icon">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+    </div>
     <div class="tile-text">
       <div class="tile-title">Portfolio</div>
       <div class="tile-sub">S&amp;P 500 &amp; Bitcoin</div>
@@ -94,18 +97,22 @@ body{
   </a>
 
   <a class="tile active" href="./carro.html">
-    <div class="tile-icon" style="background:rgba(52,211,153,0.15);color:#34D399">🚗</div>
+    <div class="tile-icon">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17H3a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h11l4 4 1 3H5"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/><path d="M13 7l-1 6"/></svg>
+    </div>
     <div class="tile-text">
-      <div class="tile-title">Carro Elétrico</div>
+      <div class="tile-title">Maximus</div>
       <div class="tile-sub">Carregamentos & custos</div>
     </div>
     <div class="tile-arrow">›</div>
   </a>
 
   <a class="tile active" href="./despesas.html">
-    <div class="tile-icon" style="background:rgba(240,169,58,0.15);color:#F0A93A">💳</div>
+    <div class="tile-icon">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+    </div>
     <div class="tile-text">
-      <div class="tile-title">Despesas</div>
+      <div class="tile-title">Finances</div>
       <div class="tile-sub">Receitas, despesas & poupanças</div>
     </div>
     <div class="tile-arrow">›</div>
