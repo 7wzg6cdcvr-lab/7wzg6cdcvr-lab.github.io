@@ -127,14 +127,50 @@ function showDetailSkeleton(label){
 }
 
 // ── Grelha de meses ───────────────────────────────────────────
+const EMERGENCY_GOAL = 10000;
+let globalKPIs = null; // carrega com loadIndex
+
 function showGrid(){
   currentView = 'grid';
   $('refresh-btn').classList.remove('spinning');
   if (!meses.length) { showSkeleton(); loadIndex(); return; }
   renderGrid();
 }
+
+function renderGlobalKPIs(){
+  if (!globalKPIs) return `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+      ${Array(4).fill('<div class="skel" style="height:62px"></div>').join('')}
+    </div>`;
+  const g = globalKPIs;
+  const emergPct = Math.min(Math.round(g.totalPoup / EMERGENCY_GOAL * 100), 100);
+  return `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+      <div class="kpi" style="--kpi-color:var(--mint)">
+        <div class="kpi-label">Total Receitas</div>
+        <div class="kpi-value">${eur(g.totalRec)}</div>
+      </div>
+      <div class="kpi" style="--kpi-color:var(--coral)">
+        <div class="kpi-label">Total Despesas</div>
+        <div class="kpi-value">${eur(g.totalDesp)}</div>
+      </div>
+      <div class="kpi" style="--kpi-color:var(--sapphire)">
+        <div class="kpi-label">Total Poupanças</div>
+        <div class="kpi-value">${eur(g.totalPoup)}</div>
+      </div>
+      <div class="kpi" style="--kpi-color:var(--amber)">
+        <div class="kpi-label">Fundo Emergência</div>
+        <div class="kpi-value">${emergPct}%</div>
+        <div style="margin-top:6px;height:4px;background:var(--surface3);border-radius:2px">
+          <div style="height:4px;border-radius:2px;background:var(--amber);width:${emergPct}%"></div>
+        </div>
+        <div style="font-size:10px;color:var(--muted2);margin-top:3px">${eur(g.totalPoup)} / €10.000</div>
+      </div>
+    </div>`;
+}
+
 function renderGrid(){
-  $('app').innerHTML = `
+  $('app').innerHTML = renderGlobalKPIs() + `
     <div class="mes-grid">
       ${meses.map(m=>`
         <div class="mes-card${m.current?' current':''}" onclick="openMes('${m.id}','${m.label}')">
@@ -149,6 +185,10 @@ async function loadIndex(){
   const d = await r.json();
   if (d.error) { $('app').innerHTML=`<p style="color:var(--coral)">${d.error}</p>`; return; }
   meses = d;
+  // Carrega os KPIs globais em paralelo
+  fetch(API()+'&action=despesasData').then(r=>r.json()).then(g=>{
+    if (!g.error) { globalKPIs = g; if(currentView==='grid') renderGrid(); }
+  }).catch(()=>{});
   renderGrid();
 }
 
@@ -174,13 +214,13 @@ function renderDetail(label, d){
     <div style="font-size:18px;font-weight:700;margin-bottom:16px">${label}</div>
 
     <div class="kpi-row">
-      <div class="kpi" style="--kpi-color:var(--coral)">
-        <div class="kpi-label">Despesas</div>
-        <div class="kpi-value">${eur(d.totalDesp)}</div>
-      </div>
       <div class="kpi" style="--kpi-color:var(--mint)">
         <div class="kpi-label">Receitas</div>
         <div class="kpi-value">${eur(d.totalRec)}</div>
+      </div>
+      <div class="kpi" style="--kpi-color:var(--coral)">
+        <div class="kpi-label">Despesas</div>
+        <div class="kpi-value">${eur(d.totalDesp)}</div>
       </div>
       <div class="kpi" style="--kpi-color:var(--sapphire)">
         <div class="kpi-label">Poupanças</div>
