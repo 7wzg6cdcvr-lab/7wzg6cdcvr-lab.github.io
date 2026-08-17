@@ -148,6 +148,14 @@ body{
     </div>
 
     <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <div class="card-title" style="margin-bottom:0">ÚLTIMOS CARREGAMENTOS</div>
+        <button onclick="openAdd()" style="background:#D2A13A;border:none;border-radius:8px;color:#1a1305;font-size:12px;font-weight:700;padding:6px 12px;cursor:pointer;font-family:inherit">+ Adicionar</button>
+      </div>
+      <div id="recentes-list" style="color:var(--muted);font-size:13px">A carregar…</div>
+    </div>
+
+    <div class="card">
       <div class="card-title">POR OPERADOR</div>
       <div id="op-list"></div>
     </div>
@@ -241,9 +249,158 @@ function renderOperadores(ops){
 Auth.protect(function(){
   document.getElementById('app-content').style.display = 'block';
   loadData();
+  loadRecentes();
   Tickets.refreshBadge();
   Push.init();
 });
+
+// ── Últimos 5 carregamentos ───────────────────────────────────
+async function loadRecentes(){
+  const r = await fetch(Auth.API_URL+'?'+new URLSearchParams({action:'carroRecentes',pin:Auth.getStoredPin()||''}));
+  const d = await r.json();
+  if (!d.ok || !d.sessions.length) return;
+  renderRecentes(d.sessions);
+}
+
+function fmtKwh(v){ return v ? v.toLocaleString('pt-PT',{minimumFractionDigits:1,maximumFractionDigits:1})+' kWh' : '—'; }
+
+function renderRecentes(sessions){
+  $('recentes-list').innerHTML = sessions.map(s=>`
+    <div style="display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.05);cursor:pointer"
+         onclick="openEdit(${JSON.stringify(s).replace(/"/g,'&quot;')})">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${s.carregador||'—'}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:3px">${s.data} · ${fmtKwh(s.kwh)} · ${s.tipo||'—'}</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        <div style="font-family:'DM Mono',monospace;font-size:13px;font-weight:600">${s.preco?eur(s.preco):'—'}</div>
+        <div style="font-size:10.5px;color:var(--muted2)">✏️ editar</div>
+      </div>
+    </div>`).join('');
+}
+
+// ── Modal de adicionar / editar ───────────────────────────────
+const TIPOS = ['CCS','T2 - 22kw','CHAdeMO'];
+const OPERADORES = ['Tesla','Continente','Atlante','EVIO','Electroverse','Casa','Outros'];
+
+function modalHTML(s){
+  const isEdit = !!s;
+  const v = s || {};
+  return `
+  <div id="carro-modal" style="position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9000;display:flex;align-items:flex-end">
+    <div style="background:#12161D;border-radius:20px 20px 0 0;width:100%;max-height:90vh;overflow-y:auto;padding:20px 16px calc(20px + env(safe-area-inset-bottom))">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+        <div style="font-size:16px;font-weight:700">${isEdit?'Editar carregamento':'Novo carregamento'}</div>
+        <button onclick="closeModal()" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;line-height:1">×</button>
+      </div>
+      ${isEdit?`<input type="hidden" id="cm-row" value="${v.row}">`:''}
+
+      <label style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Data</label>
+      <input id="cm-data" type="date" value="${isEdit?v.data.split('/').reverse().join('-'):new Date().toISOString().slice(0,10)}"
+        style="width:100%;padding:10px;margin:6px 0 14px;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#181D26;color:#F2F4F7;font-size:14px;font-family:inherit">
+
+      <label style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Carregador</label>
+      <input id="cm-carregador" type="text" value="${v.carregador||''}" placeholder="ex: Continente S. Marcos"
+        style="width:100%;padding:10px;margin:6px 0 14px;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#181D26;color:#F2F4F7;font-size:14px;font-family:inherit">
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+        <div>
+          <label style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">kWh</label>
+          <input id="cm-kwh" type="number" step="0.01" value="${v.kwh||''}" placeholder="0.00"
+            style="width:100%;padding:10px;margin-top:6px;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#181D26;color:#F2F4F7;font-size:14px;font-family:inherit">
+        </div>
+        <div>
+          <label style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Preço (€)</label>
+          <input id="cm-preco" type="number" step="0.01" value="${v.preco||''}" placeholder="0.00"
+            style="width:100%;padding:10px;margin-top:6px;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#181D26;color:#F2F4F7;font-size:14px;font-family:inherit">
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+        <div>
+          <label style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Tipo</label>
+          <select id="cm-tipo" style="width:100%;padding:10px;margin-top:6px;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#181D26;color:#F2F4F7;font-size:14px;font-family:inherit">
+            ${TIPOS.map(t=>`<option${(v.tipo||'')==t?' selected':''}>${t}</option>`).join('')}
+          </select>
+        </div>
+        <div>
+          <label style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Operador</label>
+          <select id="cm-operador" style="width:100%;padding:10px;margin-top:6px;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#181D26;color:#F2F4F7;font-size:14px;font-family:inherit">
+            ${OPERADORES.map(o=>`<option${(v.operador||'')==o?' selected':''}>${o}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+        <div>
+          <label style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Minutos</label>
+          <input id="cm-minutos" type="number" value="${v.minutos||''}" placeholder="—"
+            style="width:100%;padding:10px;margin-top:6px;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#181D26;color:#F2F4F7;font-size:14px;font-family:inherit">
+        </div>
+        <div>
+          <label style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Odómetro (km)</label>
+          <input id="cm-kms" type="number" value="${v.kms||''}" placeholder="—"
+            style="width:100%;padding:10px;margin-top:6px;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#181D26;color:#F2F4F7;font-size:14px;font-family:inherit">
+        </div>
+      </div>
+
+      <label style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Observações</label>
+      <input id="cm-obs" type="text" value="${v.obs||''}" placeholder="opcional"
+        style="width:100%;padding:10px;margin:6px 0 20px;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#181D26;color:#F2F4F7;font-size:14px;font-family:inherit">
+
+      <div id="cm-msg" style="font-size:12.5px;color:var(--coral);min-height:16px;margin-bottom:10px;text-align:center"></div>
+      <button onclick="submitModal(${isEdit})" id="cm-submit"
+        style="width:100%;padding:14px;border:none;border-radius:12px;background:#D2A13A;color:#1a1305;font-weight:700;font-size:15px;cursor:pointer;font-family:inherit">
+        ${isEdit?'Guardar alterações':'Adicionar carregamento'}
+      </button>
+    </div>
+  </div>`;
+}
+
+function openAdd(){ document.body.insertAdjacentHTML('beforeend', modalHTML(null)); }
+function openEdit(s){ document.body.insertAdjacentHTML('beforeend', modalHTML(s)); }
+function closeModal(){ const m=$('carro-modal'); if(m) m.remove(); }
+
+function getVal(id){ return document.getElementById(id)?.value.trim()||''; }
+
+async function submitModal(isEdit){
+  const btn=$('cm-submit');
+  const msg=$('cm-msg');
+  btn.disabled=true; btn.textContent='A guardar...';
+
+  // Converte data de yyyy-MM-dd para dd/MM/yyyy
+  const rawDate = getVal('cm-data');
+  const data = rawDate ? rawDate.split('-').reverse().join('/') : '';
+
+  const payload = {
+    action: isEdit ? 'carroEdit' : 'carroAdd',
+    pin: Auth.getStoredPin()||'',
+    data,
+    carregador: getVal('cm-carregador'),
+    kwh: getVal('cm-kwh').replace(',','.'),
+    preco: getVal('cm-preco').replace(',','.'),
+    tipo: getVal('cm-tipo'),
+    operador: getVal('cm-operador'),
+    minutos: getVal('cm-minutos'),
+    kms: getVal('cm-kms'),
+    obs: getVal('cm-obs'),
+  };
+  if(isEdit) payload.row = parseInt(getVal('cm-row'));
+
+  try {
+    const r = await fetch(Auth.API_URL+'?'+new URLSearchParams({action:payload.action,pin:payload.pin}),{
+      method:'POST', body: JSON.stringify(payload)
+    });
+    const d = await r.json();
+    if(!d.ok){ msg.textContent='Erro: '+(d.error||'desconhecido'); btn.disabled=false; btn.textContent=isEdit?'Guardar alterações':'Adicionar carregamento'; return; }
+    closeModal();
+    loadData();
+    loadRecentes();
+  } catch(e){
+    msg.textContent='Erro de rede: '+e.message;
+    btn.disabled=false; btn.textContent=isEdit?'Guardar alterações':'Adicionar carregamento';
+  }
+}
 </script>
 </body>
 </html>
