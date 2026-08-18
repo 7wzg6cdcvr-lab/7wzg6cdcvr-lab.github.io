@@ -165,8 +165,13 @@ function loadRecentesMovimentos(){
   fetch(API()+'&action=despesasRecentes').then(r=>r.json()).then(d=>{
     movRecentesLoaded = true;
     if (d.ok) movRecentes = d.recentes;
-    if (currentView === 'grid') renderGrid();
-  }).catch(()=>{ movRecentesLoaded = true; if (currentView === 'grid') renderGrid(); });
+    const el = $('mov-recentes-list');
+    if (el) el.innerHTML = renderRecentesMovHTML();
+  }).catch(()=>{
+    movRecentesLoaded = true;
+    const el = $('mov-recentes-list');
+    if (el) el.innerHTML = renderRecentesMovHTML();
+  });
 }
 
 function renderGlobalKPIs(){
@@ -203,16 +208,9 @@ function renderGlobalKPIs(){
 
 function renderGrid(){
   $('app').innerHTML = renderGlobalKPIs() + `
-    <div class="card">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-        <div class="card-title" style="margin-bottom:0">ÚLTIMOS MOVIMENTOS</div>
-        <button onclick="openAddMov()" style="background:#D2A13A;border:none;border-radius:8px;color:#1a1305;font-size:12px;font-weight:700;padding:6px 12px;cursor:pointer;font-family:inherit">+ Adicionar</button>
-      </div>
-      <div id="mov-recentes-list">${renderRecentesMovHTML()}</div>
-    </div>
     <div class="mes-grid">
       ${meses.map(m=>`
-        <div class="mes-card${m.current?' current':''}" onclick="openMes('${m.id}','${m.label}')">
+        <div class="mes-card${m.current?' current':''}" onclick="openMes('${m.id}','${m.label}',${!!m.current})">
           <div class="mes-label">${m.label}</div>
           <div class="mes-sub">${m.current?'Mês atual':'Ver detalhes'}</div>
         </div>`).join('')}
@@ -232,16 +230,24 @@ async function loadIndex(){
 }
 
 // ── Detalhe de um mês ─────────────────────────────────────────
-async function openMes(fileId, label){
+let viewingFileId = null;
+let viewingLabel = null;
+let viewingIsCurrent = false;
+
+async function openMes(fileId, label, isCurrent){
   currentView = 'detail';
+  viewingFileId = fileId;
+  viewingLabel = label;
+  viewingIsCurrent = !!isCurrent;
+  if (viewingIsCurrent) { movRecentesLoaded = false; movRecentes = []; }
   showDetailSkeleton(label);
   const r = await fetch(API()+`&action=despesasMes&fileId=${encodeURIComponent(fileId)}`);
   const d = await r.json();
   if (d.error) { $('app').innerHTML=`<button class="back-btn" onclick="showGrid()">‹ Voltar</button><p style="color:var(--coral)">${d.error}</p>`; return; }
-  renderDetail(label, d);
+  renderDetail(label, d, viewingIsCurrent);
 }
 
-function renderDetail(label, d){
+function renderDetail(label, d, isCurrent){
   const cats = d.categorias || [];
   const maxVal = cats.length ? cats[0].total : 1;
 
@@ -267,6 +273,15 @@ function renderDetail(label, d){
       </div>
     </div>
 
+    ${isCurrent ? `
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <div class="card-title" style="margin-bottom:0">ÚLTIMOS MOVIMENTOS</div>
+        <button onclick="openAddMov()" style="background:#D2A13A;border:none;border-radius:8px;color:#1a1305;font-size:12px;font-weight:700;padding:6px 12px;cursor:pointer;font-family:inherit">+ Adicionar</button>
+      </div>
+      <div id="mov-recentes-list">${renderRecentesMovHTML()}</div>
+    </div>` : ''}
+
     <div class="card">
       <div class="card-title">DESPESAS POR CATEGORIA</div>
       ${cats.map(c=>`
@@ -276,17 +291,21 @@ function renderDetail(label, d){
           <div class="cat-val">${eur(c.total)}</div>
         </div>`).join('')}
     </div>`;
+
+  if (isCurrent) loadRecentesMovimentos();
 }
 
 // ── Refresh ───────────────────────────────────────────────────
 function refresh(){
   const btn = $('refresh-btn');
   btn.classList.add('spinning');
-  meses = [];
-  movRecentesLoaded = false;
-  if (currentView === 'grid') showGrid();
-  else showGrid(); // volta à grelha e recarrega
-  loadRecentesMovimentos();
+  if (currentView === 'detail' && viewingFileId) {
+    openMes(viewingFileId, viewingLabel, viewingIsCurrent);
+  } else {
+    meses = [];
+    globalKPIs = null;
+    showGrid();
+  }
 }
 
 // ── Arranque ─────────────────────────────────────────────────
@@ -295,7 +314,6 @@ Auth.protect(function(){
   Tickets.refreshBadge();
   Push.init();
   showGrid();
-  loadRecentesMovimentos();
 });
 // ── Modal de adicionar movimento ──────────────────────────────
 const CATEGORIAS_DESPESA = ['Saúde','Beleza','Supermercados','Telecom/Subscrições','Educação','Transportes','Vestuário','Desporto','Habitação','Restaurantes','Férias','Seguros','Diversos'];
@@ -398,9 +416,8 @@ async function submitMov(isEdit){
     const d = await r.json();
     if(!d.ok){ msg.textContent='Erro: '+(d.error||'desconhecido'); btn.disabled=false; btn.textContent=isEdit?'Guardar alterações':'Adicionar movimento'; return; }
     closeMovModal();
-    globalKPIs = null; // força recalcular os KPIs globais
-    loadIndex();
-    loadRecentesMovimentos();
+    globalKPIs = null; // recalcula quando voltar à grelha
+    if (viewingFileId) openMes(viewingFileId, viewingLabel, viewingIsCurrent);
   } catch(e){
     msg.textContent='Erro de rede: '+e.message;
     btn.disabled=false; btn.textContent=isEdit?'Guardar alterações':'Adicionar movimento';
