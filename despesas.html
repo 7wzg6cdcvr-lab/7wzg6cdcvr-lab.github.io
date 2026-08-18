@@ -317,15 +317,16 @@ Auth.protect(function(){
 });
 // ── Modal de adicionar movimento ──────────────────────────────
 const CATEGORIAS_DESPESA = ['Saúde','Beleza','Supermercados','Telecom/Subscrições','Educação','Transportes','Vestuário','Desporto','Habitação','Restaurantes','Férias','Seguros','Diversos'];
-const CATEGORIAS_RECEITA = ['Salário','Freelance','Investimentos','Reembolso','Prenda','Outros'];
+const CATEGORIAS_RECEITA = ['Vencimentos','Apoios','Outros','Reembolsos'];
+const CODIGOS_PAGAMENTO = ['R','MB','TB','PS','SR','DD','CC'];
 const FIELD_STYLE = "width:100%;padding:10px;margin-top:6px;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#181D26;color:#F2F4F7;font-size:14px;font-family:inherit";
 
-// Cada tipo define a ordem dos campos e as propriedades de col1/col2.
-// Só a Receita tem ordem diferente (Data, Tipo, Categoria) — Despesa e
-// Poupança mantêm a ordem original (Tipo, Data, Valor, ...).
+// Cada tipo define a ordem dos campos. Tipo vem sempre primeiro, seguido
+// de Data, em todos os tipos. Na Despesa, Categoria e Descrição vêm antes
+// do Valor, e há um campo extra (Pagamento) que só existe nessa folha.
 function movFieldsConfig(tipo){
   if (tipo==='receita') return {
-    order: ['data','tipo','col2','valor','col1'],
+    order: ['tipo','data','col2','valor','col1'],
     col1: { label:'Fonte',     type:'text', placeholder:'opcional' },
     col2: { label:'Categoria', type:'select', options: CATEGORIAS_RECEITA, required:true }
   };
@@ -335,9 +336,10 @@ function movFieldsConfig(tipo){
     col2: { label:'Descrição', type:'text', placeholder:'opcional' }
   };
   return { // despesa
-    order: ['tipo','data','valor','col1','col2'],
-    col1: { label:'Categoria', type:'select', options: CATEGORIAS_DESPESA },
-    col2: { label:'Descrição', type:'text', placeholder:'opcional' }
+    order: ['tipo','data','col1','col2','valor','pagamento'],
+    col1: { label:'Categoria',  type:'select', options: CATEGORIAS_DESPESA },
+    col2: { label:'Descrição',  type:'text',   placeholder:'opcional' },
+    pagamento: { label:'Pagamento', type:'select', options: CODIGOS_PAGAMENTO }
   };
 }
 
@@ -365,9 +367,9 @@ function movBlockHTML(token, cfg, vals, isEdit){
       ${movLabel_('Valor (€)')}
       <input id="mv-valor" type="number" step="0.01" value="${vals.valor||''}" placeholder="0.00" style="${FIELD_STYLE};margin:6px 0 14px">`;
   }
-  // col1 / col2
+  // qualquer campo dinâmico definido no cfg (col1, col2, pagamento, ...)
   const fcfg = cfg[token];
-  const currentVal = token==='col1' ? vals.col1 : vals.col2;
+  const currentVal = vals[token];
   const field = fcfg.type==='select'
     ? `<select id="mv-${token}" style="${FIELD_STYLE}">${(fcfg.options||[]).map(c=>`<option${c===currentVal?' selected':''}>${c}</option>`).join('')}</select>`
     : `<input id="mv-${token}" type="text" value="${currentVal||''}" placeholder="${fcfg.placeholder||''}" style="${FIELD_STYLE}">`;
@@ -389,7 +391,7 @@ function updateMovFields(){
     tipo,
     dataISO: $('mv-data') ? $('mv-data').value : '',
     valor: $('mv-valor') ? $('mv-valor').value : '',
-    col1: '', col2: '', // ao trocar de tipo os campos mudam de significado
+    col1: '', col2: '', pagamento: '', // ao trocar de tipo os campos mudam de significado
   };
   $('mv-fields').innerHTML = renderMovFieldsHTML(tipo, vals, isEdit);
 }
@@ -404,6 +406,7 @@ function modalMovHTML(s){
     valor: isEdit ? v.valor : '',
     col1: isEdit ? v.col1 : '',
     col2: isEdit ? v.col2 : '',
+    pagamento: isEdit ? (v.pagamento || '') : '',
   };
   return `
   <div id="mov-modal" style="position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9000;display:flex;align-items:flex-end">
@@ -440,6 +443,7 @@ async function submitMov(isEdit){
   const valor = ($('mv-valor').value||'').replace(',','.');
   const col1 = $('mv-col1') ? $('mv-col1').value.trim() : '';
   const col2 = $('mv-col2') ? $('mv-col2').value.trim() : '';
+  const pagamento = $('mv-pagamento') ? $('mv-pagamento').value.trim() : '';
 
   if (!valor || Number(valor) <= 0) {
     msg.textContent = 'Indica um valor válido.';
@@ -460,7 +464,7 @@ async function submitMov(isEdit){
     }
   }
 
-  const payload = { action: isEdit?'despesasEdit':'despesasAdd', pin:Auth.getStoredPin()||'', tipo, data, valor, col1, col2 };
+  const payload = { action: isEdit?'despesasEdit':'despesasAdd', pin:Auth.getStoredPin()||'', tipo, data, valor, col1, col2, pagamento };
   if (isEdit) payload.row = parseInt($('mv-row').value);
 
   try {
