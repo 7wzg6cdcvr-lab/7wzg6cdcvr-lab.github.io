@@ -201,6 +201,13 @@ body{
     <section id="tab-btc" class="tab">
       <div class="info-bar" id="btc-info"></div>
       <div class="owner-list" id="btc-owners"></div>
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <div class="card-title" style="margin-bottom:0">ÚLTIMAS COMPRAS</div>
+          <button onclick="openAddBTC()" style="background:#D2A13A;border:none;border-radius:8px;color:#1a1305;font-size:12px;font-weight:700;padding:6px 12px;cursor:pointer;font-family:inherit">+ Adicionar</button>
+        </div>
+        <div id="btc-recentes-list">A carregar…</div>
+      </div>
       <div class="card"><div class="card-title">MENSAL (€)</div><div class="chart-wrap"><canvas id="chart-btc-bar"></canvas></div></div>
       <div class="card"><div class="card-title">PREÇO DE COMPRA VS MÉDIA ACUMULADA</div><div class="chart-wrap"><canvas id="chart-btc-price"></canvas></div></div>
     </section>
@@ -441,9 +448,139 @@ function lineChart(id,labels,datasets,yFmt){
   }});
 }
 
+/* ── Últimas compras de BTC ──────────────────────────────────── */
+let btcRecentes = [];
+let btcRecentesLoaded = false;
+const BTC_OWNERS = ['DM','LCD','RCD'];
+const BTC_FIELD_STYLE = "width:100%;padding:10px;margin-top:6px;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#181D26;color:#F2F4F7;font-size:14px;font-family:inherit";
+
+function btcLabel_(text){
+  return `<label style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">${text}</label>`;
+}
+
+function renderBTCRecentesHTML(){
+  if (!btcRecentesLoaded) return `<div style="color:var(--muted);font-size:13px">A carregar…</div>`;
+  if (!btcRecentes.length) return `<div style="color:var(--muted);font-size:13px">Sem compras registadas.</div>`;
+  return btcRecentes.map(t=>`
+    <div style="display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.05);cursor:pointer"
+         onclick="openEditBTC(${JSON.stringify(t).replace(/"/g,'&quot;')})">
+      <span style="width:9px;height:9px;border-radius:50%;background:${COLORS[t.owner]||'#F0A93A'};flex-shrink:0"></span>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:500">${t.owner||'—'} · ${t.qty.toFixed(6)} BTC</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:3px">${t.data}${t.location?' · '+t.location:''}</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        <div style="font-family:'DM Mono',monospace;font-size:13px;font-weight:600">${eur(t.eur)}</div>
+        <div style="font-size:10.5px;color:var(--muted2)">✏️ editar</div>
+      </div>
+    </div>`).join('');
+}
+
+function loadBTCRecentes(){
+  const pin = Auth.getStoredPin() || '';
+  fetch(Auth.API_URL + '?action=btcRecentes&pin=' + encodeURIComponent(pin))
+    .then(r=>r.json())
+    .then(d=>{
+      btcRecentesLoaded = true;
+      if (d.ok) btcRecentes = d.recentes;
+      const el = $('btc-recentes-list');
+      if (el) el.innerHTML = renderBTCRecentesHTML();
+    })
+    .catch(()=>{
+      btcRecentesLoaded = true;
+      const el = $('btc-recentes-list');
+      if (el) el.innerHTML = renderBTCRecentesHTML();
+    });
+}
+
+function modalBTCHTML(t){
+  const isEdit = !!t;
+  const v = t || {};
+  const today = new Date().toISOString().slice(0,10);
+  const dataISO = isEdit ? v.data.split('/').reverse().join('-') : today;
+  return `
+  <div id="btc-modal" style="position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9000;display:flex;align-items:flex-end">
+    <div style="background:#12161D;border-radius:20px 20px 0 0;width:100%;max-height:90vh;overflow-y:auto;padding:20px 16px calc(20px + env(safe-area-inset-bottom))">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+        <div style="font-size:16px;font-weight:700">${isEdit?'Editar compra':'Nova compra de BTC'}</div>
+        <button onclick="closeBTCModal()" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;line-height:1">×</button>
+      </div>
+      ${isEdit?`<input type="hidden" id="btc-row" value="${v.row}">`:''}
+
+      ${btcLabel_('Owner')}
+      <select id="btc-owner" style="${BTC_FIELD_STYLE};margin:6px 0 14px">
+        ${BTC_OWNERS.map(o=>`<option${v.owner===o?' selected':''}>${o}</option>`).join('')}
+      </select>
+
+      ${btcLabel_('Data')}
+      <input id="btc-data" type="date" value="${dataISO}" style="${BTC_FIELD_STYLE};margin:6px 0 14px">
+
+      ${btcLabel_('Quantidade (BTC)')}
+      <input id="btc-qty" type="number" step="0.00000001" value="${isEdit?v.qty:''}" placeholder="0.00000000" style="${BTC_FIELD_STYLE};margin:6px 0 14px">
+
+      ${btcLabel_('Valor Investido (€)')}
+      <input id="btc-eur" type="number" step="0.01" value="${isEdit?v.eur:''}" placeholder="0.00" style="${BTC_FIELD_STYLE};margin:6px 0 14px">
+
+      ${btcLabel_('Plataforma')}
+      <input id="btc-location" type="text" value="${isEdit?(v.location||''):''}" placeholder="ex: Binance, Bitvavo, HW" style="${BTC_FIELD_STYLE};margin:6px 0 14px">
+
+      ${btcLabel_('Observações')}
+      <input id="btc-obs" type="text" value="${isEdit?(v.obs||''):''}" placeholder="opcional" style="${BTC_FIELD_STYLE};margin:6px 0 20px">
+
+      <div id="btc-msg" style="font-size:12.5px;color:var(--coral);min-height:16px;margin-bottom:10px;text-align:center"></div>
+      <button onclick="submitBTC(${isEdit})" id="btc-submit"
+        style="width:100%;padding:14px;border:none;border-radius:12px;background:#D2A13A;color:#1a1305;font-weight:700;font-size:15px;cursor:pointer;font-family:inherit">
+        ${isEdit?'Guardar alterações':'Adicionar compra'}
+      </button>
+    </div>
+  </div>`;
+}
+
+function openAddBTC(){ document.body.insertAdjacentHTML('beforeend', modalBTCHTML(null)); }
+function openEditBTC(t){ document.body.insertAdjacentHTML('beforeend', modalBTCHTML(t)); }
+function closeBTCModal(){ const m=$('btc-modal'); if(m) m.remove(); }
+
+async function submitBTC(isEdit){
+  const btn=$('btc-submit'), msg=$('btc-msg');
+  btn.disabled=true; btn.textContent='A guardar...';
+  const restore=()=>{ btn.disabled=false; btn.textContent=isEdit?'Guardar alterações':'Adicionar compra'; };
+
+  const owner = $('btc-owner').value;
+  const date = $('btc-data').value; // yyyy-mm-dd — formato que o Code.gs entende diretamente
+  const qty = ($('btc-qty').value||'').replace(',','.');
+  const eurVal = ($('btc-eur').value||'').replace(',','.');
+  const location = $('btc-location').value.trim();
+  const obs = $('btc-obs').value.trim();
+
+  if (!qty || Number(qty) <= 0) { msg.textContent='Indica a quantidade de BTC.'; restore(); return; }
+  if (!eurVal || Number(eurVal) <= 0) { msg.textContent='Indica o valor investido.'; restore(); return; }
+
+  const payload = {
+    action: isEdit?'btcEdit':'btcAdd',
+    pin: Auth.getStoredPin()||'',
+    owner, date, qty, eur: eurVal, coin:'BTC', type:'Compra', location, obs,
+  };
+  if (isEdit) payload.row = parseInt($('btc-row').value);
+
+  try {
+    const r = await fetch(Auth.API_URL+'?'+new URLSearchParams({action:payload.action,pin:payload.pin}),{
+      method:'POST', body: JSON.stringify(payload)
+    });
+    const d = await r.json();
+    if(!d.ok){ msg.textContent='Erro: '+(d.error||'desconhecido'); restore(); return; }
+    closeBTCModal();
+    loadData();        // recalcula KPIs, gauge, owners e gráficos
+    loadBTCRecentes();  // atualiza a lista de últimas compras
+  } catch(e){
+    msg.textContent='Erro de rede: '+e.message;
+    restore();
+  }
+}
+
 Auth.protect(function(){
   document.getElementById('app-content').style.display = 'block';
   loadData();
+  loadBTCRecentes();
   Tickets.refreshBadge();
   Push.init();
 });
