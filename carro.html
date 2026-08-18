@@ -346,6 +346,12 @@ function modalHTML(s){
         </div>
       </div>
 
+      <label style="display:flex;align-items:center;gap:8px;margin-bottom:14px;cursor:pointer">
+        <input id="cm-carga-total" type="checkbox" ${v.cargaTotal?'checked':''}
+          style="width:18px;height:18px;accent-color:#D2A13A">
+        <span style="font-size:13px;color:#F2F4F7">Carga completa (100%)</span>
+      </label>
+
       <label style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Observações</label>
       <input id="cm-obs" type="text" value="${v.obs||''}" placeholder="opcional"
         style="width:100%;padding:10px;margin:6px 0 20px;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#181D26;color:#F2F4F7;font-size:14px;font-family:inherit">
@@ -386,6 +392,7 @@ async function submitModal(isEdit){
     minutos: getVal('cm-minutos'),
     kms: getVal('cm-kms'),
     obs: getVal('cm-obs'),
+    cargaTotal: document.getElementById('cm-carga-total').checked,
   };
   if(isEdit) payload.row = parseInt(getVal('cm-row'));
 
