@@ -200,6 +200,7 @@ body{
 
     <section id="tab-btc" class="tab">
       <div class="info-bar" id="btc-info"></div>
+      <div class="owner-list" id="btc-monthly-cards"></div>
       <div class="card">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
           <div class="card-title" style="margin-bottom:0">ÚLTIMAS COMPRAS</div>
@@ -388,6 +389,22 @@ function renderBTC(d){
     <div class="info-chip"><div class="info-label">Valor Atual</div><div class="info-value">${eur(c.btcVal)}</div></div>
     <div class="info-chip"><div class="info-label">P&amp;L</div><div class="info-value ${cl(c.btcPnl)}">${sgn(c.btcPnl)}<span style="font-size:0.72em;opacity:0.8;margin-left:4px">(${pct((c.btcPnl/c.btcTotalInvested)*100)})</span></div></div>
     <div class="info-chip"><div class="info-label">Preço Médio</div><div class="info-value">€${c.btcAvgPrice.toLocaleString('pt-PT')}</div></div>`;
+
+  $('btc-monthly-cards').innerHTML=c.btcMonthlyBreakdown.map(m=>{
+    return `<div class="owner-card">
+      <div class="owner-header" onclick="toggleOwner(this)">
+        <div class="owner-name-row"><span class="owner-dot" style="background:#F0A93A"></span><span class="owner-title">${m.label}</span></div>
+        <div class="owner-right"><span class="owner-pnl ${cl(m.pnl)}">${sgn(m.pnl)}</span><span class="owner-arrow">▼</span></div>
+      </div>
+      <div class="owner-body"><div class="owner-body-inner">
+        <div class="owner-row"><span class="owner-row-l">Investido</span><span class="owner-row-v">${eur(m.invested)}</span></div>
+        <div class="owner-row"><span class="owner-row-l">Quantidade</span><span class="owner-row-v">${m.qty.toFixed(6)} BTC</span></div>
+        <div class="owner-row"><span class="owner-row-l">Preço Médio</span><span class="owner-row-v">€${m.avgPrice.toLocaleString('pt-PT')}</span></div>
+        <div class="owner-row"><span class="owner-row-l">Valor Atual</span><span class="owner-row-v">${eur(m.currentValue)}</span></div>
+        <div class="owner-row"><span class="owner-row-l">Retorno</span><span class="owner-row-v ${cl(m.pnlPct)}">${pct(m.pnlPct)}</span></div>
+      </div></div>
+    </div>`;
+  }).join('');
 
   const ph=d.btcPriceHistory;
   const btcBarDs=[{label:'Investido',data:d.btcMonthly.map(m=>m.invested),backgroundColor:'#F0A93Acc',borderRadius:5}];
