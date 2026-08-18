@@ -218,15 +218,19 @@ function renderGrid(){
 }
 
 async function loadIndex(){
-  const r = await fetch(API()+'&action=despesasIndex');
-  const d = await r.json();
-  if (d.error) { $('app').innerHTML=`<p style="color:var(--coral)">${d.error}</p>`; return; }
-  meses = d;
-  // Carrega os KPIs globais em paralelo
-  fetch(API()+'&action=despesasData').then(r=>r.json()).then(g=>{
-    if (!g.error) { globalKPIs = g; if(currentView==='grid') renderGrid(); }
-  }).catch(()=>{});
-  renderGrid();
+  try {
+    const r = await fetch(API()+'&action=despesasIndex');
+    const d = await r.json();
+    if (d.error) { $('app').innerHTML=`<p style="color:var(--coral)">${d.error}</p>`; return; }
+    meses = d;
+    // Carrega os KPIs globais em paralelo
+    fetch(API()+'&action=despesasData').then(r=>r.json()).then(g=>{
+      if (!g.error) { globalKPIs = g; if(currentView==='grid') renderGrid(); }
+    }).catch(()=>{});
+    renderGrid();
+  } catch(e) {
+    $('app').innerHTML = `<p style="color:var(--coral)">Erro a carregar: ${e.message}</p>`;
+  }
 }
 
 // ── Detalhe de um mês ─────────────────────────────────────────
@@ -241,10 +245,14 @@ async function openMes(fileId, label, isCurrent){
   viewingIsCurrent = !!isCurrent;
   if (viewingIsCurrent) { movRecentesLoaded = false; movRecentes = []; }
   showDetailSkeleton(label);
-  const r = await fetch(API()+`&action=despesasMes&fileId=${encodeURIComponent(fileId)}`);
-  const d = await r.json();
-  if (d.error) { $('app').innerHTML=`<button class="back-btn" onclick="showGrid()">‹ Voltar</button><p style="color:var(--coral)">${d.error}</p>`; return; }
-  renderDetail(label, d, viewingIsCurrent);
+  try {
+    const r = await fetch(API()+`&action=despesasMes&fileId=${encodeURIComponent(fileId)}`);
+    const d = await r.json();
+    if (d.error) { $('app').innerHTML=`<button class="back-btn" onclick="showGrid()">‹ Voltar</button><p style="color:var(--coral)">${d.error}</p>`; return; }
+    renderDetail(label, d, viewingIsCurrent);
+  } catch(e) {
+    $('app').innerHTML = `<button class="back-btn" onclick="showGrid()">‹ Voltar</button><p style="color:var(--coral)">Erro a carregar: ${e.message}</p>`;
+  }
 }
 
 function renderDetail(label, d, isCurrent){
