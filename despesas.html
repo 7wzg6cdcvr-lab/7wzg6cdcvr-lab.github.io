@@ -317,37 +317,94 @@ Auth.protect(function(){
 });
 // ── Modal de adicionar movimento ──────────────────────────────
 const CATEGORIAS_DESPESA = ['Saúde','Beleza','Supermercados','Telecom/Subscrições','Educação','Transportes','Vestuário','Desporto','Habitação','Restaurantes','Férias','Seguros','Diversos'];
+const CATEGORIAS_RECEITA = ['Salário','Freelance','Investimentos','Reembolso','Prenda','Outros'];
 const FIELD_STYLE = "width:100%;padding:10px;margin-top:6px;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#181D26;color:#F2F4F7;font-size:14px;font-family:inherit";
 
+// Cada tipo define a ordem dos campos e as propriedades de col1/col2.
+// Só a Receita tem ordem diferente (Data, Tipo, Categoria) — Despesa e
+// Poupança mantêm a ordem original (Tipo, Data, Valor, ...).
 function movFieldsConfig(tipo){
-  if (tipo==='receita')  return { label1:'Fonte', type1:'text',   ph1:'ex: Salário',              label2:'Categoria', ph2:'opcional' };
-  if (tipo==='poupanca') return { label1:'Tipo',  type1:'text',   ph1:'ex: Fundo Emergência',      label2:'Descrição', ph2:'opcional' };
-  return                        { label1:'Categoria', type1:'select', ph1:'',                      label2:'Descrição', ph2:'opcional' };
+  if (tipo==='receita') return {
+    order: ['data','tipo','col2','valor','col1'],
+    col1: { label:'Fonte',     type:'text', placeholder:'opcional' },
+    col2: { label:'Categoria', type:'select', options: CATEGORIAS_RECEITA, required:true }
+  };
+  if (tipo==='poupanca') return {
+    order: ['tipo','data','valor','col1','col2'],
+    col1: { label:'Tipo',      type:'text', placeholder:'ex: Fundo Emergência' },
+    col2: { label:'Descrição', type:'text', placeholder:'opcional' }
+  };
+  return { // despesa
+    order: ['tipo','data','valor','col1','col2'],
+    col1: { label:'Categoria', type:'select', options: CATEGORIAS_DESPESA },
+    col2: { label:'Descrição', type:'text', placeholder:'opcional' }
+  };
 }
 
-function movCol1HTML(tipo, currentVal){
-  const cfg = movFieldsConfig(tipo);
-  if (cfg.type1==='select') {
-    return `<select id="mv-col1" style="${FIELD_STYLE}">${CATEGORIAS_DESPESA.map(c=>`<option${c===currentVal?' selected':''}>${c}</option>`).join('')}</select>`;
+function movLabel_(text){
+  return `<label style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">${text}</label>`;
+}
+
+function movBlockHTML(token, cfg, vals, isEdit){
+  if (token === 'tipo') {
+    return `
+      ${movLabel_('Tipo' + (isEdit?' <span style="text-transform:none;letter-spacing:0">(não editável)</span>':''))}
+      <select id="mv-tipo" onchange="updateMovFields()" ${isEdit?'disabled':''} style="${FIELD_STYLE};margin:6px 0 14px${isEdit?';opacity:.55':''}">
+        <option value="despesa"${vals.tipo==='despesa'?' selected':''}>Despesa</option>
+        <option value="receita"${vals.tipo==='receita'?' selected':''}>Receita</option>
+        <option value="poupanca"${vals.tipo==='poupanca'?' selected':''}>Poupança</option>
+      </select>`;
   }
-  return `<input id="mv-col1" type="text" value="${currentVal||''}" placeholder="${cfg.ph1}" style="${FIELD_STYLE}">`;
+  if (token === 'data') {
+    return `
+      ${movLabel_('Data')}
+      <input id="mv-data" type="date" value="${vals.dataISO||''}" style="${FIELD_STYLE};margin:6px 0 14px">`;
+  }
+  if (token === 'valor') {
+    return `
+      ${movLabel_('Valor (€)')}
+      <input id="mv-valor" type="number" step="0.01" value="${vals.valor||''}" placeholder="0.00" style="${FIELD_STYLE};margin:6px 0 14px">`;
+  }
+  // col1 / col2
+  const fcfg = cfg[token];
+  const currentVal = token==='col1' ? vals.col1 : vals.col2;
+  const field = fcfg.type==='select'
+    ? `<select id="mv-${token}" style="${FIELD_STYLE}">${(fcfg.options||[]).map(c=>`<option${c===currentVal?' selected':''}>${c}</option>`).join('')}</select>`
+    : `<input id="mv-${token}" type="text" value="${currentVal||''}" placeholder="${fcfg.placeholder||''}" style="${FIELD_STYLE}">`;
+  const reqMark = fcfg.required ? ' <span style="color:var(--coral)">*</span>' : '';
+  return `
+    ${movLabel_(fcfg.label + reqMark)}
+    <div style="margin:6px 0 14px">${field}</div>`;
+}
+
+function renderMovFieldsHTML(tipo, vals, isEdit){
+  const cfg = movFieldsConfig(tipo);
+  return cfg.order.map(tok => movBlockHTML(tok, cfg, vals, isEdit)).join('');
 }
 
 function updateMovFields(){
   const tipo = $('mv-tipo').value;
-  const cfg = movFieldsConfig(tipo);
-  $('mv-col1-label').textContent = cfg.label1;
-  $('mv-col1-wrap').innerHTML = movCol1HTML(tipo);
-  $('mv-col2-label').textContent = cfg.label2;
-  $('mv-col2').placeholder = cfg.ph2;
+  const isEdit = !!$('mv-row');
+  const vals = {
+    tipo,
+    dataISO: $('mv-data') ? $('mv-data').value : '',
+    valor: $('mv-valor') ? $('mv-valor').value : '',
+    col1: '', col2: '', // ao trocar de tipo os campos mudam de significado
+  };
+  $('mv-fields').innerHTML = renderMovFieldsHTML(tipo, vals, isEdit);
 }
 
 function modalMovHTML(s){
   const isEdit = !!s;
   const v = s || {};
   const tipoAtual = v.tipo || 'despesa';
-  const cfg = movFieldsConfig(tipoAtual);
-  const today = new Date().toISOString().slice(0,10);
+  const vals = {
+    tipo: tipoAtual,
+    dataISO: isEdit ? v.data.split('/').reverse().join('-') : new Date().toISOString().slice(0,10),
+    valor: isEdit ? v.valor : '',
+    col1: isEdit ? v.col1 : '',
+    col2: isEdit ? v.col2 : '',
+  };
   return `
   <div id="mov-modal" style="position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9000;display:flex;align-items:flex-end">
     <div style="background:#12161D;border-radius:20px 20px 0 0;width:100%;max-height:90vh;overflow-y:auto;padding:20px 16px calc(20px + env(safe-area-inset-bottom))">
@@ -357,24 +414,7 @@ function modalMovHTML(s){
       </div>
       ${isEdit?`<input type="hidden" id="mv-row" value="${v.row}">`:''}
 
-      <label style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Tipo${isEdit?' <span style="text-transform:none;letter-spacing:0">(não editável)</span>':''}</label>
-      <select id="mv-tipo" onchange="updateMovFields()" ${isEdit?'disabled':''} style="${FIELD_STYLE};margin:6px 0 14px${isEdit?';opacity:.55':''}">
-        <option value="despesa"${tipoAtual==='despesa'?' selected':''}>Despesa</option>
-        <option value="receita"${tipoAtual==='receita'?' selected':''}>Receita</option>
-        <option value="poupanca"${tipoAtual==='poupanca'?' selected':''}>Poupança</option>
-      </select>
-
-      <label style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Data</label>
-      <input id="mv-data" type="date" value="${isEdit?v.data.split('/').reverse().join('-'):today}" style="${FIELD_STYLE};margin:6px 0 14px">
-
-      <label style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Valor (€)</label>
-      <input id="mv-valor" type="number" step="0.01" value="${isEdit?v.valor:''}" placeholder="0.00" style="${FIELD_STYLE};margin:6px 0 14px">
-
-      <label id="mv-col1-label" style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">${cfg.label1}</label>
-      <div id="mv-col1-wrap" style="margin:6px 0 14px">${movCol1HTML(tipoAtual, v.col1)}</div>
-
-      <label id="mv-col2-label" style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">${cfg.label2}</label>
-      <input id="mv-col2" type="text" value="${isEdit?v.col2||'':''}" placeholder="${cfg.ph2}" style="${FIELD_STYLE};margin:6px 0 20px">
+      <div id="mv-fields">${renderMovFieldsHTML(tipoAtual, vals, isEdit)}</div>
 
       <div id="mv-msg" style="font-size:12.5px;color:var(--coral);min-height:16px;margin-bottom:10px;text-align:center"></div>
       <button onclick="submitMov(${isEdit})" id="mv-submit"
@@ -392,18 +432,32 @@ function closeMovModal(){ const m=$('mov-modal'); if(m) m.remove(); }
 async function submitMov(isEdit){
   const btn=$('mv-submit'), msg=$('mv-msg');
   btn.disabled=true; btn.textContent='A guardar...';
+  const restore = () => { btn.disabled=false; btn.textContent=isEdit?'Guardar alterações':'Adicionar movimento'; };
 
   const rawDate = $('mv-data').value;
   const data = rawDate ? rawDate.split('-').reverse().join('/') : '';
   const tipo = $('mv-tipo').value;
   const valor = ($('mv-valor').value||'').replace(',','.');
-  const col1 = $('mv-col1').value.trim();
-  const col2 = $('mv-col2').value.trim();
+  const col1 = $('mv-col1') ? $('mv-col1').value.trim() : '';
+  const col2 = $('mv-col2') ? $('mv-col2').value.trim() : '';
 
   if (!valor || Number(valor) <= 0) {
     msg.textContent = 'Indica um valor válido.';
-    btn.disabled=false; btn.textContent=isEdit?'Guardar alterações':'Adicionar movimento';
+    restore();
     return;
+  }
+
+  // Valida campos obrigatórios consoante o tipo (ex: Categoria em Receita)
+  const cfg = movFieldsConfig(tipo);
+  for (const tok of ['col1','col2']) {
+    if (cfg[tok].required) {
+      const val = tok==='col1' ? col1 : col2;
+      if (!val) {
+        msg.textContent = `Indica ${cfg[tok].label.toLowerCase()}.`;
+        restore();
+        return;
+      }
+    }
   }
 
   const payload = { action: isEdit?'despesasEdit':'despesasAdd', pin:Auth.getStoredPin()||'', tipo, data, valor, col1, col2 };
@@ -414,13 +468,13 @@ async function submitMov(isEdit){
       method:'POST', body: JSON.stringify(payload)
     });
     const d = await r.json();
-    if(!d.ok){ msg.textContent='Erro: '+(d.error||'desconhecido'); btn.disabled=false; btn.textContent=isEdit?'Guardar alterações':'Adicionar movimento'; return; }
+    if(!d.ok){ msg.textContent='Erro: '+(d.error||'desconhecido'); restore(); return; }
     closeMovModal();
     globalKPIs = null; // recalcula quando voltar à grelha
     if (viewingFileId) openMes(viewingFileId, viewingLabel, viewingIsCurrent);
   } catch(e){
     msg.textContent='Erro de rede: '+e.message;
-    btn.disabled=false; btn.textContent=isEdit?'Guardar alterações':'Adicionar movimento';
+    restore();
   }
 }
 </script>
