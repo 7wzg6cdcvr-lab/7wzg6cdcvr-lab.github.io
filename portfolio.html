@@ -194,6 +194,13 @@ body{
     <section id="tab-sxr8" class="tab">
       <div class="info-bar" id="sxr8-info"></div>
       <div class="owner-list" id="sxr8-owners"></div>
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <div class="card-title" style="margin-bottom:0">ÚLTIMAS COMPRAS</div>
+          <button onclick="openAddXTB()" style="background:#D2A13A;border:none;border-radius:8px;color:#1a1305;font-size:12px;font-weight:700;padding:6px 12px;cursor:pointer;font-family:inherit">+ Adicionar</button>
+        </div>
+        <div id="xtb-recentes-list">A carregar…</div>
+      </div>
       <div class="card"><div class="card-title">MENSAL POR OWNER (€)</div><div class="chart-wrap"><canvas id="chart-sp-bar"></canvas></div></div>
       <div class="card"><div class="card-title">CAPITAL ACUMULADO (€)</div><div class="chart-wrap"><canvas id="chart-sp-cum"></canvas></div></div>
     </section>
@@ -584,10 +591,128 @@ async function submitBTC(isEdit){
   }
 }
 
+/* ── Últimas compras de SXR8 ─────────────────────────────────── */
+let xtbRecentes = [];
+let xtbRecentesLoaded = false;
+const XTB_OWNERS = ['DM','LCD','RCD'];
+
+function renderXTBRecentesHTML(){
+  if (!xtbRecentesLoaded) return `<div style="color:var(--muted);font-size:13px">A carregar…</div>`;
+  if (!xtbRecentes.length) return `<div style="color:var(--muted);font-size:13px">Sem compras registadas.</div>`;
+  return xtbRecentes.map(t=>`
+    <div style="display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.05);cursor:pointer"
+         onclick="openEditXTB(${JSON.stringify(t).replace(/"/g,'&quot;')})">
+      <span style="width:9px;height:9px;border-radius:50%;background:${COLORS[t.owner]||'#F0A93A'};flex-shrink:0"></span>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:500">${t.owner} · ${t.shares.toFixed(4)} ações</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:3px">${t.data} · €${t.price.toLocaleString('pt-PT')}/ação</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        <div style="font-family:'DM Mono',monospace;font-size:13px;font-weight:600">${eur(t.amount)}</div>
+        <div style="font-size:10.5px;color:var(--muted2)">✏️ editar</div>
+      </div>
+    </div>`).join('');
+}
+
+function loadXTBRecentes(){
+  const pin = Auth.getStoredPin() || '';
+  fetch(Auth.API_URL + '?action=xtbRecentes&pin=' + encodeURIComponent(pin))
+    .then(r=>r.json())
+    .then(d=>{
+      xtbRecentesLoaded = true;
+      if (d.ok) xtbRecentes = d.recentes;
+      const el = $('xtb-recentes-list');
+      if (el) el.innerHTML = renderXTBRecentesHTML();
+    })
+    .catch(()=>{
+      xtbRecentesLoaded = true;
+      const el = $('xtb-recentes-list');
+      if (el) el.innerHTML = renderXTBRecentesHTML();
+    });
+}
+
+function modalXTBHTML(t){
+  const isEdit = !!t;
+  const v = t || {};
+  const today = new Date().toISOString().slice(0,10);
+  const dataISO = isEdit ? v.data.split('/').reverse().join('-') : today;
+  return `
+  <div id="xtb-modal" style="position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9000;display:flex;align-items:flex-end">
+    <div style="background:#12161D;border-radius:20px 20px 0 0;width:100%;max-height:90vh;overflow-y:auto;padding:20px 16px calc(20px + env(safe-area-inset-bottom))">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+        <div style="font-size:16px;font-weight:700">${isEdit?'Editar compra':'Nova compra de SXR8'}</div>
+        <button onclick="closeXTBModal()" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;line-height:1">×</button>
+      </div>
+      ${isEdit?`<input type="hidden" id="xtb-row" value="${v.row}">`:''}
+
+      ${btcLabel_('Owner')}
+      <select id="xtb-owner" style="${BTC_FIELD_STYLE};margin:6px 0 14px">
+        ${XTB_OWNERS.map(o=>`<option${v.owner===o?' selected':''}>${o}</option>`).join('')}
+      </select>
+
+      ${btcLabel_('Data')}
+      <input id="xtb-data" type="date" value="${dataISO}" style="${BTC_FIELD_STYLE};margin:6px 0 14px">
+
+      ${btcLabel_('Valor Investido (€)')}
+      <input id="xtb-amount" type="number" step="0.01" value="${isEdit?v.amount:''}" placeholder="0.00" style="${BTC_FIELD_STYLE};margin:6px 0 14px">
+
+      ${btcLabel_('Preço por Ação (€)')}
+      <input id="xtb-price" type="number" step="0.01" value="${isEdit?v.price:''}" placeholder="0.00" style="${BTC_FIELD_STYLE};margin:6px 0 20px">
+
+      <div id="xtb-msg" style="font-size:12.5px;color:var(--coral);min-height:16px;margin-bottom:10px;text-align:center"></div>
+      <button onclick="submitXTB(${isEdit})" id="xtb-submit"
+        style="width:100%;padding:14px;border:none;border-radius:12px;background:#D2A13A;color:#1a1305;font-weight:700;font-size:15px;cursor:pointer;font-family:inherit">
+        ${isEdit?'Guardar alterações':'Adicionar compra'}
+      </button>
+    </div>
+  </div>`;
+}
+
+function openAddXTB(){ document.body.insertAdjacentHTML('beforeend', modalXTBHTML(null)); }
+function openEditXTB(t){ document.body.insertAdjacentHTML('beforeend', modalXTBHTML(t)); }
+function closeXTBModal(){ const m=$('xtb-modal'); if(m) m.remove(); }
+
+async function submitXTB(isEdit){
+  const btn=$('xtb-submit'), msg=$('xtb-msg');
+  btn.disabled=true; btn.textContent='A guardar...';
+  const restore=()=>{ btn.disabled=false; btn.textContent=isEdit?'Guardar alterações':'Adicionar compra'; };
+
+  const owner = $('xtb-owner').value;
+  const rawDate = $('xtb-data').value; // yyyy-mm-dd
+  const date = rawDate ? rawDate.split('-').reverse().join('/') : ''; // dd/mm/yyyy — formato que o Code.gs espera
+  const amount = ($('xtb-amount').value||'').replace(',','.');
+  const price = ($('xtb-price').value||'').replace(',','.');
+
+  if (!amount || Number(amount) <= 0) { msg.textContent='Indica o valor investido.'; restore(); return; }
+  if (!price || Number(price) <= 0) { msg.textContent='Indica o preço por ação.'; restore(); return; }
+
+  const payload = {
+    action: isEdit?'xtbEdit':'xtbAdd',
+    pin: Auth.getStoredPin()||'',
+    owner, date, amount, price,
+  };
+  if (isEdit) payload.row = parseInt($('xtb-row').value);
+
+  try {
+    const r = await fetch(Auth.API_URL+'?'+new URLSearchParams({action:payload.action,pin:payload.pin}),{
+      method:'POST', body: JSON.stringify(payload)
+    });
+    const d = await r.json();
+    if(!d.ok){ msg.textContent='Erro: '+(d.error||'desconhecido'); restore(); return; }
+    closeXTBModal();
+    loadData();        // recalcula KPIs, gauge, owners e gráficos
+    loadXTBRecentes();  // atualiza a lista de últimas compras
+  } catch(e){
+    msg.textContent='Erro de rede: '+e.message;
+    restore();
+  }
+}
+
 Auth.protect(function(){
   document.getElementById('app-content').style.display = 'block';
   loadData();
   loadBTCRecentes();
+  loadXTBRecentes();
   Tickets.refreshBadge();
   Push.init();
 });
