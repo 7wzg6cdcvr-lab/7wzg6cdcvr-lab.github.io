@@ -200,7 +200,6 @@ body{
 
     <section id="tab-btc" class="tab">
       <div class="info-bar" id="btc-info"></div>
-      <div class="owner-list" id="btc-owners"></div>
       <div class="card">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
           <div class="card-title" style="margin-bottom:0">ÚLTIMAS COMPRAS</div>
@@ -390,23 +389,6 @@ function renderBTC(d){
     <div class="info-chip"><div class="info-label">P&amp;L</div><div class="info-value ${cl(c.btcPnl)}">${sgn(c.btcPnl)}<span style="font-size:0.72em;opacity:0.8;margin-left:4px">(${pct((c.btcPnl/c.btcTotalInvested)*100)})</span></div></div>
     <div class="info-chip"><div class="info-label">Preço Médio</div><div class="info-value">€${c.btcAvgPrice.toLocaleString('pt-PT')}</div></div>`;
 
-  $('btc-owners').innerHTML=Object.entries(c.btcOwners).map(([o,ow])=>{
-    const col=COLORS[o]||'#F0A93A';
-    return `<div class="owner-card">
-      <div class="owner-header" onclick="toggleOwner(this)">
-        <div class="owner-name-row"><span class="owner-dot" style="background:${col}"></span><span class="owner-title">${o}</span></div>
-        <div class="owner-right"><span class="owner-pnl ${cl(ow.pnl)}">${sgn(ow.pnl)}</span><span class="owner-arrow">▼</span></div>
-      </div>
-      <div class="owner-body"><div class="owner-body-inner">
-        <div class="owner-row"><span class="owner-row-l">Investido</span><span class="owner-row-v">${eur(ow.invested)}</span></div>
-        <div class="owner-row"><span class="owner-row-l">Quantidade</span><span class="owner-row-v">${ow.qty.toFixed(6)} BTC</span></div>
-        <div class="owner-row"><span class="owner-row-l">Preço Médio</span><span class="owner-row-v">€${ow.avgPrice.toLocaleString('pt-PT')}</span></div>
-        <div class="owner-row"><span class="owner-row-l">Valor Atual</span><span class="owner-row-v">${eur(ow.currentValue)}</span></div>
-        <div class="owner-row"><span class="owner-row-l">Retorno</span><span class="owner-row-v ${cl(ow.pnlPct)}">${pct(ow.pnlPct)}</span></div>
-      </div></div>
-    </div>`;
-  }).join('');
-
   const ph=d.btcPriceHistory;
   const btcBarDs=[{label:'Investido',data:d.btcMonthly.map(m=>m.invested),backgroundColor:'#F0A93Acc',borderRadius:5}];
   dc('chart-btc-bar'); ch['chart-btc-bar']=barChart('chart-btc-bar',d.btcMonthly.map(m=>m.label),btcBarDs,false);
@@ -451,7 +433,6 @@ function lineChart(id,labels,datasets,yFmt){
 /* ── Últimas compras de BTC ──────────────────────────────────── */
 let btcRecentes = [];
 let btcRecentesLoaded = false;
-const BTC_OWNERS = ['DM','LCD','RCD'];
 const BTC_FIELD_STYLE = "width:100%;padding:10px;margin-top:6px;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#181D26;color:#F2F4F7;font-size:14px;font-family:inherit";
 
 function btcLabel_(text){
@@ -461,19 +442,22 @@ function btcLabel_(text){
 function renderBTCRecentesHTML(){
   if (!btcRecentesLoaded) return `<div style="color:var(--muted);font-size:13px">A carregar…</div>`;
   if (!btcRecentes.length) return `<div style="color:var(--muted);font-size:13px">Sem compras registadas.</div>`;
-  return btcRecentes.map(t=>`
+  return btcRecentes.map(t=>{
+    const isVenda = String(t.tipo||'').toLowerCase() === 'venda';
+    return `
     <div style="display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.05);cursor:pointer"
          onclick="openEditBTC(${JSON.stringify(t).replace(/"/g,'&quot;')})">
-      <span style="width:9px;height:9px;border-radius:50%;background:${COLORS[t.owner]||'#F0A93A'};flex-shrink:0"></span>
+      <span style="width:9px;height:9px;border-radius:50%;background:${isVenda?'var(--coral)':'var(--mint)'};flex-shrink:0"></span>
       <div style="flex:1;min-width:0">
-        <div style="font-size:13px;font-weight:500">${t.owner||'—'} · ${t.qty.toFixed(6)} BTC</div>
+        <div style="font-size:13px;font-weight:500">${t.qty.toFixed(6)} ${t.coin||'BTC'}</div>
         <div style="font-size:11px;color:var(--muted);margin-top:3px">${t.data}${t.location?' · '+t.location:''}</div>
       </div>
       <div style="text-align:right;flex-shrink:0">
         <div style="font-family:'DM Mono',monospace;font-size:13px;font-weight:600">${eur(t.eur)}</div>
         <div style="font-size:10.5px;color:var(--muted2)">✏️ editar</div>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 function loadBTCRecentes(){
@@ -507,19 +491,23 @@ function modalBTCHTML(t){
       </div>
       ${isEdit?`<input type="hidden" id="btc-row" value="${v.row}">`:''}
 
-      ${btcLabel_('Owner')}
-      <select id="btc-owner" style="${BTC_FIELD_STYLE};margin:6px 0 14px">
-        ${BTC_OWNERS.map(o=>`<option${v.owner===o?' selected':''}>${o}</option>`).join('')}
-      </select>
-
       ${btcLabel_('Data')}
       <input id="btc-data" type="date" value="${dataISO}" style="${BTC_FIELD_STYLE};margin:6px 0 14px">
 
-      ${btcLabel_('Quantidade (BTC)')}
+      ${btcLabel_('Asset')}
+      <input id="btc-coin" type="text" value="${isEdit?(v.coin||'BTC'):'BTC'}" style="${BTC_FIELD_STYLE};margin:6px 0 14px">
+
+      ${btcLabel_('Quantidade')}
       <input id="btc-qty" type="number" step="0.00000001" value="${isEdit?v.qty:''}" placeholder="0.00000000" style="${BTC_FIELD_STYLE};margin:6px 0 14px">
 
       ${btcLabel_('Valor Investido (€)')}
       <input id="btc-eur" type="number" step="0.01" value="${isEdit?v.eur:''}" placeholder="0.00" style="${BTC_FIELD_STYLE};margin:6px 0 14px">
+
+      ${btcLabel_('Tipo')}
+      <select id="btc-tipo" style="${BTC_FIELD_STYLE};margin:6px 0 14px">
+        <option${(!isEdit || v.tipo==='Compra')?' selected':''}>Compra</option>
+        <option${(isEdit && v.tipo==='Venda')?' selected':''}>Venda</option>
+      </select>
 
       ${btcLabel_('Plataforma')}
       <input id="btc-location" type="text" value="${isEdit?(v.location||''):''}" placeholder="ex: Binance, Bitvavo, HW" style="${BTC_FIELD_STYLE};margin:6px 0 14px">
@@ -530,7 +518,7 @@ function modalBTCHTML(t){
       <div id="btc-msg" style="font-size:12.5px;color:var(--coral);min-height:16px;margin-bottom:10px;text-align:center"></div>
       <button onclick="submitBTC(${isEdit})" id="btc-submit"
         style="width:100%;padding:14px;border:none;border-radius:12px;background:#D2A13A;color:#1a1305;font-weight:700;font-size:15px;cursor:pointer;font-family:inherit">
-        ${isEdit?'Guardar alterações':'Adicionar compra'}
+        ${isEdit?'Guardar alterações':'Adicionar transação'}
       </button>
     </div>
   </div>`;
@@ -543,22 +531,24 @@ function closeBTCModal(){ const m=$('btc-modal'); if(m) m.remove(); }
 async function submitBTC(isEdit){
   const btn=$('btc-submit'), msg=$('btc-msg');
   btn.disabled=true; btn.textContent='A guardar...';
-  const restore=()=>{ btn.disabled=false; btn.textContent=isEdit?'Guardar alterações':'Adicionar compra'; };
+  const restore=()=>{ btn.disabled=false; btn.textContent=isEdit?'Guardar alterações':'Adicionar transação'; };
 
-  const owner = $('btc-owner').value;
-  const date = $('btc-data').value; // yyyy-mm-dd — formato que o Code.gs entende diretamente
+  const rawDate = $('btc-data').value; // yyyy-mm-dd (formato nativo do <input type=date>)
+  const date = rawDate ? rawDate.split('-').reverse().join('/') : ''; // dd/mm/yyyy — formato que o Code.gs espera
+  const coin = $('btc-coin').value.trim() || 'BTC';
   const qty = ($('btc-qty').value||'').replace(',','.');
   const eurVal = ($('btc-eur').value||'').replace(',','.');
+  const tipo = $('btc-tipo').value;
   const location = $('btc-location').value.trim();
   const obs = $('btc-obs').value.trim();
 
-  if (!qty || Number(qty) <= 0) { msg.textContent='Indica a quantidade de BTC.'; restore(); return; }
+  if (!qty || Number(qty) <= 0) { msg.textContent='Indica a quantidade.'; restore(); return; }
   if (!eurVal || Number(eurVal) <= 0) { msg.textContent='Indica o valor investido.'; restore(); return; }
 
   const payload = {
     action: isEdit?'btcEdit':'btcAdd',
     pin: Auth.getStoredPin()||'',
-    owner, date, qty, eur: eurVal, coin:'BTC', type:'Compra', location, obs,
+    date, coin, qty, eur: eurVal, type: tipo, location, obs,
   };
   if (isEdit) payload.row = parseInt($('btc-row').value);
 
