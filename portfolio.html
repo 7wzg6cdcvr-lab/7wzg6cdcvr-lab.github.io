@@ -595,6 +595,9 @@ async function submitBTC(isEdit){
 let xtbRecentes = [];
 let xtbRecentesLoaded = false;
 const XTB_OWNERS = ['DM','LCD','RCD'];
+const XTB_TYPES = ['Stock purchase'];
+const XTB_TICKERS = ['SXR8.DE'];
+const XTB_INSTRUMENTS = ['Core S&P 500'];
 
 function renderXTBRecentesHTML(){
   if (!xtbRecentesLoaded) return `<div style="color:var(--muted);font-size:13px">A carregar…</div>`;
@@ -604,8 +607,8 @@ function renderXTBRecentesHTML(){
          onclick="openEditXTB(${JSON.stringify(t).replace(/"/g,'&quot;')})">
       <span style="width:9px;height:9px;border-radius:50%;background:${COLORS[t.owner]||'#F0A93A'};flex-shrink:0"></span>
       <div style="flex:1;min-width:0">
-        <div style="font-size:13px;font-weight:500">${t.owner} · ${t.shares.toFixed(4)} ações</div>
-        <div style="font-size:11px;color:var(--muted);margin-top:3px">${t.data} · €${t.price.toLocaleString('pt-PT')}/ação</div>
+        <div style="font-size:13px;font-weight:500">${t.owner} · ${t.shares?t.shares.toFixed(4)+' ações':t.comment}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:3px">${t.time}</div>
       </div>
       <div style="text-align:right;flex-shrink:0">
         <div style="font-family:'DM Mono',monospace;font-size:13px;font-weight:600">${eur(t.amount)}</div>
@@ -634,35 +637,55 @@ function loadXTBRecentes(){
 function modalXTBHTML(t){
   const isEdit = !!t;
   const v = t || {};
-  const today = new Date().toISOString().slice(0,10);
-  const dataISO = isEdit ? v.data.split('/').reverse().join('-') : today;
+  const pad = n => String(n).padStart(2,'0');
+  const now = new Date();
+  const defaultTime = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  const timeISO = isEdit ? v.time.replace(' ', 'T') : defaultTime;
   return `
   <div id="xtb-modal" style="position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9000;display:flex;align-items:flex-end">
     <div style="background:#12161D;border-radius:20px 20px 0 0;width:100%;max-height:90vh;overflow-y:auto;padding:20px 16px calc(20px + env(safe-area-inset-bottom))">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
-        <div style="font-size:16px;font-weight:700">${isEdit?'Editar compra':'Nova compra de SXR8'}</div>
+        <div style="font-size:16px;font-weight:700">${isEdit?'Editar transação':'Nova transação de SXR8'}</div>
         <button onclick="closeXTBModal()" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;line-height:1">×</button>
       </div>
       ${isEdit?`<input type="hidden" id="xtb-row" value="${v.row}">`:''}
 
-      ${btcLabel_('Owner')}
-      <select id="xtb-owner" style="${BTC_FIELD_STYLE};margin:6px 0 14px">
-        ${XTB_OWNERS.map(o=>`<option${v.owner===o?' selected':''}>${o}</option>`).join('')}
+      ${btcLabel_('Type')}
+      <select id="xtb-type" style="${BTC_FIELD_STYLE};margin:6px 0 14px">
+        ${XTB_TYPES.map(o=>`<option${(!isEdit||v.type===o)?' selected':''}>${o}</option>`).join('')}
       </select>
 
-      ${btcLabel_('Data')}
-      <input id="xtb-data" type="date" value="${dataISO}" style="${BTC_FIELD_STYLE};margin:6px 0 14px">
+      ${btcLabel_('Ticker')}
+      <select id="xtb-ticker" style="${BTC_FIELD_STYLE};margin:6px 0 14px">
+        ${XTB_TICKERS.map(o=>`<option${(!isEdit||v.ticker===o)?' selected':''}>${o}</option>`).join('')}
+      </select>
 
-      ${btcLabel_('Valor Investido (€)')}
-      <input id="xtb-amount" type="number" step="0.01" value="${isEdit?v.amount:''}" placeholder="0.00" style="${BTC_FIELD_STYLE};margin:6px 0 14px">
+      ${btcLabel_('Instrument')}
+      <select id="xtb-instrument" style="${BTC_FIELD_STYLE};margin:6px 0 14px">
+        ${XTB_INSTRUMENTS.map(o=>`<option${(!isEdit||v.instrument===o)?' selected':''}>${o}</option>`).join('')}
+      </select>
 
-      ${btcLabel_('Preço por Ação (€)')}
-      <input id="xtb-price" type="number" step="0.01" value="${isEdit?v.price:''}" placeholder="0.00" style="${BTC_FIELD_STYLE};margin:6px 0 20px">
+      ${btcLabel_('Time (AAAA-MM-DD HH:MM)')}
+      <input id="xtb-time" type="datetime-local" value="${timeISO}" style="${BTC_FIELD_STYLE};margin:6px 0 14px">
+
+      ${btcLabel_('Amount (€)')}
+      <input id="xtb-amount" type="text" inputmode="decimal" value="${isEdit?v.amount:''}" placeholder="ex: 99,53" style="${BTC_FIELD_STYLE};margin:6px 0 14px">
+
+      ${btcLabel_('ID')}
+      <input id="xtb-id" type="text" value="${isEdit?(v.id||''):''}" placeholder="deixa em branco para gerar automaticamente" style="${BTC_FIELD_STYLE};margin:6px 0 14px">
+
+      ${btcLabel_('Comment')}
+      <input id="xtb-comment" type="text" value="${isEdit?(v.comment||''):''}" placeholder="ex: OPEN BUY 0.917 @ 542.34" style="${BTC_FIELD_STYLE};margin:6px 0 14px">
+
+      ${btcLabel_('Owner')}
+      <select id="xtb-owner" style="${BTC_FIELD_STYLE};margin:6px 0 20px">
+        ${XTB_OWNERS.map(o=>`<option${v.owner===o?' selected':''}>${o}</option>`).join('')}
+      </select>
 
       <div id="xtb-msg" style="font-size:12.5px;color:var(--coral);min-height:16px;margin-bottom:10px;text-align:center"></div>
       <button onclick="submitXTB(${isEdit})" id="xtb-submit"
         style="width:100%;padding:14px;border:none;border-radius:12px;background:#D2A13A;color:#1a1305;font-weight:700;font-size:15px;cursor:pointer;font-family:inherit">
-        ${isEdit?'Guardar alterações':'Adicionar compra'}
+        ${isEdit?'Guardar alterações':'Adicionar transação'}
       </button>
     </div>
   </div>`;
@@ -675,21 +698,25 @@ function closeXTBModal(){ const m=$('xtb-modal'); if(m) m.remove(); }
 async function submitXTB(isEdit){
   const btn=$('xtb-submit'), msg=$('xtb-msg');
   btn.disabled=true; btn.textContent='A guardar...';
-  const restore=()=>{ btn.disabled=false; btn.textContent=isEdit?'Guardar alterações':'Adicionar compra'; };
+  const restore=()=>{ btn.disabled=false; btn.textContent=isEdit?'Guardar alterações':'Adicionar transação'; };
 
-  const owner = $('xtb-owner').value;
-  const rawDate = $('xtb-data').value; // yyyy-mm-dd
-  const date = rawDate ? rawDate.split('-').reverse().join('/') : ''; // dd/mm/yyyy — formato que o Code.gs espera
+  const type = $('xtb-type').value;
+  const ticker = $('xtb-ticker').value;
+  const instrument = $('xtb-instrument').value;
+  const rawTime = $('xtb-time').value; // yyyy-mm-ddThh:mm
+  const time = rawTime ? rawTime.replace('T', ' ') : ''; // yyyy-mm-dd hh:mm — formato que o Code.gs espera
   const amount = ($('xtb-amount').value||'').replace(',','.');
-  const price = ($('xtb-price').value||'').replace(',','.');
+  const id = $('xtb-id').value.trim();
+  const comment = $('xtb-comment').value.trim();
+  const owner = $('xtb-owner').value;
 
-  if (!amount || Number(amount) <= 0) { msg.textContent='Indica o valor investido.'; restore(); return; }
-  if (!price || Number(price) <= 0) { msg.textContent='Indica o preço por ação.'; restore(); return; }
+  if (!time) { msg.textContent='Indica a data/hora.'; restore(); return; }
+  if (!amount || Number(amount) <= 0) { msg.textContent='Indica o Amount.'; restore(); return; }
 
   const payload = {
     action: isEdit?'xtbEdit':'xtbAdd',
     pin: Auth.getStoredPin()||'',
-    owner, date, amount, price,
+    type, ticker, instrument, time, amount, id, comment, owner,
   };
   if (isEdit) payload.row = parseInt($('xtb-row').value);
 
