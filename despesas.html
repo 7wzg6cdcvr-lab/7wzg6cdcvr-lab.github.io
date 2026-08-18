@@ -137,6 +137,38 @@ function showGrid(){
   renderGrid();
 }
 
+// ── Últimos 5 movimentos do mês atual ─────────────────────────
+let movRecentes = [];
+let movRecentesLoaded = false;
+const TIPO_LABEL = { despesa:'Despesa', receita:'Receita', poupanca:'Poupança' };
+const TIPO_COLOR = { despesa:'var(--coral)', receita:'var(--mint)', poupanca:'var(--sapphire)' };
+
+function renderRecentesMovHTML(){
+  if (!movRecentesLoaded) return `<div style="color:var(--muted);font-size:13px">A carregar…</div>`;
+  if (!movRecentes.length) return `<div style="color:var(--muted);font-size:13px">Sem movimentos este mês.</div>`;
+  return movRecentes.map(m=>`
+    <div style="display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.05);cursor:pointer"
+         onclick="openEditMov(${JSON.stringify(m).replace(/"/g,'&quot;')})">
+      <span style="width:8px;height:8px;border-radius:50%;background:${TIPO_COLOR[m.tipo]||'var(--muted)'};flex-shrink:0"></span>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${m.col1||'—'}${m.col2?' · '+m.col2:''}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:3px">${m.data} · ${TIPO_LABEL[m.tipo]||m.tipo}</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        <div style="font-family:'DM Mono',monospace;font-size:13px;font-weight:600;color:${TIPO_COLOR[m.tipo]||'var(--text)'}">${eur(m.valor)}</div>
+        <div style="font-size:10.5px;color:var(--muted2)">✏️ editar</div>
+      </div>
+    </div>`).join('');
+}
+
+function loadRecentesMovimentos(){
+  fetch(API()+'&action=despesasRecentes').then(r=>r.json()).then(d=>{
+    movRecentesLoaded = true;
+    if (d.ok) movRecentes = d.recentes;
+    if (currentView === 'grid') renderGrid();
+  }).catch(()=>{ movRecentesLoaded = true; if (currentView === 'grid') renderGrid(); });
+}
+
 function renderGlobalKPIs(){
   if (!globalKPIs) return `
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
@@ -171,6 +203,13 @@ function renderGlobalKPIs(){
 
 function renderGrid(){
   $('app').innerHTML = renderGlobalKPIs() + `
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <div class="card-title" style="margin-bottom:0">ÚLTIMOS MOVIMENTOS</div>
+        <button onclick="openAddMov()" style="background:#D2A13A;border:none;border-radius:8px;color:#1a1305;font-size:12px;font-weight:700;padding:6px 12px;cursor:pointer;font-family:inherit">+ Adicionar</button>
+      </div>
+      <div id="mov-recentes-list">${renderRecentesMovHTML()}</div>
+    </div>
     <div class="mes-grid">
       ${meses.map(m=>`
         <div class="mes-card${m.current?' current':''}" onclick="openMes('${m.id}','${m.label}')">
@@ -244,8 +283,10 @@ function refresh(){
   const btn = $('refresh-btn');
   btn.classList.add('spinning');
   meses = [];
+  movRecentesLoaded = false;
   if (currentView === 'grid') showGrid();
   else showGrid(); // volta à grelha e recarrega
+  loadRecentesMovimentos();
 }
 
 // ── Arranque ─────────────────────────────────────────────────
@@ -254,7 +295,117 @@ Auth.protect(function(){
   Tickets.refreshBadge();
   Push.init();
   showGrid();
+  loadRecentesMovimentos();
 });
+// ── Modal de adicionar movimento ──────────────────────────────
+const CATEGORIAS_DESPESA = ['Saúde','Beleza','Supermercados','Telecom/Subscrições','Educação','Transportes','Vestuário','Desporto','Habitação','Restaurantes','Férias','Seguros','Diversos'];
+const FIELD_STYLE = "width:100%;padding:10px;margin-top:6px;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#181D26;color:#F2F4F7;font-size:14px;font-family:inherit";
+
+function movFieldsConfig(tipo){
+  if (tipo==='receita')  return { label1:'Fonte', type1:'text',   ph1:'ex: Salário',              label2:'Categoria', ph2:'opcional' };
+  if (tipo==='poupanca') return { label1:'Tipo',  type1:'text',   ph1:'ex: Fundo Emergência',      label2:'Descrição', ph2:'opcional' };
+  return                        { label1:'Categoria', type1:'select', ph1:'',                      label2:'Descrição', ph2:'opcional' };
+}
+
+function movCol1HTML(tipo, currentVal){
+  const cfg = movFieldsConfig(tipo);
+  if (cfg.type1==='select') {
+    return `<select id="mv-col1" style="${FIELD_STYLE}">${CATEGORIAS_DESPESA.map(c=>`<option${c===currentVal?' selected':''}>${c}</option>`).join('')}</select>`;
+  }
+  return `<input id="mv-col1" type="text" value="${currentVal||''}" placeholder="${cfg.ph1}" style="${FIELD_STYLE}">`;
+}
+
+function updateMovFields(){
+  const tipo = $('mv-tipo').value;
+  const cfg = movFieldsConfig(tipo);
+  $('mv-col1-label').textContent = cfg.label1;
+  $('mv-col1-wrap').innerHTML = movCol1HTML(tipo);
+  $('mv-col2-label').textContent = cfg.label2;
+  $('mv-col2').placeholder = cfg.ph2;
+}
+
+function modalMovHTML(s){
+  const isEdit = !!s;
+  const v = s || {};
+  const tipoAtual = v.tipo || 'despesa';
+  const cfg = movFieldsConfig(tipoAtual);
+  const today = new Date().toISOString().slice(0,10);
+  return `
+  <div id="mov-modal" style="position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9000;display:flex;align-items:flex-end">
+    <div style="background:#12161D;border-radius:20px 20px 0 0;width:100%;max-height:90vh;overflow-y:auto;padding:20px 16px calc(20px + env(safe-area-inset-bottom))">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+        <div style="font-size:16px;font-weight:700">${isEdit?'Editar movimento':'Novo movimento'}</div>
+        <button onclick="closeMovModal()" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;line-height:1">×</button>
+      </div>
+      ${isEdit?`<input type="hidden" id="mv-row" value="${v.row}">`:''}
+
+      <label style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Tipo${isEdit?' <span style="text-transform:none;letter-spacing:0">(não editável)</span>':''}</label>
+      <select id="mv-tipo" onchange="updateMovFields()" ${isEdit?'disabled':''} style="${FIELD_STYLE};margin:6px 0 14px${isEdit?';opacity:.55':''}">
+        <option value="despesa"${tipoAtual==='despesa'?' selected':''}>Despesa</option>
+        <option value="receita"${tipoAtual==='receita'?' selected':''}>Receita</option>
+        <option value="poupanca"${tipoAtual==='poupanca'?' selected':''}>Poupança</option>
+      </select>
+
+      <label style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Data</label>
+      <input id="mv-data" type="date" value="${isEdit?v.data.split('/').reverse().join('-'):today}" style="${FIELD_STYLE};margin:6px 0 14px">
+
+      <label style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Valor (€)</label>
+      <input id="mv-valor" type="number" step="0.01" value="${isEdit?v.valor:''}" placeholder="0.00" style="${FIELD_STYLE};margin:6px 0 14px">
+
+      <label id="mv-col1-label" style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">${cfg.label1}</label>
+      <div id="mv-col1-wrap" style="margin:6px 0 14px">${movCol1HTML(tipoAtual, v.col1)}</div>
+
+      <label id="mv-col2-label" style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">${cfg.label2}</label>
+      <input id="mv-col2" type="text" value="${isEdit?v.col2||'':''}" placeholder="${cfg.ph2}" style="${FIELD_STYLE};margin:6px 0 20px">
+
+      <div id="mv-msg" style="font-size:12.5px;color:var(--coral);min-height:16px;margin-bottom:10px;text-align:center"></div>
+      <button onclick="submitMov(${isEdit})" id="mv-submit"
+        style="width:100%;padding:14px;border:none;border-radius:12px;background:#D2A13A;color:#1a1305;font-weight:700;font-size:15px;cursor:pointer;font-family:inherit">
+        ${isEdit?'Guardar alterações':'Adicionar movimento'}
+      </button>
+    </div>
+  </div>`;
+}
+
+function openAddMov(){ document.body.insertAdjacentHTML('beforeend', modalMovHTML(null)); }
+function openEditMov(m){ document.body.insertAdjacentHTML('beforeend', modalMovHTML(m)); }
+function closeMovModal(){ const m=$('mov-modal'); if(m) m.remove(); }
+
+async function submitMov(isEdit){
+  const btn=$('mv-submit'), msg=$('mv-msg');
+  btn.disabled=true; btn.textContent='A guardar...';
+
+  const rawDate = $('mv-data').value;
+  const data = rawDate ? rawDate.split('-').reverse().join('/') : '';
+  const tipo = $('mv-tipo').value;
+  const valor = ($('mv-valor').value||'').replace(',','.');
+  const col1 = $('mv-col1').value.trim();
+  const col2 = $('mv-col2').value.trim();
+
+  if (!valor || Number(valor) <= 0) {
+    msg.textContent = 'Indica um valor válido.';
+    btn.disabled=false; btn.textContent=isEdit?'Guardar alterações':'Adicionar movimento';
+    return;
+  }
+
+  const payload = { action: isEdit?'despesasEdit':'despesasAdd', pin:Auth.getStoredPin()||'', tipo, data, valor, col1, col2 };
+  if (isEdit) payload.row = parseInt($('mv-row').value);
+
+  try {
+    const r = await fetch(Auth.API_URL+'?'+new URLSearchParams({action:payload.action,pin:payload.pin}),{
+      method:'POST', body: JSON.stringify(payload)
+    });
+    const d = await r.json();
+    if(!d.ok){ msg.textContent='Erro: '+(d.error||'desconhecido'); btn.disabled=false; btn.textContent=isEdit?'Guardar alterações':'Adicionar movimento'; return; }
+    closeMovModal();
+    globalKPIs = null; // força recalcular os KPIs globais
+    loadIndex();
+    loadRecentesMovimentos();
+  } catch(e){
+    msg.textContent='Erro de rede: '+e.message;
+    btn.disabled=false; btn.textContent=isEdit?'Guardar alterações':'Adicionar movimento';
+  }
+}
 </script>
 </body>
 </html>
