@@ -650,37 +650,37 @@ function modalXTBHTML(t){
       </div>
       ${isEdit?`<input type="hidden" id="xtb-row" value="${v.row}">`:''}
 
-      ${btcLabel_('Type')}
+      ${btcLabel_('Type <span style="color:var(--coral)">*</span>')}
       <select id="xtb-type" style="${BTC_FIELD_STYLE};margin:6px 0 14px">
         ${XTB_TYPES.map(o=>`<option${(!isEdit||v.type===o)?' selected':''}>${o}</option>`).join('')}
       </select>
 
-      ${btcLabel_('Ticker')}
+      ${btcLabel_('Ticker <span style="color:var(--coral)">*</span>')}
       <select id="xtb-ticker" style="${BTC_FIELD_STYLE};margin:6px 0 14px">
         ${XTB_TICKERS.map(o=>`<option${(!isEdit||v.ticker===o)?' selected':''}>${o}</option>`).join('')}
       </select>
 
-      ${btcLabel_('Instrument')}
+      ${btcLabel_('Instrument <span style="color:var(--coral)">*</span>')}
       <select id="xtb-instrument" style="${BTC_FIELD_STYLE};margin:6px 0 14px">
         ${XTB_INSTRUMENTS.map(o=>`<option${(!isEdit||v.instrument===o)?' selected':''}>${o}</option>`).join('')}
       </select>
 
-      ${btcLabel_('Time (AAAA-MM-DD HH:MM)')}
+      ${btcLabel_('Time (AAAA-MM-DD HH:MM) <span style="color:var(--coral)">*</span>')}
       <input id="xtb-time" type="datetime-local" value="${timeISO}" style="${BTC_FIELD_STYLE};margin:6px 0 14px">
 
-      ${btcLabel_('Amount (€)')}
+      ${btcLabel_('Amount (€) <span style="color:var(--coral)">*</span>')}
       <input id="xtb-amount" type="text" inputmode="decimal" value="${isEdit?v.amount:''}" placeholder="ex: 99,53" style="${BTC_FIELD_STYLE};margin:6px 0 14px">
 
       ${btcLabel_('ID <span style="color:var(--coral)">*</span>')}
       <input id="xtb-id" type="text" value="${isEdit?(v.id||''):''}" placeholder="ID da transação" style="${BTC_FIELD_STYLE};margin:6px 0 14px">
 
-      ${btcLabel_('Quantity (Open Buy)')}
+      ${btcLabel_('Quantity (Open Buy) <span style="color:var(--coral)">*</span>')}
       <input id="xtb-quantity" type="text" inputmode="decimal" value="${isEdit?v.quantity:''}" placeholder="ex: 0.917" style="${BTC_FIELD_STYLE};margin:6px 0 14px">
 
-      ${btcLabel_('Price per Share (Open Buy) (€)')}
+      ${btcLabel_('Price per Share (Open Buy) (€) <span style="color:var(--coral)">*</span>')}
       <input id="xtb-price" type="text" inputmode="decimal" value="${isEdit?v.price:''}" placeholder="ex: 542.34" style="${BTC_FIELD_STYLE};margin:6px 0 14px">
 
-      ${btcLabel_('Owner')}
+      ${btcLabel_('Owner <span style="color:var(--coral)">*</span>')}
       <select id="xtb-owner" style="${BTC_FIELD_STYLE};margin:6px 0 20px">
         ${XTB_OWNERS.map(o=>`<option${v.owner===o?' selected':''}>${o}</option>`).join('')}
       </select>
@@ -714,11 +714,15 @@ async function submitXTB(isEdit){
   const price = ($('xtb-price').value||'').replace(',','.');
   const owner = $('xtb-owner').value;
 
+  if (!type) { msg.textContent='Indica o Type.'; restore(); return; }
+  if (!ticker) { msg.textContent='Indica o Ticker.'; restore(); return; }
+  if (!instrument) { msg.textContent='Indica o Instrument.'; restore(); return; }
   if (!time) { msg.textContent='Indica a data/hora.'; restore(); return; }
   if (!id) { msg.textContent='Indica o ID.'; restore(); return; }
   if (!amount || Number(amount) <= 0) { msg.textContent='Indica o Amount.'; restore(); return; }
   if (!quantity || Number(quantity) <= 0) { msg.textContent='Indica a Quantity.'; restore(); return; }
   if (!price || Number(price) <= 0) { msg.textContent='Indica o Price per Share.'; restore(); return; }
+  if (!owner) { msg.textContent='Indica o Owner.'; restore(); return; }
 
   const payload = {
     action: isEdit?'xtbEdit':'xtbAdd',
