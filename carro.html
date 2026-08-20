@@ -173,24 +173,22 @@ body{
 <script>
 const eur=v=>'€'+Math.abs(v).toLocaleString('pt-PT',{minimumFractionDigits:2,maximumFractionDigits:2});
 
-// Usa XMLHttpRequest em vez de fetch para POST — o Safari/iOS tem um bug
-// conhecido a seguir o redirecionamento interno do Apps Script em pedidos
-// POST feitos com fetch (falha com "Load failed" mesmo com boa ligação).
-function postToScript(url, payload){
-  return new Promise((resolve, reject) => {
-    const xhr = new XMLHttpRequest();
-    xhr.open('POST', url, true);
-    xhr.onload = function(){
-      if (xhr.status >= 200 && xhr.status < 300) {
-        try { resolve(JSON.parse(xhr.responseText)); }
-        catch(e) { reject(new Error('Resposta inválida do servidor.')); }
-      } else {
-        reject(new Error('Erro do servidor: ' + xhr.status));
-      }
-    };
-    xhr.onerror = function(){ reject(new Error('Erro de rede.')); };
-    xhr.send(JSON.stringify(payload));
-  });
+// POST ao Apps Script, com uma repetição automática — o XMLHttpRequest
+// foi tentado como alternativa ao fetch mas causa bloqueio de CORS
+// (o fetch é o que realmente funciona aqui); a repetição cobre falhas
+// de rede pontuais, incluindo o "Load failed" ocasional no Safari/iOS.
+async function postToScript(url, payload, _retried){
+  try {
+    const r = await fetch(url, { method: 'POST', body: JSON.stringify(payload) });
+    return await r.json();
+  } catch(e) {
+    if (!_retried) {
+      // Falha de rede pontual (comum no Safari/iOS) — espera um instante e tenta mais uma vez
+      await new Promise(res => setTimeout(res, 800));
+      return postToScript(url, payload, true);
+    }
+    throw e;
+  }
 }
 const $=id=>document.getElementById(id);
 const OP_COLORS=['#F0A93A','#5B8DEF','#34D399','#A78BFA','#FF6B5E','#8B95A5'];
