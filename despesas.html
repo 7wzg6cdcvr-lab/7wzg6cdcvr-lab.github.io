@@ -106,6 +106,26 @@ body{min-height:100vh;background:var(--bg);color:var(--text);font-family:'DM San
 <script src="push.js"></script>
 <script>
 const eur = v => (v<0?'-':'')+'€'+Math.abs(v).toLocaleString('pt-PT',{minimumFractionDigits:2,maximumFractionDigits:2});
+
+// Usa XMLHttpRequest em vez de fetch para POST — o Safari/iOS tem um bug
+// conhecido a seguir o redirecionamento interno do Apps Script em pedidos
+// POST feitos com fetch (falha com "Load failed" mesmo com boa ligação).
+function postToScript(url, payload){
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', url, true);
+    xhr.onload = function(){
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try { resolve(JSON.parse(xhr.responseText)); }
+        catch(e) { reject(new Error('Resposta inválida do servidor.')); }
+      } else {
+        reject(new Error('Erro do servidor: ' + xhr.status));
+      }
+    };
+    xhr.onerror = function(){ reject(new Error('Erro de rede.')); };
+    xhr.send(JSON.stringify(payload));
+  });
+}
 const $ = id => document.getElementById(id);
 const API = () => Auth.API_URL + '?pin=' + encodeURIComponent(Auth.getStoredPin()||'');
 
@@ -483,10 +503,8 @@ async function submitMov(isEdit){
   if (isEdit) payload.row = parseInt($('mv-row').value);
 
   try {
-    const r = await fetch(Auth.API_URL+'?'+new URLSearchParams({action:payload.action,pin:payload.pin}),{
-      method:'POST', body: JSON.stringify(payload)
-    });
-    const d = await r.json();
+    const url = Auth.API_URL+'?'+new URLSearchParams({action:payload.action,pin:payload.pin});
+    const d = await postToScript(url, payload);
     if(!d.ok){ msg.textContent='Erro: '+(d.error||'desconhecido'); restore(); return; }
     closeMovModal();
     globalKPIs = null; // recalcula quando voltar à grelha
@@ -546,10 +564,8 @@ async function submitAddMonth(){
   const payload = { action:'despesasRegistarMes', pin:Auth.getStoredPin()||'', code, id };
 
   try {
-    const r = await fetch(Auth.API_URL+'?'+new URLSearchParams({action:payload.action,pin:payload.pin}),{
-      method:'POST', body: JSON.stringify(payload)
-    });
-    const d = await r.json();
+    const url = Auth.API_URL+'?'+new URLSearchParams({action:payload.action,pin:payload.pin});
+    const d = await postToScript(url, payload);
     if(!d.ok){ msg.textContent='Erro: '+(d.error||'desconhecido'); restore(); return; }
     closeMonthModal();
     meses = [];
@@ -600,10 +616,8 @@ async function submitFundo(){
   const payload = { action:'despesasFundoSet', pin:Auth.getStoredPin()||'', valor: valorRaw };
 
   try {
-    const r = await fetch(Auth.API_URL+'?'+new URLSearchParams({action:payload.action,pin:payload.pin}),{
-      method:'POST', body: JSON.stringify(payload)
-    });
-    const d = await r.json();
+    const url = Auth.API_URL+'?'+new URLSearchParams({action:payload.action,pin:payload.pin});
+    const d = await postToScript(url, payload);
     if(!d.ok){ msg.textContent='Erro: '+(d.error||'desconhecido'); restore(); return; }
     closeFundoModal();
     if (globalKPIs) globalKPIs.fundoEmergencia = d.valor;
