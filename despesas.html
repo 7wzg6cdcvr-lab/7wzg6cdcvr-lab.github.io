@@ -349,9 +349,28 @@ Auth.protect(function(){
   showGrid();
 });
 // ── Modal de adicionar movimento ──────────────────────────────
-const CATEGORIAS_DESPESA = ['Saúde','Beleza','Supermercados','Telecom/Subscrições','Educação','Transportes','Vestuário','Desporto','Habitação','Restaurantes','Férias','Seguros','Diversos'];
-const CATEGORIAS_RECEITA = ['Vencimentos','Apoios','Outros','Reembolsos'];
-const CODIGOS_PAGAMENTO = ['R','MB','TB','PS','SR','DD','CC'];
+// Listas de categorias — carregadas da aba "Categorias" da folha do mês
+// atual (endpoint despesasCategorias). Enquanto não carregam, usam uma
+// lista de reserva mínima para o modal não ficar vazio.
+let CATEGORIAS_DESPESA = ['Saude','Beleza','Supermercados','Telecom/Subscricoes','Educacao','Transportes','Vestuario','Desporto','Habitacao','Restaurantes','Ferias','Seguros','Diversos'];
+let CATEGORIAS_RECEITA = ['Vencimentos','Apoios','Outros','Reembolsos'];
+let CODIGOS_PAGAMENTO  = ['R','MB','TB','PS','SR','DD','CC'];
+let categoriasLoaded   = false;
+
+function loadCategorias(){
+  if (categoriasLoaded) return Promise.resolve();
+  return fetch(API() + '&action=despesasCategorias')
+    .then(r => r.json())
+    .then(d => {
+      if (d.ok) {
+        if (d.catDespesa.length) CATEGORIAS_DESPESA = d.catDespesa;
+        if (d.pagamento.length)  CODIGOS_PAGAMENTO  = d.pagamento;
+        if (d.catReceita.length) CATEGORIAS_RECEITA = d.catReceita;
+        categoriasLoaded = true;
+      }
+    })
+    .catch(() => {}); // se falhar, mantém as listas de reserva
+}
 const FIELD_STYLE = "width:100%;padding:10px;margin-top:6px;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#181D26;color:#F2F4F7;font-size:14px;font-family:inherit";
 
 // Cada tipo define a ordem dos campos. Tipo vem sempre primeiro, seguido
@@ -461,8 +480,8 @@ function modalMovHTML(s){
   </div>`;
 }
 
-function openAddMov(){ document.body.insertAdjacentHTML('beforeend', modalMovHTML(null)); }
-function openEditMov(m){ document.body.insertAdjacentHTML('beforeend', modalMovHTML(m)); }
+function openAddMov(){ loadCategorias().then(() => document.body.insertAdjacentHTML('beforeend', modalMovHTML(null))); }
+function openEditMov(m){ loadCategorias().then(() => document.body.insertAdjacentHTML('beforeend', modalMovHTML(m))); }
 function closeMovModal(){ const m=$('mov-modal'); if(m) m.remove(); }
 
 async function submitMov(isEdit){
