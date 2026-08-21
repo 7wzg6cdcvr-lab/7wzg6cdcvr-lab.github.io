@@ -6,7 +6,7 @@
    logout (Auth.logout()).
    ══════════════════════════════════════════════════════════════ */
 const Auth = (() => {
-  const API_URL = "https://script.google.com/macros/s/AKfycbxzKI0lupG5gjLzuC3J1aR5AwVA1PIbSxTqA7Pjy3NWp_HaUbctCbNzhxjbuXx5GtqnJw/exec";
+  const API_URL = "https://script.google.com/macros/s/AKfycbxCEdk9deh7WMmT0e66PfQ79-496AEGlfb7L9jHJEEy9XciqzXrvHyh9D5CS_KXB5bMrQ/exec";
   const PIN_KEY  = 'dm_pin';
   const USER_KEY = 'dm_user';
 
