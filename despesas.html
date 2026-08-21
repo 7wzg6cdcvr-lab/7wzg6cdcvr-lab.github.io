@@ -501,8 +501,7 @@ async function submitMov(isEdit){
   if (isEdit) payload.row = parseInt($('mv-row').value);
 
   try {
-    const url = Auth.API_URL+'?'+new URLSearchParams({action:payload.action,pin:payload.pin});
-    const d = await postToScript(url, payload);
+    const d = await postToScript(Auth.API_URL, payload);
     if(!d.ok){ msg.textContent='Erro: '+(d.error||'desconhecido'); restore(); return; }
     closeMovModal();
     globalKPIs = null; // recalcula quando voltar à grelha
@@ -562,8 +561,7 @@ async function submitAddMonth(){
   const payload = { action:'despesasRegistarMes', pin:Auth.getStoredPin()||'', code, id };
 
   try {
-    const url = Auth.API_URL+'?'+new URLSearchParams({action:payload.action,pin:payload.pin});
-    const d = await postToScript(url, payload);
+    const d = await postToScript(Auth.API_URL, payload);
     if(!d.ok){ msg.textContent='Erro: '+(d.error||'desconhecido'); restore(); return; }
     closeMonthModal();
     meses = [];
@@ -614,8 +612,7 @@ async function submitFundo(){
   const payload = { action:'despesasFundoSet', pin:Auth.getStoredPin()||'', valor: valorRaw };
 
   try {
-    const url = Auth.API_URL+'?'+new URLSearchParams({action:payload.action,pin:payload.pin});
-    const d = await postToScript(url, payload);
+    const d = await postToScript(Auth.API_URL, payload);
     if(!d.ok){ msg.textContent='Erro: '+(d.error||'desconhecido'); restore(); return; }
     closeFundoModal();
     if (globalKPIs) globalKPIs.fundoEmergencia = Number(valorRaw);
