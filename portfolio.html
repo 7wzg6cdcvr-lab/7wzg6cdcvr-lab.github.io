@@ -595,8 +595,7 @@ async function submitBTC(isEdit){
   if (isEdit) payload.row = parseInt($('btc-row').value);
 
   try {
-    const url = Auth.API_URL+'?'+new URLSearchParams({action:payload.action,pin:payload.pin});
-    const d = await postToScript(url, payload);
+    const d = await postToScript(Auth.API_URL, payload);
     if(!d.ok){ msg.textContent='Erro: '+(d.error||'desconhecido'); restore(); return; }
     closeBTCModal();
     loadData();        // recalcula KPIs, gauge, owners e gráficos
@@ -748,8 +747,7 @@ async function submitXTB(isEdit){
   if (isEdit) payload.row = parseInt($('xtb-row').value);
 
   try {
-    const url = Auth.API_URL+'?'+new URLSearchParams({action:payload.action,pin:payload.pin});
-    const d = await postToScript(url, payload);
+    const d = await postToScript(Auth.API_URL, payload);
     if(!d.ok){ msg.textContent='Erro: '+(d.error||'desconhecido'); restore(); return; }
     closeXTBModal();
     loadData();        // recalcula KPIs, gauge, owners e gráficos
