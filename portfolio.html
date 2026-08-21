@@ -609,10 +609,29 @@ async function submitBTC(isEdit){
 /* ── Últimas compras de SXR8 ─────────────────────────────────── */
 let xtbRecentes = [];
 let xtbRecentesLoaded = false;
-const XTB_OWNERS = ['DM','LCD','RCD'];
-const XTB_TYPES = ['Stock purchase'];
-const XTB_TICKERS = ['SXR8.DE'];
-const XTB_INSTRUMENTS = ['Core S&P 500'];
+// Listas dinâmicas — carregadas da aba "Categorias" do Portfolio
+let XTB_OWNERS      = ['DM','LCD','RCD'];
+let XTB_TYPES       = ['Stock purchase'];
+let XTB_TICKERS     = ['SXR8.DE'];
+let XTB_INSTRUMENTS = ['Core S&P 500'];
+let portfolioCategoriasLoaded = false;
+
+function loadPortfolioCategorias(){
+  if (portfolioCategoriasLoaded) return Promise.resolve();
+  const pin = Auth.getStoredPin() || '';
+  return fetch(Auth.API_URL + '?action=portfolioCategorias&pin=' + encodeURIComponent(pin))
+    .then(r => r.json())
+    .then(d => {
+      if (d.ok) {
+        if (d.types.length)       XTB_TYPES       = d.types;
+        if (d.tickers.length)     XTB_TICKERS     = d.tickers;
+        if (d.instruments.length) XTB_INSTRUMENTS = d.instruments;
+        if (d.owners.length)      XTB_OWNERS      = d.owners;
+        portfolioCategoriasLoaded = true;
+      }
+    })
+    .catch(() => {});
+}
 
 function renderXTBRecentesHTML(){
   if (!xtbRecentesLoaded) return `<div style="color:var(--muted);font-size:13px">A carregar…</div>`;
@@ -709,8 +728,8 @@ function modalXTBHTML(t){
   </div>`;
 }
 
-function openAddXTB(){ document.body.insertAdjacentHTML('beforeend', modalXTBHTML(null)); }
-function openEditXTB(t){ document.body.insertAdjacentHTML('beforeend', modalXTBHTML(t)); }
+function openAddXTB(){ loadPortfolioCategorias().then(() => document.body.insertAdjacentHTML('beforeend', modalXTBHTML(null))); }
+function openEditXTB(t){ loadPortfolioCategorias().then(() => document.body.insertAdjacentHTML('beforeend', modalXTBHTML(t))); }
 function closeXTBModal(){ const m=$('xtb-modal'); if(m) m.remove(); }
 
 async function submitXTB(isEdit){
