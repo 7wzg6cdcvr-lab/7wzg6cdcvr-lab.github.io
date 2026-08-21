@@ -417,8 +417,7 @@ async function submitModal(isEdit){
   if(isEdit) payload.row = parseInt(getVal('cm-row'));
 
   try {
-    const url = Auth.API_URL+'?'+new URLSearchParams({action:payload.action,pin:payload.pin});
-    const d = await postToScript(url, payload);
+    const d = await postToScript(Auth.API_URL, payload);
     if(!d.ok){ msg.textContent='Erro: '+(d.error||'desconhecido'); btn.disabled=false; btn.textContent=isEdit?'Guardar alterações':'Adicionar carregamento'; return; }
     closeModal();
     loadData();
