@@ -497,16 +497,17 @@ async function submitMov(isEdit){
   const col2 = $('mv-col2') ? $('mv-col2').value.trim() : '';
   const pagamento = $('mv-pagamento') ? $('mv-pagamento').value.trim() : '';
 
+  if (!data) { msg.textContent='Indica a data.'; restore(); return; }
   if (!valor || Number(valor) <= 0) {
     msg.textContent = 'Indica um valor válido.';
     restore();
     return;
   }
 
-  // Valida campos obrigatórios consoante o tipo (ex: Categoria em Receita)
+  // Valida campos obrigatórios consoante o tipo
   const cfg = movFieldsConfig(tipo);
   for (const tok of ['col1','col2']) {
-    if (cfg[tok].required) {
+    if (cfg[tok] && cfg[tok].required) {
       const val = tok==='col1' ? col1 : col2;
       if (!val) {
         msg.textContent = `Indica ${cfg[tok].label.toLowerCase()}.`;
@@ -515,6 +516,10 @@ async function submitMov(isEdit){
       }
     }
   }
+  // Categoria (col1) obrigatória em todos os tipos
+  if (!col1) { msg.textContent = 'Indica a categoria.'; restore(); return; }
+  // Pagamento obrigatório só nas despesas
+  if (tipo === 'despesa' && !pagamento) { msg.textContent = 'Indica o pagamento.'; restore(); return; }
 
   const payload = { action: isEdit?'despesasEdit':'despesasAdd', pin:Auth.getStoredPin()||'', tipo, data, valor, col1, col2, pagamento };
   if (isEdit) payload.row = parseInt($('mv-row').value);
