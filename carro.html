@@ -301,9 +301,25 @@ function renderRecentes(sessions){
     </div>`).join('');
 }
 
-// ── Modal de adicionar / editar ───────────────────────────────
-const TIPOS = ['CCS','T2 - 22kw','CHAdeMO'];
-const OPERADORES = ['Tesla','Continente','Atlante','EVIO','Electroverse','Casa','Outros'];
+// ── Listas dinâmicas — carregadas da aba "Categorias" da folha do Carro ──
+let TIPOS      = ['CCS','TYPE 2'];
+let OPERADORES = ['Atlante','Continente','Tesla','EVIO','Electroverse','Casa','Outros'];
+let carroCategoriasLoaded = false;
+
+function loadCarroCategorias(){
+  if (carroCategoriasLoaded) return Promise.resolve();
+  const pin = Auth.getStoredPin() || '';
+  return fetch(Auth.API_URL + '?action=carroCategorias&pin=' + encodeURIComponent(pin))
+    .then(r => r.json())
+    .then(d => {
+      if (d.ok) {
+        if (d.tipos && d.tipos.length)      TIPOS      = d.tipos;
+        if (d.operadores && d.operadores.length) OPERADORES = d.operadores;
+        carroCategoriasLoaded = true;
+      }
+    })
+    .catch(() => {});
+}
 
 function modalHTML(s){
   const isEdit = !!s;
@@ -385,8 +401,8 @@ function modalHTML(s){
   </div>`;
 }
 
-function openAdd(){ document.body.insertAdjacentHTML('beforeend', modalHTML(null)); }
-function openEdit(s){ document.body.insertAdjacentHTML('beforeend', modalHTML(s)); }
+function openAdd(){ loadCarroCategorias().then(() => document.body.insertAdjacentHTML('beforeend', modalHTML(null))); }
+function openEdit(s){ loadCarroCategorias().then(() => document.body.insertAdjacentHTML('beforeend', modalHTML(s))); }
 function closeModal(){ const m=$('carro-modal'); if(m) m.remove(); }
 
 function getVal(id){ return document.getElementById(id)?.value.trim()||''; }
