@@ -42,9 +42,9 @@ body{
 /* Botões fixos no fundo */
 .bottom-bar{
   position:fixed;bottom:0;left:0;right:0;
-  display:flex;justify-content:center;gap:12px;
-  padding:12px 20px calc(12px + env(safe-area-inset-bottom));
-  background:linear-gradient(to top, var(--bg) 70%, transparent);
+  display:flex;justify-content:center;
+  padding:10px 20px calc(10px + env(safe-area-inset-bottom));
+  background:linear-gradient(to top, var(--bg) 60%, transparent);
   z-index:50;
 }
 .tagline{
@@ -142,39 +142,42 @@ body{
     </div>
     <div class="tile-arrow">›</div>
   </a>
-
-  <a class="tile active" href="./garantias.html">
-    <div class="tile-icon">
-      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-        <path d="M9 12l2 2 4-4"/>
-      </svg>
-    </div>
-    <div class="tile-text">
-      <div class="tile-title">Garantias</div>
-      <div class="tile-sub">Faturas & prazos</div>
-    </div>
-    <div class="tile-arrow">›</div>
-  </a>
 </div><!-- .tiles -->
 </div><!-- .main-content -->
 
 <div class="bottom-bar">
-  <button class="icon-btn" onclick="Tickets.open()" title="Tickets" aria-label="Tickets" style="position:relative">
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--muted)">
-      <path d="M3 9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-4Z"/>
-      <path d="M13 5v2M13 17v2M13 11v2"/>
-    </svg>
-    <span id="dm-t-badge" style="display:none;position:absolute;top:-6px;right:-6px;
-      min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:#FF6B5E;color:#1a0505;
-      font-size:10px;font-weight:700;align-items:center;justify-content:center;border:2px solid var(--bg)"></span>
-  </button>
-  <button class="icon-btn" onclick="if(confirm('Sair? Vais precisar da password para voltar a entrar.')){Auth.logout();}" title="Sair" aria-label="Sair">
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
-  </button>
-  <button id="dm-push-btn" class="icon-btn" onclick="enablePush()" title="Ativar notificações" style="display:none">
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-  </button>
+  <div style="display:flex;background:#1C2130;border:1px solid rgba(255,255,255,0.1);border-radius:24px;padding:6px;gap:2px;width:100%;max-width:360px">
+
+    <button onclick="Tickets.open()" title="Tickets" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;background:none;border:none;color:var(--muted);cursor:pointer;padding:10px 8px;border-radius:18px;transition:background .15s;position:relative" onmousedown="this.style.background='rgba(255,255,255,0.07)'" onmouseup="this.style.background=''" ontouchstart="this.style.background='rgba(255,255,255,0.07)'" ontouchend="this.style.background=''">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-4Z"/>
+        <path d="M13 5v2M13 17v2M13 11v2"/>
+      </svg>
+      <span style="font-size:11px;font-weight:500">Tickets</span>
+      <span id="dm-t-badge" style="display:none;position:absolute;top:6px;right:22px;
+        min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:#FF6B5E;color:#fff;
+        font-size:10px;font-weight:700;align-items:center;justify-content:center;border:2px solid #1C2130"></span>
+    </button>
+
+    <a href="./garantias.html" title="Garantias" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;background:none;border:none;color:var(--muted);cursor:pointer;padding:10px 8px;border-radius:18px;transition:background .15s;text-decoration:none" onmousedown="this.style.background='rgba(255,255,255,0.07)'" onmouseup="this.style.background=''" ontouchstart="this.style.background='rgba(255,255,255,0.07)'" ontouchend="this.style.background=''">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        <path d="M9 12l2 2 4-4"/>
+      </svg>
+      <span style="font-size:11px;font-weight:500">Garantias</span>
+    </a>
+
+    <button onclick="if(confirm('Sair? Vais precisar da password para voltar a entrar.')){Auth.logout();}" title="Sair" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;background:none;border:none;color:var(--muted);cursor:pointer;padding:10px 8px;border-radius:18px;transition:background .15s" onmousedown="this.style.background='rgba(255,255,255,0.07)'" onmouseup="this.style.background=''" ontouchstart="this.style.background='rgba(255,255,255,0.07)'" ontouchend="this.style.background=''">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+      <span style="font-size:11px;font-weight:500">Sair</span>
+    </button>
+
+    <button id="dm-push-btn" onclick="enablePush()" title="Notificações" style="display:none;flex:1;flex-direction:column;align-items:center;gap:4px;background:none;border:none;color:var(--muted);cursor:pointer;padding:10px 8px;border-radius:18px">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      <span style="font-size:11px;font-weight:500">Alertas</span>
+    </button>
+
+  </div>
 </div>
 </div><!-- app-content -->
 
