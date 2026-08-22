@@ -306,6 +306,12 @@ function renderDetail(label, d, isCurrent){
       </div>
     </div>
 
+    ${isCurrent && d.saldoMensal != null ? `
+    <div class="kpi" style="--kpi-color:${d.saldoMensal >= 0 ? 'var(--mint)' : 'var(--coral)'};margin-bottom:12px">
+      <div class="kpi-label">Saldo Mensal</div>
+      <div class="kpi-value" style="color:${d.saldoMensal >= 0 ? 'var(--mint)' : 'var(--coral)'}">${eur(d.saldoMensal)}</div>
+    </div>` : ''}
+
     ${isCurrent ? `
     <div class="card">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
