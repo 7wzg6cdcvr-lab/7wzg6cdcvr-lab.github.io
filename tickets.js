@@ -1,421 +1,340 @@
-/* ══════════════════════════════════════════════════════════════
-   DC Family — painel de Tickets
-   Lista (separada em Aberto/Resolvidos), abre, responde, muda
-   estado e categoria — tudo a partir do site. O pedido passa
-   sempre pelo Code.gs (autenticado com o PIN da app) — o token do
-   GitHub nunca chega ao browser.
-   ══════════════════════════════════════════════════════════════ */
-const Tickets = (() => {
-  let screen = 'list';      // 'list' | 'detail' | 'new'
-  let cache = [];
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0A0D12">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<title>DC Tickets</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+@font-face{font-family:'Cybertruck';src:url('fonts/Cybertruck-Regular.ttf') format('truetype');font-weight:400;font-style:normal;font-display:swap;}
+:root{
+  --bg:#0A0D12;--surface:#12161D;--surface2:#181D26;--surface3:#212938;
+  --border:rgba(255,255,255,0.08);--border-soft:rgba(255,255,255,0.05);
+  --text:#F2F4F7;--muted:#8B95A5;--muted2:#5C6576;
+  --gold:#D2A13A;--gold-light:#F4D27A;
+  --mint:#34D399;--coral:#FF6B5E;--sapphire:#5B8DEF;--amber:#F0A93A;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{background:var(--bg)}
+body{min-height:100vh;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;-webkit-font-smoothing:antialiased;padding-bottom:calc(24px + env(safe-area-inset-bottom));overscroll-behavior-y:contain;}
 
-  const fmtDate = iso => new Date(iso).toLocaleDateString('pt-PT', { day:'2-digit', month:'short', year:'numeric' });
-  const fmtDateTime = iso => new Date(iso).toLocaleDateString('pt-PT', { day:'2-digit', month:'short', year:'numeric' }) +
-    ' às ' + new Date(iso).toLocaleTimeString('pt-PT', { hour:'2-digit', minute:'2-digit' });
-  const esc = s => (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+.topbar{position:sticky;top:0;z-index:60;background:#0D1117;border-bottom:1px solid var(--border-soft);padding:14px 16px;padding-top:calc(14px + env(safe-area-inset-top));}
+.topbar-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand{display:flex;align-items:center;min-width:0;flex:1}
+.brand-logo{height:110px;width:auto;display:block}
+.icon-btn{background:var(--surface3);color:var(--text);border:1px solid var(--border);border-radius:10px;width:40px;height:40px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;text-decoration:none;font-family:inherit}
+.icon-btn:active{transform:scale(.92)}
 
-  // Transforma "![nome](url)" e "[📎 nome](url)" em imagens/links a sério,
-  // escapando tudo o resto normalmente (só usamos markdown para anexos).
-  function renderRich(raw){
-    const tokens = [];
-    let text = (raw || '').replace(/!\[(.*?)\]\((.*?)\)/g, (m, alt, url) => {
-      tokens.push(`<a href="${url}" target="_blank" rel="noopener"><img src="${url}" alt="${esc(alt)}" style="max-width:100%;border-radius:10px;margin-top:8px;display:block"></a>`);
-      return `\u0000${tokens.length-1}\u0000`;
-    });
-    text = text.replace(/\[📎 (.*?)\]\((.*?)\)/g, (m, name, url) => {
-      tokens.push(`<a href="${url}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;margin-top:8px;padding:8px 12px;background:#181D26;border:1px solid rgba(255,255,255,0.08);border-radius:9px;color:#F4D27A;font-size:12.5px;text-decoration:none">📎 ${esc(name)}</a>`);
-      return `\u0000${tokens.length-1}\u0000`;
-    });
-    let out = esc(text);
-    out = out.replace(/\u0000(\d+)\u0000/g, (m, i) => tokens[i]);
-    return out;
-  }
+#app{padding:16px;max-width:640px;margin:0 auto}
 
-  const STATUSES = ['Novo', 'Pendente', 'Em Progresso', 'Resolvido'];
-  const STATUS_COLOR = { 'Novo':'#A78BFA', 'Pendente':'#F0A93A', 'Em Progresso':'#5B8DEF', 'Resolvido':'#34D399' };
-  const CATEGORIES = ['Casa', 'Família', 'Saúde', 'Website'];
+/* Ticket rows */
+.t-row{display:flex;align-items:flex-start;gap:10px;padding:14px 0;border-bottom:1px solid rgba(255,255,255,0.06);cursor:pointer}
+.t-row:active{opacity:.7}
+.t-title{font-size:14px;color:var(--text);font-weight:500;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.t-date{font-size:11px;color:var(--muted2);margin-top:4px}
 
-  let pendingFile = null; // { filename, mimeType, dataBase64 } — anexo escolhido antes de enviar
+/* Pills */
+.pill{display:inline-flex;align-items:center;gap:4px;padding:2px 7px;border-radius:20px;font-size:10.5px;font-weight:600}
 
-  function shellHTML(){
-    return `
-    <div id="dm-ticket" style="position:fixed;inset:0;background:#0A0D12;z-index:9998;display:flex;flex-direction:column;font-family:'DM Sans',sans-serif">
-      <div style="display:flex;align-items:center;gap:10px;padding:calc(14px + env(safe-area-inset-top)) 16px 14px;border-bottom:1px solid rgba(255,255,255,0.06)">
-        <button id="dm-t-back" style="background:none;border:none;color:#8B95A5;font-size:20px;cursor:pointer;display:none;padding:0 4px 0 0">‹</button>
-        <div id="dm-t-title" style="flex:1;font-size:16px;font-weight:600;color:#F2F4F7">Tickets</div>
-        <button id="dm-t-new" style="background:#212938;border:1px solid rgba(255,255,255,0.08);color:#F4D27A;font-size:13px;font-weight:600;padding:7px 12px;border-radius:9px;cursor:pointer;font-family:inherit">+ Novo</button>
-        <button id="dm-t-close" style="background:none;border:none;color:#8B95A5;font-size:24px;cursor:pointer;line-height:1;padding:0 0 0 6px">×</button>
-      </div>
-      <div id="dm-t-body" style="flex:1;overflow-y:auto;padding:16px;-webkit-overflow-scrolling:touch"></div>
-    </div>`;
-  }
+/* Section header */
+.sec-hdr{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:20px 0 8px;padding-bottom:6px;border-bottom:1px solid var(--border-soft)}
 
-  function open(){
-    if (document.getElementById('dm-ticket')) return;
-    document.body.insertAdjacentHTML('beforeend', shellHTML());
-    document.getElementById('dm-t-close').onclick = () => { screen === 'list' ? close() : renderList(); };
-    document.getElementById('dm-t-new').onclick = () => renderNew();
-    document.getElementById('dm-t-back').onclick = () => renderList();
-    renderList();
-  }
+/* Detail */
+.comment-bubble{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:10px}
+.comment-meta{font-size:11px;color:var(--muted2);margin-bottom:6px}
+.comment-body{font-size:13.5px;line-height:1.55}
 
-  // Abre o painel já diretamente num ticket (usado quando se chega por
-  // uma notificação, via ?ticket=N no URL).
-  function openTicket(number){
-    if (document.getElementById('dm-ticket')) { renderDetail(number); return; }
-    document.body.insertAdjacentHTML('beforeend', shellHTML());
-    document.getElementById('dm-t-close').onclick = () => { screen === 'list' ? close() : renderList(); };
-    document.getElementById('dm-t-new').onclick = () => renderNew();
-    document.getElementById('dm-t-back').onclick = () => renderList();
-    renderDetail(number);
-  }
+/* New ticket */
+.field{width:100%;padding:11px;border-radius:9px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:14px;font-family:inherit;box-sizing:border-box;margin-bottom:10px}
+textarea.field{resize:vertical}
 
-  function close(){ const el = document.getElementById('dm-ticket'); if (el) el.remove(); refreshBadge(); }
+.skel{background:linear-gradient(90deg,var(--surface) 25%,var(--surface2) 50%,var(--surface) 75%);background-size:200% 100%;animation:shimmer 1.4s ease-in-out infinite;border-radius:10px}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+</style>
+</head>
+<body>
+<div id="app-content" style="display:none">
 
-  // Mostra quantos tickets estão "Novo" num pequeno selo sobre o botão
-  // "🎫 Tickets" da página principal (id="dm-t-badge", se existir na página).
-  async function refreshBadge(){
-    const badge = document.getElementById('dm-t-badge');
-    try {
-      const d = await api('listTickets', {});
-      if (!d.ok) return;
-      const n = d.tickets.filter(t => t.status === 'Novo').length;
-
-      if (badge) {
-        if (n > 0) { badge.textContent = n > 9 ? '9+' : String(n); badge.style.display = 'flex'; }
-        else { badge.style.display = 'none'; }
-      }
-
-      // Selo no ícone do ecrã principal (só funciona com a app instalada/standalone).
-      if ('setAppBadge' in navigator) {
-        if (n > 0) navigator.setAppBadge(n).catch(()=>{});
-        else navigator.clearAppBadge().catch(()=>{});
-      }
-    } catch (e) { /* sem rede, sem selo — não é crítico */ }
-  }
-
-  function setChrome({ title, back, showNew }){
-    document.getElementById('dm-t-title').textContent = title;
-    document.getElementById('dm-t-back').style.display = back ? 'block' : 'none';
-    document.getElementById('dm-t-new').style.display = showNew ? 'block' : 'none';
-  }
-
-  async function api(action, params, method){
-    const pin = Auth.getStoredPin() || '';
-    const url = Auth.API_URL + '?' + new URLSearchParams(Object.assign({ action, pin }, params||{})).toString();
-    const r = await fetch(url, { method: method || 'GET' });
-    return r.json();
-  }
-
-  // Anexos vão no corpo do pedido (podem ser maiores do que um URL aguenta).
-  async function apiUpload(number, filename, mimeType, dataBase64){
-    const pin = Auth.getStoredPin() || '';
-    const url = Auth.API_URL + '?action=uploadAttachment';
-    const r = await fetch(url, { method:'POST', body: JSON.stringify({ pin, number, filename, mimeType, dataBase64 }) });
-    return r.json();
-  }
-
-  function readFileAsBase64(file){
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(String(reader.result).split(',')[1] || '');
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
-  }
-
-  function rowHTML(t){
-    return `
-      <div class="dm-t-row" data-n="${t.number}" style="display:flex;align-items:center;gap:10px;padding:13px 4px;border-bottom:1px solid rgba(255,255,255,0.06);cursor:pointer">
-        <span style="width:8px;height:8px;border-radius:50%;flex-shrink:0;background:${STATUS_COLOR[t.status]||'#5C6576'}"></span>
-        <div style="flex:1;min-width:0">
-          <div style="font-size:14px;color:#F2F4F7;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(t.title)}</div>
-          <div style="font-size:11.5px;color:#5C6576;margin-top:2px">${esc(t.status)}${t.category?' · '+esc(t.category):''} · #${t.number} · ${fmtDate(t.createdAt)}${t.comments?' · '+t.comments+' resposta'+(t.comments>1?'s':''):''}</div>
-        </div>
-        <span style="color:#5C6576;font-size:16px;flex-shrink:0">›</span>
-      </div>`;
-  }
-
-  // ── Lista, separada em Em Aberto / Resolvidos ──
-  async function renderList(){
-    screen = 'list';
-    setChrome({ title:'Tickets', back:false, showNew:true });
-    const body = document.getElementById('dm-t-body');
-    body.innerHTML = `<div style="text-align:center;color:#8B95A5;font-size:13px;padding:30px 0">A carregar…</div>`;
-
-    const d = await api('listTickets', {});
-    if (!d.ok) { body.innerHTML = `<div style="color:#FF6B5E;font-size:13px;text-align:center;padding:20px 0">Erro: ${esc(d.error||'desconhecido')}</div>`; return; }
-    cache = d.tickets;
-
-    if (!cache.length) {
-      body.innerHTML = `<div style="text-align:center;color:#8B95A5;font-size:13px;padding:40px 20px">Sem tickets ainda.<br>Toca em "+ Novo" para criar o primeiro.</div>`;
-      return;
-    }
-
-    const abertos    = cache.filter(t => t.status !== 'Resolvido' && !t.archived);
-    const resolvidos = cache.filter(t => t.status === 'Resolvido' && !t.archived);
-    const arquivados = cache.filter(t => t.archived);
-
-    body.innerHTML = `
-      <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:#8B95A5;margin-bottom:4px">Em Aberto${abertos.length?' ('+abertos.length+')':''}</div>
-      ${abertos.length ? abertos.map(rowHTML).join('') : '<div style="color:#5C6576;font-size:12.5px;padding:10px 0 18px">Nada em aberto.</div>'}
-
-      <button id="dm-t-resolved-toggle" style="width:100%;display:flex;align-items:center;justify-content:space-between;
-        background:none;border:none;padding:14px 4px;margin-top:8px;border-top:1px solid rgba(255,255,255,0.06);cursor:pointer;font-family:inherit">
-        <span style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:#8B95A5">Resolvidos${resolvidos.length?' ('+resolvidos.length+')':''}</span>
-        <span id="dm-t-resolved-arrow" style="color:#5C6576;font-size:11px;transition:transform .2s">▼</span>
+<div class="topbar">
+  <div class="topbar-row">
+    <div class="brand">
+      <img class="brand-logo" src="logo.png" alt="DC Family">
+      <span style="font-family:'Cybertruck',sans-serif;font-size:22px;letter-spacing:.06em;color:#B0B5BD;margin-left:8px">TICKETS</span>
+    </div>
+    <div style="display:flex;gap:8px">
+      <a class="icon-btn" href="./index.html" title="Início">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>
+      </a>
+      <button class="icon-btn" id="btn-new" onclick="showNew()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
       </button>
-      <div id="dm-t-resolved-list" style="display:none">
-        ${resolvidos.length ? resolvidos.map(rowHTML).join('') : '<div style="color:#5C6576;font-size:12.5px;padding:10px 0">Ainda nenhum.</div>'}
+    </div>
+  </div>
+</div>
+
+<div id="app"></div>
+</div>
+
+<script src="auth.js"></script>
+<script src="push.js"></script>
+<script>
+const $  = id => document.getElementById(id);
+const esc = s => (s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmtDate = iso => new Date(iso).toLocaleDateString('pt-PT',{day:'2-digit',month:'short',year:'numeric'});
+const fmtDateTime = iso => fmtDate(iso) + ' às ' + new Date(iso).toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
+const API = () => Auth.API_URL + '?pin=' + encodeURIComponent(Auth.getStoredPin()||'');
+
+const STATUSES   = ['Novo','Pendente','Em Progresso','Resolvido'];
+const STATUS_COLOR = {'Novo':'#A78BFA','Pendente':'#F0A93A','Em Progresso':'#5B8DEF','Resolvido':'#34D399'};
+const CATEGORIES = ['Casa','Família','Saúde','Website'];
+const CAT_COLOR  = {'Casa':'#F0A93A','Família':'#FF6B5E','Saúde':'#34D399','Website':'#5B8DEF'};
+const CAT_ICON   = {'Casa':'🏠','Família':'👨‍👩‍👧‍👦','Saúde':'🩺','Website':'🌐'};
+
+function pill(label, color){
+  return `<span class="pill" style="background:${color}22;color:${color};border:1px solid ${color}44">${label}</span>`;
+}
+function statusPill(s){ return pill(s, STATUS_COLOR[s]||'#5C6576'); }
+function catPill(cat){
+  if (!cat) return '';
+  return pill((CAT_ICON[cat]||'')+' '+cat, CAT_COLOR[cat]||'#8B95A5');
+}
+
+function renderRich(raw){
+  const tokens = [];
+  let text = (raw||'').replace(/!\[(.*?)\]\((.*?)\)/g,(m,alt,url)=>{
+    tokens.push(`<a href="${url}" target="_blank"><img src="${url}" alt="${esc(alt)}" style="max-width:100%;border-radius:10px;margin-top:8px;display:block"></a>`);
+    return `\u0000${tokens.length-1}\u0000`;
+  });
+  text = text.replace(/\[📎 (.*?)\]\((.*?)\)/g,(m,name,url)=>{
+    tokens.push(`<a href="${url}" target="_blank" style="display:inline-flex;align-items:center;gap:6px;margin-top:8px;padding:8px 12px;background:#181D26;border:1px solid rgba(255,255,255,0.08);border-radius:9px;color:#F4D27A;font-size:12.5px;text-decoration:none">📎 ${esc(name)}</a>`);
+    return `\u0000${tokens.length-1}\u0000`;
+  });
+  let out = esc(text);
+  out = out.replace(/\u0000(\d+)\u0000/g,(m,i)=>tokens[i]);
+  return out;
+}
+
+async function apiFetch(action, params){
+  const url = API() + '&action=' + action + (params ? '&' + new URLSearchParams(params).toString() : '');
+  const r = await fetch(url);
+  return r.json();
+}
+
+let pendingFile = null;
+function readFileAsBase64(file){
+  return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(String(r.result).split(',')[1]||''); r.onerror=rej; r.readAsDataURL(file); });
+}
+async function apiUpload(number, filename, mimeType, dataBase64){
+  const pin = Auth.getStoredPin()||'';
+  const r = await fetch(Auth.API_URL+'?action=uploadAttachment', {
+    method:'POST', body: JSON.stringify({pin,number,filename,mimeType,dataBase64})
+  });
+  return r.json();
+}
+
+// ── Lista ──────────────────────────────────────────────────────
+async function showList(){
+  $('btn-new').style.display='flex';
+  const app = $('app');
+  app.innerHTML = `${[1,2,3,4].map(()=>'<div class="skel" style="height:72px;margin-bottom:10px"></div>').join('')}`;
+  const d = await apiFetch('listTickets');
+  if (!d.ok) { app.innerHTML=`<p style="color:var(--coral);padding:20px">${d.error}</p>`; return; }
+  const open = d.tickets.filter(t=>t.status!=='Resolvido');
+  const done = d.tickets.filter(t=>t.status==='Resolvido');
+
+  function rows(list){ return list.map(t=>`
+    <div class="t-row" onclick="showDetail(${t.number})">
+      <div style="flex:1;min-width:0">
+        <div class="t-title">${esc(t.title)}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:4px">${statusPill(t.status)}${catPill(t.category)}</div>
+        <div class="t-date">#${t.number} · ${fmtDate(t.updatedAt)}</div>
       </div>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="color:var(--muted2);flex-shrink:0;margin-top:4px"><path d="M9 18l6-6-6-6"/></svg>
+    </div>`).join('');}
 
-      <button id="dm-t-archived-toggle" style="width:100%;display:flex;align-items:center;justify-content:space-between;
-        background:none;border:none;padding:14px 4px;margin-top:4px;border-top:1px solid rgba(255,255,255,0.06);cursor:pointer;font-family:inherit">
-        <span style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:#8B95A5">Arquivados${arquivados.length?' ('+arquivados.length+')':''}</span>
-        <span id="dm-t-archived-arrow" style="color:#5C6576;font-size:11px;transition:transform .2s">▼</span>
-      </button>
-      <div id="dm-t-archived-list" style="display:none">
-        ${arquivados.length ? arquivados.map(rowHTML).join('') : '<div style="color:#5C6576;font-size:12.5px;padding:10px 0">Ainda nenhum. Tickets resolvidos há mais de 30 dias aparecem aqui automaticamente.</div>'}
+  app.innerHTML =
+    (open.length ? `<div class="sec-hdr">Abertos · ${open.length}</div>${rows(open)}` : '') +
+    (done.length ? `<div class="sec-hdr">Resolvidos · ${done.length}</div>${rows(done)}` : '') +
+    (!d.tickets.length ? '<p style="color:var(--muted);text-align:center;padding:40px">Sem tickets</p>' : '');
+}
+
+// ── Detalhe ────────────────────────────────────────────────────
+async function showDetail(number){
+  $('btn-new').style.display='none';
+  const app = $('app');
+  app.innerHTML = `<div class="skel" style="height:120px;margin-bottom:10px"></div>`;
+  const d = await apiFetch('getTicket',{number});
+  if (!d.ok) { app.innerHTML=`<p style="color:var(--coral)">${d.error}</p>`; return; }
+  const t = d.ticket;
+
+  let selectedStatus = t.status;
+  let statusChanged = false;
+
+  app.innerHTML = `
+    <button onclick="showList()" style="background:none;border:none;color:var(--muted);font-size:13px;cursor:pointer;font-family:inherit;padding:0 0 14px;display:flex;align-items:center;gap:4px">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg> Todos os tickets
+    </button>
+
+    <div style="margin-bottom:16px">
+      <div style="font-size:17px;font-weight:700;margin-bottom:8px">${esc(t.title)}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">
+        ${statusPill(t.status)} ${catPill(t.category)}
       </div>
-    `;
+      <div style="font-size:11px;color:var(--muted2)">#${t.number} · ${fmtDateTime(t.createdAt)}</div>
+    </div>
 
-    document.getElementById('dm-t-resolved-toggle').onclick = () => {
-      const list  = document.getElementById('dm-t-resolved-list');
-      const arrow = document.getElementById('dm-t-resolved-arrow');
-      const open  = list.style.display === 'block';
-      list.style.display = open ? 'none' : 'block';
-      arrow.style.transform = open ? 'rotate(0deg)' : 'rotate(180deg)';
-    };
-    document.getElementById('dm-t-archived-toggle').onclick = () => {
-      const list  = document.getElementById('dm-t-archived-list');
-      const arrow = document.getElementById('dm-t-archived-arrow');
-      const open  = list.style.display === 'block';
-      list.style.display = open ? 'none' : 'block';
-      arrow.style.transform = open ? 'rotate(0deg)' : 'rotate(180deg)';
-    };
+    <div style="margin-bottom:16px">
+      ${t.comments.map(c=>`
+      <div class="comment-bubble">
+        <div class="comment-meta">${esc(c.author)} · ${fmtDateTime(c.createdAt)}</div>
+        <div class="comment-body">${renderRich(c.body)}</div>
+      </div>`).join('')}
+    </div>
 
-    body.querySelectorAll('.dm-t-row').forEach(row => {
-      row.onclick = () => renderDetail(parseInt(row.dataset.n, 10));
-    });
-  }
-
-  // ── Detalhe ──
-  async function renderDetail(number){
-    screen = 'detail';
-    setChrome({ title:'#'+number, back:true, showNew:false });
-    const body = document.getElementById('dm-t-body');
-    body.innerHTML = `<div style="text-align:center;color:#8B95A5;font-size:13px;padding:30px 0">A carregar…</div>`;
-
-    const d = await api('getTicket', { number });
-    if (!d.ok) { body.innerHTML = `<div style="color:#FF6B5E;font-size:13px;text-align:center;padding:20px 0">Erro: ${esc(d.error||'desconhecido')}</div>`; return; }
-    const t = d.ticket;
-
-    const commentsHTML = t.comments.map(c => {
-      const m = c.body.match(/^\*\*(.+?):\*\*\n\n([\s\S]*)$/);
-      const who = m ? m[1] : c.author;
-      const text = m ? m[2] : c.body;
-      return `
-      <div style="background:#12161D;border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:12px 14px;margin-bottom:8px">
-        <div style="font-size:11.5px;color:#8B95A5;font-weight:600;margin-bottom:5px">${esc(who)} <span style="color:#5C6576;font-weight:400">· ${fmtDateTime(c.createdAt)}</span></div>
-        <div style="font-size:13.5px;color:#F2F4F7;white-space:pre-wrap;line-height:1.45">${renderRich(text)}</div>
-      </div>`;
-    }).join('');
-
-    body.innerHTML = `
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px">
-        ${STATUSES.map(s => `
-          <button class="dm-t-status-btn" data-s="${esc(s)}" style="padding:9px 4px;border-radius:9px;font-size:11.5px;font-weight:600;cursor:pointer;font-family:inherit;
-            border:1px solid ${t.status===s ? STATUS_COLOR[s] : 'rgba(255,255,255,0.08)'};
-            background:${t.status===s ? STATUS_COLOR[s]+'22' : '#181D26'};
-            color:${t.status===s ? STATUS_COLOR[s] : '#8B95A5'}">${esc(s)}</button>
-        `).join('')}
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px">
+      <div style="font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:8px">Estado</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px">
+        ${STATUSES.map(s=>`<button class="dm-t-status-btn" data-s="${s}" style="padding:5px 11px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;border:1px solid ${STATUS_COLOR[s]}44;background:${s===selectedStatus?STATUS_COLOR[s]+'33':'transparent'};color:${STATUS_COLOR[s]}">${s}</button>`).join('')}
       </div>
-      <select id="dm-t-category" style="width:100%;padding:9px 11px;margin-bottom:16px;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#181D26;color:#F2F4F7;font-size:13px;font-family:inherit">
+      <div style="font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:8px">Categoria</div>
+      <select id="dm-t-category" class="field" style="margin-bottom:14px">
         <option value="">Sem categoria</option>
-        ${CATEGORIES.map(c => `<option value="${esc(c)}" ${t.category===c?'selected':''}>${esc(c)}</option>`).join('')}
+        ${CATEGORIES.map(c=>`<option value="${c}" ${t.category===c?'selected':''}>${c}</option>`).join('')}
       </select>
-      <div style="font-size:16px;font-weight:600;color:#F2F4F7;margin-bottom:4px">${esc(t.title)}</div>
-      ${(() => {
-        const m = t.body.match(/^([\s\S]*?)\n*_Criado por (.+?) a partir da app DC Family\._\s*$/);
-        const cleanBody = m ? m[1].trim() : t.body;
-        const creator = m ? m[2] : null;
-        const createdLine = 'Criado ' + (creator ? 'por ' + esc(creator) + ' ' : '') + '· ' + fmtDateTime(t.createdAt);
-        return `<div style="font-size:11.5px;color:#5C6576;margin-bottom:14px">${createdLine}</div>` +
-               (cleanBody ? `<div style="font-size:13.5px;color:#B8C0CC;white-space:pre-wrap;line-height:1.5;margin-bottom:18px">${renderRich(cleanBody)}</div>` : '');
-      })()}
-      ${commentsHTML}
-      <div style="margin-top:16px">
-        <textarea id="dm-t-reply" placeholder="Escrever uma resposta…" rows="3" style="width:100%;padding:11px;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#181D26;color:#F2F4F7;font-size:14px;font-family:inherit;resize:vertical;box-sizing:border-box;margin-bottom:8px"></textarea>
-        <div id="dm-t-attach-preview" style="display:none;align-items:center;gap:8px;margin-bottom:8px;padding:8px 10px;background:#181D26;border:1px solid rgba(255,255,255,0.08);border-radius:9px">
-          <span style="font-size:12.5px;color:#8B95A5;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" id="dm-t-attach-name"></span>
-          <button id="dm-t-attach-remove" style="background:none;border:none;color:#5C6576;font-size:16px;cursor:pointer;line-height:1">×</button>
-        </div>
-        <div style="display:flex;gap:8px">
-          <input type="file" id="dm-t-file" accept="image/*,.pdf,.doc,.docx,.txt" style="display:none">
-          <button id="dm-t-attach-btn" title="Anexar ficheiro" style="width:44px;flex-shrink:0;padding:12px 0;border:1px solid rgba(255,255,255,0.08);border-radius:9px;background:#181D26;color:#8B95A5;font-size:16px;cursor:pointer">📎</button>
-          <button id="dm-t-send" style="flex:1;padding:12px;border:none;border-radius:9px;background:#D2A13A;color:#1a1305;font-weight:700;font-size:13.5px;cursor:pointer;font-family:inherit">Responder</button>
-        </div>
-        <div id="dm-t-detail-msg" style="margin-top:8px;font-size:12px;text-align:center;min-height:15px"></div>
-      </div>`;
-
-    let selectedStatus = t.status;
-    let statusChanged = false;
-
-    function paintStatusButtons(){
-      body.querySelectorAll('.dm-t-status-btn').forEach(b => {
-        const s = b.dataset.s;
-        const active = s === selectedStatus;
-        b.style.border = '1px solid ' + (active ? STATUS_COLOR[s] : 'rgba(255,255,255,0.08)');
-        b.style.background = active ? STATUS_COLOR[s]+'22' : '#181D26';
-        b.style.color = active ? STATUS_COLOR[s] : '#8B95A5';
-      });
-    }
-
-    body.querySelectorAll('.dm-t-status-btn').forEach(btn => {
-      btn.onclick = () => {
-        selectedStatus = btn.dataset.s;
-        statusChanged = (selectedStatus !== t.status);
-        paintStatusButtons();
-      };
-    });
-
-    document.getElementById('dm-t-category').onchange = async (e) => {
-      const val = e.target.value;
-      e.target.disabled = true;
-      const res = val
-        ? await api('setCategory', { number, category: val }, 'POST')
-        : { ok: true }; // "Sem categoria" — não há ação de remover; fica como está no GitHub
-      e.target.disabled = false;
-      if (!res.ok) document.getElementById('dm-t-detail-msg').textContent = 'Erro: ' + (res.error||'desconhecido');
-    };
-
-    pendingFile = null;
-    const fileInput   = document.getElementById('dm-t-file');
-    const attachBtn   = document.getElementById('dm-t-attach-btn');
-    const preview     = document.getElementById('dm-t-attach-preview');
-    const previewName = document.getElementById('dm-t-attach-name');
-
-    attachBtn.onclick = () => fileInput.click();
-    fileInput.onchange = () => {
-      const f = fileInput.files[0];
-      if (!f) return;
-      if (f.size > 1500000) {
-        document.getElementById('dm-t-detail-msg').textContent = 'Ficheiro demasiado grande (máx. ~1,4 MB).';
-        fileInput.value = '';
-        return;
-      }
-      pendingFile = f;
-      previewName.textContent = '📎 ' + f.name;
-      preview.style.display = 'flex';
-    };
-    document.getElementById('dm-t-attach-remove').onclick = () => {
-      pendingFile = null; fileInput.value = ''; preview.style.display = 'none';
-    };
-
-    document.getElementById('dm-t-send').onclick = async () => {
-      const btn = document.getElementById('dm-t-send');
-      const ta  = document.getElementById('dm-t-reply');
-      const msg = document.getElementById('dm-t-detail-msg');
-      let val = ta.value.trim();
-
-      if (!val && !pendingFile && !statusChanged) { msg.style.color = '#FF6B5E'; msg.textContent = 'Escreve algo, anexa um ficheiro ou muda o estado.'; return; }
-
-      btn.disabled = true; attachBtn.disabled = true;
-
-      if (pendingFile) {
-        btn.textContent = 'A enviar anexo...';
-        const b64 = await readFileAsBase64(pendingFile);
-        const up = await apiUpload(number, pendingFile.name, pendingFile.type, b64);
-        if (!up.ok) {
-          btn.disabled = false; attachBtn.disabled = false; btn.textContent = 'Responder';
-          msg.style.color = '#FF6B5E'; msg.textContent = 'Erro no anexo: ' + (up.error||'desconhecido');
-          return;
-        }
-        val = val ? val + '\n\n' + up.markdown : up.markdown;
-      }
-
-      btn.textContent = 'A enviar...';
-      const params = { number, body: val };
-      if (statusChanged) params.status = selectedStatus;
-      const res = await api('addComment', params, 'POST');
-      btn.disabled = false; attachBtn.disabled = false; btn.textContent = 'Responder';
-      if (res.ok) { renderDetail(number); }
-      else { msg.style.color = '#FF6B5E'; msg.textContent = 'Erro: ' + (res.error||'desconhecido'); }
-    };
-  }
-
-  // ── Novo ticket ──
-  function renderNew(){
-    screen = 'new';
-    setChrome({ title:'Novo ticket', back:true, showNew:false });
-    const body = document.getElementById('dm-t-body');
-    body.innerHTML = `
-      <input id="dm-t-new-title" placeholder="Título (ex: Botão de atualizar não funciona)" style="width:100%;padding:11px;margin-bottom:10px;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#181D26;color:#F2F4F7;font-size:14px;font-family:inherit;box-sizing:border-box">
-      <select id="dm-t-new-category" style="width:100%;padding:11px;margin-bottom:10px;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#181D26;color:#F2F4F7;font-size:14px;font-family:inherit">
-        <option value="">Sem categoria</option>
-        ${CATEGORIES.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('')}
-      </select>
-      <textarea id="dm-t-new-body" placeholder="Descreve o que aconteceu ou o que gostavas de ver (opcional)" rows="5" style="width:100%;padding:11px;margin-bottom:10px;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#181D26;color:#F2F4F7;font-size:14px;font-family:inherit;resize:vertical;box-sizing:border-box"></textarea>
-      <div id="dm-t-new-attach-preview" style="display:none;align-items:center;gap:8px;margin-bottom:10px;padding:8px 10px;background:#181D26;border:1px solid rgba(255,255,255,0.08);border-radius:9px">
-        <span style="font-size:12.5px;color:#8B95A5;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" id="dm-t-new-attach-name"></span>
-        <button id="dm-t-new-attach-remove" style="background:none;border:none;color:#5C6576;font-size:16px;cursor:pointer;line-height:1">×</button>
+      <textarea id="dm-t-reply" class="field" rows="3" placeholder="Responder ou comentar..."></textarea>
+      <div id="dm-t-attach-preview" style="display:none;align-items:center;gap:8px;margin-bottom:10px;padding:8px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:9px">
+        <span style="font-size:12.5px;color:var(--muted);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" id="dm-t-attach-name"></span>
+        <button id="dm-t-attach-remove" style="background:none;border:none;color:var(--muted2);font-size:16px;cursor:pointer;line-height:1">×</button>
       </div>
+      <input type="file" id="dm-t-file" accept="image/*,.pdf,.doc,.docx,.txt" style="display:none">
       <div style="display:flex;gap:8px">
-        <input type="file" id="dm-t-new-file" accept="image/*,.pdf,.doc,.docx,.txt" style="display:none">
-        <button id="dm-t-new-attach-btn" title="Anexar ficheiro" style="width:44px;flex-shrink:0;padding:12px 0;border:1px solid rgba(255,255,255,0.08);border-radius:9px;background:#181D26;color:#8B95A5;font-size:16px;cursor:pointer">📎</button>
-        <button id="dm-t-new-send" style="flex:1;padding:13px;border:none;border-radius:9px;background:#D2A13A;color:#1a1305;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit">Criar ticket</button>
+        <button id="dm-t-attach-btn" style="width:44px;flex-shrink:0;padding:12px 0;border:1px solid var(--border);border-radius:9px;background:var(--surface2);color:var(--muted);font-size:16px;cursor:pointer">📎</button>
+        <button id="dm-t-send" style="flex:1;padding:13px;border:none;border-radius:9px;background:var(--gold);color:#1a1305;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit">Responder</button>
       </div>
-      <div id="dm-t-new-msg" style="margin-top:10px;font-size:12.5px;text-align:center;min-height:16px"></div>`;
+      <div id="dm-t-detail-msg" style="margin-top:8px;font-size:12.5px;color:var(--coral);min-height:16px;text-align:center"></div>
+    </div>`;
 
-    let pendingNewFile = null;
-    const fileInput   = document.getElementById('dm-t-new-file');
-    const attachBtn   = document.getElementById('dm-t-new-attach-btn');
-    const preview     = document.getElementById('dm-t-new-attach-preview');
-    const previewName = document.getElementById('dm-t-new-attach-name');
-    const msg         = document.getElementById('dm-t-new-msg');
-
-    attachBtn.onclick = () => fileInput.click();
-    fileInput.onchange = () => {
-      const f = fileInput.files[0];
-      if (!f) return;
-      if (f.size > 1500000) { msg.textContent = 'Ficheiro demasiado grande (máx. ~1,4 MB).'; fileInput.value = ''; return; }
-      pendingNewFile = f;
-      previewName.textContent = '📎 ' + f.name;
-      preview.style.display = 'flex';
-    };
-    document.getElementById('dm-t-new-attach-remove').onclick = () => {
-      pendingNewFile = null; fileInput.value = ''; preview.style.display = 'none';
-    };
-
-    document.getElementById('dm-t-new-send').onclick = async () => {
-      const title    = document.getElementById('dm-t-new-title').value.trim();
-      const desc     = document.getElementById('dm-t-new-body').value.trim();
-      const category = document.getElementById('dm-t-new-category').value;
-      const btn = document.getElementById('dm-t-new-send');
-      if (!title) { msg.style.color = '#FF6B5E'; msg.textContent = 'Escreve pelo menos um título.'; return; }
-      btn.disabled = true; attachBtn.disabled = true; btn.textContent = 'A criar...';
-
-      const res = await api('submitTicket', { title, body: desc, category }, 'POST');
-      if (!res.ok) {
-        btn.disabled = false; attachBtn.disabled = false; btn.textContent = 'Criar ticket';
-        msg.style.color = '#FF6B5E'; msg.textContent = 'Erro: ' + (res.error||'desconhecido');
-        return;
-      }
-
-      if (pendingNewFile) {
-        btn.textContent = 'A enviar anexo...';
-        const b64 = await readFileAsBase64(pendingNewFile);
-        const up = await apiUpload(res.number, pendingNewFile.name, pendingNewFile.type, b64);
-        if (up.ok) {
-          await api('addComment', { number: res.number, body: up.markdown }, 'POST');
-        } else {
-          msg.style.color = '#FF6B5E'; msg.textContent = 'Ticket criado, mas o anexo falhou: ' + (up.error||'desconhecido');
-        }
-      }
-
-      renderDetail(res.number);
-    };
+  // Status buttons
+  function paintStatusButtons(){
+    app.querySelectorAll('.dm-t-status-btn').forEach(b=>{
+      const s = b.dataset.s;
+      b.style.background = s===selectedStatus ? STATUS_COLOR[s]+'33' : 'transparent';
+    });
   }
+  app.querySelectorAll('.dm-t-status-btn').forEach(btn=>{
+    btn.onclick = ()=>{ selectedStatus=btn.dataset.s; statusChanged=(selectedStatus!==t.status); paintStatusButtons(); };
+  });
 
-  return { open, close, refreshBadge, openTicket };
-})();
+  // Category change
+  $('dm-t-category').onchange = async e=>{
+    const val=e.target.value; e.target.disabled=true;
+    const res = val ? await fetch(Auth.API_URL+'?'+new URLSearchParams({action:'setCategory',pin:Auth.getStoredPin()||'',number,category:val})).then(r=>r.json()) : {ok:true};
+    e.target.disabled=false;
+    if (!res.ok) $('dm-t-detail-msg').textContent='Erro: '+(res.error||'desconhecido');
+  };
+
+  // Attach
+  const fileInput=$('dm-t-file'), attachBtn=$('dm-t-attach-btn'), preview=$('dm-t-attach-preview'), previewName=$('dm-t-attach-name');
+  pendingFile=null;
+  attachBtn.onclick=()=>fileInput.click();
+  fileInput.onchange=()=>{
+    const f=fileInput.files[0]; if(!f) return;
+    if(f.size>1500000){$('dm-t-detail-msg').textContent='Ficheiro demasiado grande (máx. ~1,4 MB).';fileInput.value='';return;}
+    pendingFile=f; previewName.textContent='📎 '+f.name; preview.style.display='flex';
+  };
+  $('dm-t-attach-remove').onclick=()=>{ pendingFile=null; fileInput.value=''; preview.style.display='none'; };
+
+  // Send
+  $('dm-t-send').onclick=async()=>{
+    const btn=$('dm-t-send'), ta=$('dm-t-reply'), msg=$('dm-t-detail-msg');
+    let val=ta.value.trim();
+    if(!val&&!pendingFile&&!statusChanged){msg.textContent='Escreve algo, anexa ou muda o estado.';return;}
+    btn.disabled=true; attachBtn.disabled=true;
+    if(pendingFile){
+      btn.textContent='A enviar anexo...';
+      const b64=await readFileAsBase64(pendingFile);
+      const up=await apiUpload(number,pendingFile.name,pendingFile.type,b64);
+      if(!up.ok){btn.disabled=false;attachBtn.disabled=false;btn.textContent='Responder';msg.textContent='Erro no anexo: '+(up.error||'desconhecido');return;}
+      val=val?val+'\n\n'+up.markdown:up.markdown;
+    }
+    btn.textContent='A enviar...';
+    const params={number,body:val};
+    if(statusChanged) params.status=selectedStatus;
+    const res=await fetch(Auth.API_URL+'?'+new URLSearchParams({action:'addComment',pin:Auth.getStoredPin()||'',...params})).then(r=>r.json());
+    btn.disabled=false; attachBtn.disabled=false; btn.textContent='Responder';
+    if(res.ok) showDetail(number);
+    else msg.textContent='Erro: '+(res.error||'desconhecido');
+  };
+}
+
+// ── Novo Ticket ────────────────────────────────────────────────
+function showNew(){
+  $('btn-new').style.display='none';
+  const app=$('app');
+  app.innerHTML=`
+    <button onclick="showList()" style="background:none;border:none;color:var(--muted);font-size:13px;cursor:pointer;font-family:inherit;padding:0 0 14px;display:flex;align-items:center;gap:4px">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg> Todos os tickets
+    </button>
+    <input id="dm-t-new-title" class="field" placeholder="Título (ex: Botão não funciona)">
+    <select id="dm-t-new-category" class="field">
+      <option value="">Sem categoria</option>
+      ${CATEGORIES.map(c=>`<option value="${c}">${c}</option>`).join('')}
+    </select>
+    <textarea id="dm-t-new-body" class="field" rows="5" placeholder="Descreve o que aconteceu (opcional)"></textarea>
+    <div id="dm-t-new-attach-preview" style="display:none;align-items:center;gap:8px;margin-bottom:10px;padding:8px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:9px">
+      <span style="font-size:12.5px;color:var(--muted);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" id="dm-t-new-attach-name"></span>
+      <button id="dm-t-new-attach-remove" style="background:none;border:none;color:var(--muted2);font-size:16px;cursor:pointer;line-height:1">×</button>
+    </div>
+    <div style="display:flex;gap:8px">
+      <input type="file" id="dm-t-new-file" accept="image/*,.pdf,.doc,.docx,.txt" style="display:none">
+      <button id="dm-t-new-attach-btn" style="width:44px;flex-shrink:0;padding:12px 0;border:1px solid var(--border);border-radius:9px;background:var(--surface2);color:var(--muted);font-size:16px;cursor:pointer">📎</button>
+      <button id="dm-t-new-send" style="flex:1;padding:13px;border:none;border-radius:9px;background:var(--gold);color:#1a1305;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit">Criar ticket</button>
+    </div>
+    <div id="dm-t-new-msg" style="margin-top:10px;font-size:12.5px;text-align:center;min-height:16px;color:var(--coral)"></div>`;
+
+  let pendingNewFile=null;
+  const fileInput=$('dm-t-new-file'), attachBtn=$('dm-t-new-attach-btn'), preview=$('dm-t-new-attach-preview'), previewName=$('dm-t-new-attach-name');
+  attachBtn.onclick=()=>fileInput.click();
+  fileInput.onchange=()=>{
+    const f=fileInput.files[0]; if(!f) return;
+    if(f.size>1500000){$('dm-t-new-msg').textContent='Ficheiro demasiado grande (máx. ~1,4 MB).';fileInput.value='';return;}
+    pendingNewFile=f; previewName.textContent='📎 '+f.name; preview.style.display='flex';
+  };
+  $('dm-t-new-attach-remove').onclick=()=>{ pendingNewFile=null; fileInput.value=''; preview.style.display='none'; };
+
+  $('dm-t-new-send').onclick=async()=>{
+    const title=$('dm-t-new-title').value.trim(), desc=$('dm-t-new-body').value.trim(), category=$('dm-t-new-category').value;
+    const btn=$('dm-t-new-send'), msg=$('dm-t-new-msg');
+    if(!title){msg.textContent='Escreve pelo menos um título.';return;}
+    btn.disabled=true; attachBtn.disabled=true; btn.textContent='A criar...';
+    const res=await fetch(Auth.API_URL+'?'+new URLSearchParams({action:'submitTicket',pin:Auth.getStoredPin()||'',title,body:desc,category})).then(r=>r.json());
+    if(!res.ok){btn.disabled=false;attachBtn.disabled=false;btn.textContent='Criar ticket';msg.textContent='Erro: '+(res.error||'desconhecido');return;}
+    if(pendingNewFile){
+      btn.textContent='A enviar anexo...';
+      const b64=await readFileAsBase64(pendingNewFile);
+      const up=await apiUpload(res.number,pendingNewFile.name,pendingNewFile.type,b64);
+      if(up.ok) await fetch(Auth.API_URL+'?'+new URLSearchParams({action:'addComment',pin:Auth.getStoredPin()||'',number:res.number,body:up.markdown}));
+    }
+    showDetail(res.number);
+  };
+}
+
+// ── Arranque ──────────────────────────────────────────────────
+Auth.protect(function(){
+  $('app-content').style.display='block';
+  Push.init();
+  // Se vier ?ticket=N abre diretamente esse ticket
+  const urlParams = new URLSearchParams(location.search);
+  const ticketNum = urlParams.get('ticket');
+  if (ticketNum) showDetail(Number(ticketNum));
+  else showList();
+});
+</script>
+</body>
+</html>
