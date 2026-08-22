@@ -43,16 +43,16 @@ body{
 .bottom-bar{
   position:fixed;bottom:0;left:0;right:0;
   display:flex;justify-content:center;
-  padding:10px 20px calc(14px + env(safe-area-inset-bottom));
+  padding:8px 20px calc(8px + env(safe-area-inset-bottom));
   z-index:50;
   pointer-events:none;
 }
 .bottom-pill{
   pointer-events:all;
   display:flex;
-  gap:2px;
-  padding:6px;
-  border-radius:28px;
+  gap:0;
+  padding:4px;
+  border-radius:22px;
   background:rgba(255,255,255,0.08);
   backdrop-filter:blur(24px) saturate(180%);
   -webkit-backdrop-filter:blur(24px) saturate(180%);
@@ -163,33 +163,33 @@ body{
 <div class="bottom-bar">
   <div class="bottom-pill">
 
-    <a href="./tickets.html" title="Tickets" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;background:none;border:none;color:rgba(255,255,255,0.75);cursor:pointer;padding:10px 22px;border-radius:22px;transition:background .15s;text-decoration:none;font-family:inherit;position:relative" onmousedown="this.style.background='rgba(255,255,255,0.12)'" onmouseup="this.style.background=''" ontouchstart="this.style.background='rgba(255,255,255,0.12)'" ontouchend="this.style.background=''">
+    <a href="./tickets.html" title="Tickets" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;background:none;border:none;color:rgba(255,255,255,0.75);cursor:pointer;padding:7px 18px;border-radius:18px;transition:background .15s;text-decoration:none;font-family:inherit;position:relative" onmousedown="this.style.background='rgba(255,255,255,0.12)'" onmouseup="this.style.background=''" ontouchstart="this.style.background='rgba(255,255,255,0.12)'" ontouchend="this.style.background=''">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M3 9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-4Z"/>
         <path d="M13 5v2M13 17v2M13 11v2"/>
       </svg>
-      <span style="font-size:11px;font-weight:500">Tickets</span>
+      <span style="font-size:10px;font-weight:500">Tickets</span>
       <span id="dm-t-badge" style="display:none;position:absolute;top:6px;right:14px;
         min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:#FF6B5E;color:#fff;
         font-size:10px;font-weight:700;align-items:center;justify-content:center;border:2px solid transparent"></span>
     </a>
 
-    <a href="./garantias.html" style="display:flex;flex-direction:column;align-items:center;gap:4px;background:none;border:none;color:rgba(255,255,255,0.75);cursor:pointer;padding:10px 22px;border-radius:22px;transition:background .15s;text-decoration:none;font-family:inherit" onmousedown="this.style.background='rgba(255,255,255,0.12)'" onmouseup="this.style.background=''" ontouchstart="this.style.background='rgba(255,255,255,0.12)'" ontouchend="this.style.background=''">
+    <a href="./garantias.html" style="display:flex;flex-direction:column;align-items:center;gap:4px;background:none;border:none;color:rgba(255,255,255,0.75);cursor:pointer;padding:7px 18px;border-radius:18px;transition:background .15s;text-decoration:none;font-family:inherit" onmousedown="this.style.background='rgba(255,255,255,0.12)'" onmouseup="this.style.background=''" ontouchstart="this.style.background='rgba(255,255,255,0.12)'" ontouchend="this.style.background=''">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
         <path d="M9 12l2 2 4-4"/>
       </svg>
-      <span style="font-size:11px;font-weight:500">Garantias</span>
+      <span style="font-size:10px;font-weight:500">Garantias</span>
     </a>
 
-    <button onclick="if(confirm('Sair? Vais precisar da password para voltar a entrar.')){Auth.logout();}" style="display:flex;flex-direction:column;align-items:center;gap:4px;background:none;border:none;color:rgba(255,255,255,0.75);cursor:pointer;padding:10px 22px;border-radius:22px;transition:background .15s;font-family:inherit" onmousedown="this.style.background='rgba(255,255,255,0.12)'" onmouseup="this.style.background=''" ontouchstart="this.style.background='rgba(255,255,255,0.12)'" ontouchend="this.style.background=''">
+    <button onclick="if(confirm('Sair? Vais precisar da password para voltar a entrar.')){Auth.logout();}" style="display:flex;flex-direction:column;align-items:center;gap:4px;background:none;border:none;color:rgba(255,255,255,0.75);cursor:pointer;padding:7px 18px;border-radius:18px;transition:background .15s;font-family:inherit" onmousedown="this.style.background='rgba(255,255,255,0.12)'" onmouseup="this.style.background=''" ontouchstart="this.style.background='rgba(255,255,255,0.12)'" ontouchend="this.style.background=''">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
-      <span style="font-size:11px;font-weight:500">Sair</span>
+      <span style="font-size:10px;font-weight:500">Sair</span>
     </button>
 
-    <button id="dm-push-btn" onclick="enablePush()" style="display:none;flex-direction:column;align-items:center;gap:4px;background:none;border:none;color:rgba(255,255,255,0.75);cursor:pointer;padding:10px 22px;border-radius:22px;font-family:inherit">
+    <button id="dm-push-btn" onclick="enablePush()" style="display:none;flex-direction:column;align-items:center;gap:4px;background:none;border:none;color:rgba(255,255,255,0.75);cursor:pointer;padding:7px 18px;border-radius:18px;font-family:inherit">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-      <span style="font-size:11px;font-weight:500">Alertas</span>
+      <span style="font-size:10px;font-weight:500">Alertas</span>
     </button>
 
   </div>
