@@ -88,7 +88,8 @@ const API = () => Auth.API_URL + '?pin=' + encodeURIComponent(Auth.getStoredPin(
 const eur = v => '€'+Math.abs(v).toLocaleString('pt-PT',{minimumFractionDigits:2,maximumFractionDigits:2});
 
 const CATEGORIAS_GAR = ['Eletrodomésticos','Eletrónica','Automóvel','Casa','Saúde','Outros'];
-const DURACOES = [1, 2, 3, 5, 10];
+const TIPOS_GAR = ['Geral','Bateria','Motor','Ecrã','Consumíveis','Adicional'];
+const DURACOES = [1, 2, 3, 4, 5, 8, 10];
 const FIELD_STYLE = "width:100%;padding:10px;margin-top:6px;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#181D26;color:#F2F4F7;font-size:14px;font-family:inherit";
 
 // ── Cores por estado ──────────────────────────────────────────
@@ -117,7 +118,7 @@ function renderGarantias(list) {
     return `<div class="gar-card" onclick="openDetail(${JSON.stringify(g).replace(/"/g,'&quot;')})">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
         <div style="min-width:0">
-          <div class="gar-nome">${g.nome}</div>
+          <div class="gar-nome">${g.nome}${g.tipo && g.tipo!=='Geral' ? ` <span style="font-size:11px;font-weight:500;color:var(--amber);background:rgba(240,169,58,0.15);padding:2px 6px;border-radius:8px">${g.tipo}</span>` : ''}</div>
           <div class="gar-meta">${g.categoria}${g.categoria?' · ':''}Comprado em ${g.dataCompra} · ${g.duracaoAnos} ano${g.duracaoAnos>1?'s':''}</div>
         </div>
         <div style="font-size:11px;color:var(--muted2);flex-shrink:0;text-align:right">até ${g.dataFim}</div>
@@ -151,7 +152,7 @@ function openDetail(g) {
         <div style="font-size:16px;font-weight:700">${g.nome}</div>
         <button onclick="$('det-modal').remove()" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;line-height:1">×</button>
       </div>
-      <div style="font-size:13px;color:var(--muted);margin-bottom:6px">${g.categoria} · ${g.duracaoAnos} ano${g.duracaoAnos>1?'s':''}</div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:6px">${g.tipo||'Geral'} · ${g.categoria} · ${g.duracaoAnos} ano${g.duracaoAnos>1?'s':''}</div>
       <div style="font-size:13px;margin-bottom:4px">Comprado em <strong>${g.dataCompra}</strong></div>
       <div style="font-size:13px;margin-bottom:14px">Garantia até <strong>${g.dataFim}</strong></div>
       <div style="font-size:15px;font-weight:700;color:${cor};margin-bottom:20px">${label}</div>
@@ -190,6 +191,11 @@ function openAddGarantia() {
       <label style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Produto <span style="color:var(--coral)">*</span></label>
       <input id="g-nome" type="text" placeholder="ex: Samsung TV 65&quot;" style="${FIELD_STYLE};margin:6px 0 14px">
 
+      <label style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Tipo de garantia</label>
+      <select id="g-tipo" style="${FIELD_STYLE};margin:6px 0 14px">
+        ${TIPOS_GAR.map(t=>`<option>${t}</option>`).join('')}
+      </select>
+
       <label style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Categoria</label>
       <select id="g-cat" style="${FIELD_STYLE};margin:6px 0 14px">
         ${CATEGORIAS_GAR.map(c=>`<option>${c}</option>`).join('')}
@@ -220,6 +226,7 @@ async function submitGarantia() {
   const restore=()=>{ btn.disabled=false; btn.textContent='Adicionar garantia'; };
 
   const nome = $('g-nome').value.trim();
+  const tipo = $('g-tipo').value;
   const cat  = $('g-cat').value;
   const rawData = $('g-data').value;
   const dur  = $('g-dur').value;
@@ -247,17 +254,28 @@ async function submitGarantia() {
   const payload = {
     action: 'garantiasAdd',
     pin: Auth.getStoredPin()||'',
-    nome, categoria: cat, dataCompra, duracaoAnos: dur,
+    nome, tipo, categoria: cat, dataCompra, duracaoAnos: dur,
     filename, filedata, mimetype,
   };
 
-  try {
+  // Garantias com ficheiro usam POST (base64 demasiado grande para URL).
+  // Retry até 3 vezes para cobrir a falha silenciosa do Apps Script na 1ª chamada.
+  async function doPost(attempt) {
     const r = await fetch(Auth.API_URL + '?action=garantiasAdd&pin=' + encodeURIComponent(payload.pin), {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify(payload),
     });
     const d = await r.json();
+    if (!d.ok && attempt < 3) {
+      await new Promise(res => setTimeout(res, 600 * attempt));
+      return doPost(attempt + 1);
+    }
+    return d;
+  }
+
+  try {
+    const d = await doPost(1);
     if (!d.ok) { msg.textContent='Erro: '+(d.error||'desconhecido'); restore(); return; }
     $('add-modal').remove();
     loadGarantias();
