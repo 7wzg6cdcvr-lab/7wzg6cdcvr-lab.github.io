@@ -226,8 +226,34 @@ function renderGlobalKPIs(){
     </div>`;
 }
 
+let dashboardLoaded = false;
+let dashboardLoading = false;
+
+function renderDashboardBtn(){
+  if (globalKPIs) return renderGlobalKPIs();
+  return `
+    <button onclick="loadDashboard()" id="dashboard-btn" style="width:100%;padding:14px;border:none;border-radius:14px;background:var(--surface);border:1px solid var(--border);color:var(--muted);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:14px;display:flex;align-items:center;justify-content:center;gap:8px">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      Dashboard Anual
+    </button>`;
+}
+
+async function loadDashboard(){
+  if (dashboardLoading) return;
+  dashboardLoading = true;
+  const btn = $('dashboard-btn');
+  if (btn) { btn.textContent = 'A carregar…'; btn.disabled = true; }
+  try {
+    const r = await fetch(API()+'&action=despesasData');
+    const g = await r.json();
+    if (!g.error) { globalKPIs = g; dashboardLoaded = true; }
+  } catch(e) {}
+  dashboardLoading = false;
+  if (currentView === 'grid') renderGrid();
+}
+
 function renderGrid(){
-  $('app').innerHTML = renderGlobalKPIs() + `
+  $('app').innerHTML = renderDashboardBtn() + `
     <div class="mes-grid">
       ${meses.map(m=>`
         <div class="mes-card${m.current?' current':''}" onclick="openMes('${m.id}','${m.label}',${!!m.current})">
@@ -243,10 +269,7 @@ async function loadIndex(){
     const d = await r.json();
     if (d.error) { $('app').innerHTML=`<p style="color:var(--coral)">${d.error}</p>`; return; }
     meses = d;
-    // Carrega os KPIs globais em paralelo
-    fetch(API()+'&action=despesasData').then(r=>r.json()).then(g=>{
-      if (!g.error) { globalKPIs = g; if(currentView==='grid') renderGrid(); }
-    }).catch(()=>{});
+    // Dashboard anual só carrega se o utilizador carregar no botão
     renderGrid();
   } catch(e) {
     $('app').innerHTML = `<p style="color:var(--coral)">Erro a carregar: ${e.message}</p>`;
@@ -338,6 +361,7 @@ function refresh(){
   } else {
     meses = [];
     globalKPIs = null;
+    dashboardLoaded = false;
     showGrid();
   }
 }
@@ -530,7 +554,6 @@ async function submitMov(isEdit){
     const d = await postToScript(url, payload);
     if(!d.ok){ msg.textContent='Erro: '+(d.error||'desconhecido'); restore(); return; }
     closeMovModal();
-    globalKPIs = null; // recalcula quando voltar à grelha
     if (viewingFileId) openMes(viewingFileId, viewingLabel, viewingIsCurrent);
   } catch(e){
     msg.textContent='Erro de rede: '+e.message;
