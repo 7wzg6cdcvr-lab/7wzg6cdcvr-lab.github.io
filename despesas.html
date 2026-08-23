@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#0A0D12">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icons/icon-192.png" type="image/png">
@@ -543,7 +543,7 @@ function modalMovHTML(s){
       <div id="mv-fields">${renderMovFieldsHTML(tipoAtual, vals, isEdit)}</div>
 
       <div id="mv-msg" style="font-size:12.5px;color:var(--coral);min-height:16px;margin-bottom:10px;text-align:center"></div>
-      <button onclick="submitMov(${isEdit})" id="mv-submit"
+      <button onclick="submitMov(${isEdit?1:0})" id="mv-submit"
         style="width:100%;padding:14px;border:none;border-radius:12px;background:#D2A13A;color:#1a1305;font-weight:700;font-size:15px;cursor:pointer;font-family:inherit">
         ${isEdit?'Guardar alterações':'Adicionar movimento'}
       </button>
