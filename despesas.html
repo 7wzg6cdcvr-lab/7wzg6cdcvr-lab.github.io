@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#0A0D12">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icons/icon-192.png" type="image/png">
@@ -551,8 +551,25 @@ function modalMovHTML(s){
   </div>`;
 }
 
-function openAddMov(){ loadCategorias().then(() => document.body.insertAdjacentHTML('beforeend', modalMovHTML(null))); }
-function openEditMov(m){ loadCategorias().then(() => document.body.insertAdjacentHTML('beforeend', modalMovHTML(m))); }
+function openAddMov(){
+  document.body.insertAdjacentHTML('beforeend', modalMovHTML(null));
+  // Carrega categorias em background — se chegarem antes de submeter, actualiza os selects
+  if (!categoriasLoaded) {
+    loadCategorias().then(() => {
+      const m = $('mv-fields');
+      if (m) $('mv-fields').innerHTML = renderMovFieldsHTML($('mv-tipo').value, {
+        tipo: $('mv-tipo').value,
+        dataISO: $('mv-data') ? $('mv-data').value : '',
+        valor: $('mv-valor') ? $('mv-valor').value : '',
+        col1: '', col2: '', pagamento: '',
+      }, false);
+    });
+  }
+}
+function openEditMov(m){
+  document.body.insertAdjacentHTML('beforeend', modalMovHTML(m));
+  if (!categoriasLoaded) loadCategorias();
+}
 function closeMovModal(){ const m=$('mov-modal'); if(m) m.remove(); }
 
 async function submitMov(isEdit){
