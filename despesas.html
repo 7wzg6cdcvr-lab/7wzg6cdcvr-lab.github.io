@@ -111,33 +111,13 @@ const eur = v => (v<0?'-':'')+'€'+Math.abs(v).toLocaleString('pt-PT',{minimumF
 // foi tentado como alternativa ao fetch mas causa bloqueio de CORS
 // (o fetch é o que realmente funciona aqui); a repetição cobre falhas
 // de rede pontuais, incluindo o "Load failed" ocasional no Safari/iOS.
-async function postToScript(url, payload, _attempt) {
-  // Escritas via GET (evita CORS do POST do Apps Script).
-  // Retry automático até 3 tentativas com delay crescente —
-  // o Apps Script às vezes falha silenciosamente na 1ª chamada.
-  const params = new URLSearchParams();
-  for (const [k, v] of Object.entries(payload)) {
-    if (v !== null && v !== undefined) {
-      params.set(k, typeof v === 'object' ? JSON.stringify(v) : String(v));
-    }
-  }
-  const attempt = _attempt || 1;
-  try {
-    const r = await fetch(url + '?' + params.toString());
-    const d = await r.json();
-    // Se o servidor devolve erro e ainda temos tentativas, tenta outra vez
-    if (!d.ok && attempt < 3) {
-      await new Promise(res => setTimeout(res, 600 * attempt));
-      return postToScript(url, payload, attempt + 1);
-    }
-    return d;
-  } catch(e) {
-    if (attempt < 3) {
-      await new Promise(res => setTimeout(res, 600 * attempt));
-      return postToScript(url, payload, attempt + 1);
-    }
-    throw e;
-  }
+async function postToScript(url, payload) {
+  const r = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(payload)
+  });
+  return await r.json();
 }
 const $ = id => document.getElementById(id);
 const API = () => Auth.API_URL + '?pin=' + encodeURIComponent(Auth.getStoredPin()||'');
@@ -546,7 +526,8 @@ async function submitMov(isEdit){
   if (isEdit) payload.row = parseInt($('mv-row').value);
 
   try {
-    const d = await postToScript(Auth.API_URL, payload);
+    const url = Auth.API_URL+'?'+new URLSearchParams({action:payload.action,pin:payload.pin});
+    const d = await postToScript(url, payload);
     if(!d.ok){ msg.textContent='Erro: '+(d.error||'desconhecido'); restore(); return; }
     closeMovModal();
     globalKPIs = null; // recalcula quando voltar à grelha
@@ -606,7 +587,8 @@ async function submitAddMonth(){
   const payload = { action:'despesasRegistarMes', pin:Auth.getStoredPin()||'', code, id };
 
   try {
-    const d = await postToScript(Auth.API_URL, payload);
+    const url = Auth.API_URL+'?'+new URLSearchParams({action:payload.action,pin:payload.pin});
+    const d = await postToScript(url, payload);
     if(!d.ok){ msg.textContent='Erro: '+(d.error||'desconhecido'); restore(); return; }
     closeMonthModal();
     meses = [];
@@ -657,7 +639,8 @@ async function submitFundo(){
   const payload = { action:'despesasFundoSet', pin:Auth.getStoredPin()||'', valor: valorRaw };
 
   try {
-    const d = await postToScript(Auth.API_URL, payload);
+    const url = Auth.API_URL+'?'+new URLSearchParams({action:payload.action,pin:payload.pin});
+    const d = await postToScript(url, payload);
     if(!d.ok){ msg.textContent='Erro: '+(d.error||'desconhecido'); restore(); return; }
     closeFundoModal();
     if (globalKPIs) globalKPIs.fundoEmergencia = Number(valorRaw);
