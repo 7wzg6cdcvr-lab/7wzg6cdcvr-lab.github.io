@@ -165,31 +165,9 @@ body{
 </div>
 
 <script src="auth.js"></script>
+<script src="tickets.js"></script>
 <script src="push.js"></script>
 <script>
-// Mostra quantos tickets estão "Novo" no selo do botão Tickets
-// (id="dm-t-badge", só existe no index.html) e no ícone da app instalada.
-async function refreshTicketBadge(){
-  const badge = document.getElementById('dm-t-badge');
-  try {
-    const pin = Auth.getStoredPin() || '';
-    const url = Auth.API_URL + '?' + new URLSearchParams({ action:'listTickets', pin }).toString();
-    const r = await fetch(url);
-    const d = await r.json();
-    if (!d.ok) return;
-    const n = d.tickets.filter(t => t.status === 'Novo').length;
-
-    if (badge) {
-      if (n > 0) { badge.textContent = n > 9 ? '9+' : String(n); badge.style.display = 'flex'; }
-      else { badge.style.display = 'none'; }
-    }
-    if ('setAppBadge' in navigator) {
-      if (n > 0) navigator.setAppBadge(n).catch(()=>{});
-      else navigator.clearAppBadge().catch(()=>{});
-    }
-  } catch (e) { /* sem rede, sem selo — não é crítico */ }
-}
-
 const eur=v=>'€'+Math.abs(v).toLocaleString('pt-PT',{minimumFractionDigits:2,maximumFractionDigits:2});
 
 // POST ao Apps Script, com uma repetição automática — o XMLHttpRequest
@@ -286,7 +264,7 @@ Auth.protect(function(){
   document.getElementById('app-content').style.display = 'block';
   loadData();
   loadRecentes();
-  refreshTicketBadge();
+  if (window.Tickets) Tickets.refreshBadge();
   Push.init();
 });
 
