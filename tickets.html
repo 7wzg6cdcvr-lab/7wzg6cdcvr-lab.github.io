@@ -122,8 +122,23 @@ function renderRich(raw){
 
 async function apiFetch(action, params){
   const url = API() + '&action=' + action + (params ? '&' + new URLSearchParams(params).toString() : '');
-  const r = await fetch(url);
+  const r = await fetch(url, { cache: 'no-store' });
   return r.json();
+}
+
+// Pedido sem cache nenhuma — usado nas escritas (responder, mudar estado,
+// mudar categoria, criar ticket). Sem isto, o browser pode devolver uma
+// resposta antiga guardada em cache para um URL igual (mesmos parâmetros),
+// mesmo depois do servidor ter sido corrigido.
+function noCacheParams(params){
+  return new URLSearchParams({ ...params, _t: Date.now() });
+}
+async function noCacheFetch(params){
+  const url = Auth.API_URL + '?' + noCacheParams(params).toString();
+  const r = await fetch(url, { cache: 'no-store' });
+  const text = await r.text();
+  try { return JSON.parse(text); }
+  catch(e) { return { ok:false, error: 'Resposta inesperada do servidor (' + r.status + '): ' + text.slice(0,150) }; }
 }
 
 let pendingFile = null;
@@ -258,7 +273,7 @@ async function showDetail(number){
   // Category change
   $('dm-t-category').onchange = async e=>{
     const val=e.target.value; e.target.disabled=true;
-    const res = val ? await fetch(Auth.API_URL+'?'+new URLSearchParams({action:'setCategory',pin:Auth.getStoredPin()||'',number,category:val})).then(r=>r.json()) : {ok:true};
+    const res = val ? await noCacheFetch({action:'setCategory',pin:Auth.getStoredPin()||'',number,category:val}) : {ok:true};
     e.target.disabled=false;
     if (!res.ok) $('dm-t-detail-msg').textContent='Erro: '+(res.error||'desconhecido');
   };
@@ -288,14 +303,11 @@ async function showDetail(number){
       val=val?val+'\n\n'+up.markdown:up.markdown;
     }
     btn.textContent='A enviar...';
-    const params={number,body:val};
+    const params={action:'addComment',pin:Auth.getStoredPin()||'',number,body:val};
     if(statusChanged) params.status=selectedStatus;
     let res;
     try {
-      const r = await fetch(Auth.API_URL+'?'+new URLSearchParams({action:'addComment',pin:Auth.getStoredPin()||'',...params}));
-      const text = await r.text();
-      try { res = JSON.parse(text); }
-      catch(e) { res = { ok:false, error: 'Resposta inesperada do servidor (' + r.status + '): ' + text.slice(0,150) }; }
+      res = await noCacheFetch(params);
     } catch(e) {
       res = { ok:false, error: 'Erro de rede: ' + e.message };
     }
@@ -345,13 +357,13 @@ function showNew(){
     const btn=$('dm-t-new-send'), msg=$('dm-t-new-msg');
     if(!title){msg.textContent='Escreve pelo menos um título.';return;}
     btn.disabled=true; attachBtn.disabled=true; btn.textContent='A criar...';
-    const res=await fetch(Auth.API_URL+'?'+new URLSearchParams({action:'submitTicket',pin:Auth.getStoredPin()||'',title,body:desc,category})).then(r=>r.json());
+    const res = await noCacheFetch({action:'submitTicket',pin:Auth.getStoredPin()||'',title,body:desc,category});
     if(!res.ok){btn.disabled=false;attachBtn.disabled=false;btn.textContent='Criar ticket';msg.textContent='Erro: '+(res.error||'desconhecido');return;}
     if(pendingNewFile){
       btn.textContent='A enviar anexo...';
       const b64=await readFileAsBase64(pendingNewFile);
       const up=await apiUpload(res.number,pendingNewFile.name,pendingNewFile.type,b64);
-      if(up.ok) await fetch(Auth.API_URL+'?'+new URLSearchParams({action:'addComment',pin:Auth.getStoredPin()||'',number:res.number,body:up.markdown}));
+      if(up.ok) await noCacheFetch({action:'addComment',pin:Auth.getStoredPin()||'',number:res.number,body:up.markdown});
     }
     showDetail(res.number);
   };
