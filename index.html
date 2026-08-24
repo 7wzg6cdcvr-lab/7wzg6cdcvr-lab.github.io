@@ -168,7 +168,7 @@ body{
 <div class="bottom-bar">
   <div class="bottom-pill">
 
-    <a href="./tickets.html" title="Tickets" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;background:none;border:none;color:rgba(255,255,255,0.75);cursor:pointer;padding:7px 18px;border-radius:18px;transition:background .15s;text-decoration:none;font-family:inherit;position:relative" onmousedown="this.style.background='rgba(255,255,255,0.12)'" onmouseup="this.style.background=''" ontouchstart="this.style.background='rgba(255,255,255,0.12)'" ontouchend="this.style.background=''">
+    <button onclick="Tickets.open()" title="Tickets" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;background:none;border:none;color:rgba(255,255,255,0.75);cursor:pointer;padding:7px 18px;border-radius:18px;transition:background .15s;font-family:inherit;position:relative" onmousedown="this.style.background='rgba(255,255,255,0.12)'" onmouseup="this.style.background=''" ontouchstart="this.style.background='rgba(255,255,255,0.12)'" ontouchend="this.style.background=''">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M3 9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-4Z"/>
         <path d="M13 5v2M13 17v2M13 11v2"/>
@@ -177,7 +177,7 @@ body{
       <span id="dm-t-badge" style="display:none;position:absolute;top:6px;right:14px;
         min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:#FF6B5E;color:#fff;
         font-size:10px;font-weight:700;align-items:center;justify-content:center;border:2px solid transparent"></span>
-    </a>
+    </button>
 
     <a href="./garantias.html" style="display:flex;flex-direction:column;align-items:center;gap:4px;background:none;border:none;color:rgba(255,255,255,0.75);cursor:pointer;padding:7px 18px;border-radius:18px;transition:background .15s;text-decoration:none;font-family:inherit" onmousedown="this.style.background='rgba(255,255,255,0.12)'" onmouseup="this.style.background=''" ontouchstart="this.style.background='rgba(255,255,255,0.12)'" ontouchend="this.style.background=''">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -198,31 +198,9 @@ body{
 </div><!-- app-content -->
 
 <script src="auth.js"></script>
+<script src="tickets.js"></script>
 <script src="push.js"></script>
 <script>
-// Mostra quantos tickets estão "Novo" no selo do botão Tickets
-// (id="dm-t-badge", só existe no index.html) e no ícone da app instalada.
-async function refreshTicketBadge(){
-  const badge = document.getElementById('dm-t-badge');
-  try {
-    const pin = Auth.getStoredPin() || '';
-    const url = Auth.API_URL + '?' + new URLSearchParams({ action:'listTickets', pin }).toString();
-    const r = await fetch(url);
-    const d = await r.json();
-    if (!d.ok) return;
-    const n = d.tickets.filter(t => t.status === 'Novo').length;
-
-    if (badge) {
-      if (n > 0) { badge.textContent = n > 9 ? '9+' : String(n); badge.style.display = 'flex'; }
-      else { badge.style.display = 'none'; }
-    }
-    if ('setAppBadge' in navigator) {
-      if (n > 0) navigator.setAppBadge(n).catch(()=>{});
-      else navigator.clearAppBadge().catch(()=>{});
-    }
-  } catch (e) { /* sem rede, sem selo — não é crítico */ }
-}
-
   function enablePush(){
     // Chamado diretamente pelo clique, sem nada assíncrono antes —
     // é este isolamento que faz o Safari aceitar o pedido.
@@ -251,7 +229,7 @@ async function refreshTicketBadge(){
     el.style.display = 'flex';
     el.style.flexDirection = 'column';
     el.style.alignItems = 'center';
-    refreshTicketBadge();
+    if (window.Tickets) Tickets.refreshBadge();
     Push.init();
 
     if (Push.isSupported() && !Push.alreadyEnabled()) {
@@ -259,7 +237,7 @@ async function refreshTicketBadge(){
     }
 
     const ticketNum = new URLSearchParams(location.search).get('ticket');
-    if (ticketNum) location.href = './tickets.html?ticket=' + encodeURIComponent(ticketNum);
+    if (ticketNum) Tickets.openTicket(parseInt(ticketNum, 10));
   });
 </script>
 </body>
