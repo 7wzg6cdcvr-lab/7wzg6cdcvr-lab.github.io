@@ -139,14 +139,31 @@ async function apiUpload(number, filename, mimeType, dataBase64){
 }
 
 // ── Lista ──────────────────────────────────────────────────────
+let allTickets = [];
+let currentTab = 'abertos'; // abertos | resolvidos | arquivados
+
 async function showList(){
   $('btn-new').style.display='flex';
   const app = $('app');
   app.innerHTML = `${[1,2,3,4].map(()=>'<div class="skel" style="height:72px;margin-bottom:10px"></div>').join('')}`;
   const d = await apiFetch('listTickets');
   if (!d.ok) { app.innerHTML=`<p style="color:var(--coral);padding:20px">${d.error}</p>`; return; }
-  const open = d.tickets.filter(t=>t.status!=='Resolvido');
-  const done = d.tickets.filter(t=>t.status==='Resolvido');
+  allTickets = d.tickets;
+  currentTab = 'abertos';
+  renderTicketList();
+}
+
+function switchTab(key){ currentTab = key; renderTicketList(); }
+
+function tabBtn(key, label, count){
+  const active = currentTab === key;
+  return `<button onclick="switchTab('${key}')" style="flex:1;padding:9px 4px;border-radius:10px;border:1px solid ${active?'var(--gold)':'var(--border)'};background:${active?'rgba(210,161,58,0.15)':'var(--surface)'};color:${active?'var(--gold-light)':'var(--muted)'};font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">${label}${count?' · '+count:''}</button>`;
+}
+
+function renderTicketList(){
+  const abertos    = allTickets.filter(t => t.status !== 'Resolvido');
+  const resolvidos = allTickets.filter(t => t.status === 'Resolvido' && !t.archived);
+  const arquivados = allTickets.filter(t => t.archived);
 
   function rows(list){ return list.map(t=>`
     <div class="t-row" onclick="showDetail(${t.number})">
@@ -158,10 +175,17 @@ async function showList(){
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="color:var(--muted2);flex-shrink:0;margin-top:4px"><path d="M9 18l6-6-6-6"/></svg>
     </div>`).join('');}
 
-  app.innerHTML =
-    (open.length ? `<div class="sec-hdr">Abertos · ${open.length}</div>${rows(open)}` : '') +
-    (done.length ? `<div class="sec-hdr">Resolvidos · ${done.length}</div>${rows(done)}` : '') +
-    (!d.tickets.length ? '<p style="color:var(--muted);text-align:center;padding:40px">Sem tickets</p>' : '');
+  const tabs = `<div style="display:flex;gap:6px;margin-bottom:16px">
+    ${tabBtn('abertos','Abertos',abertos.length)}
+    ${tabBtn('resolvidos','Resolvidos',resolvidos.length)}
+    ${tabBtn('arquivados','Arquivados',arquivados.length)}
+  </div>`;
+
+  const list = currentTab==='abertos' ? abertos : currentTab==='resolvidos' ? resolvidos : arquivados;
+
+  $('app').innerHTML = tabs + (list.length
+    ? rows(list)
+    : `<p style="color:var(--muted);text-align:center;padding:40px">Sem tickets ${currentTab==='abertos'?'abertos':currentTab==='resolvidos'?'resolvidos':'arquivados'}</p>`);
 }
 
 // ── Detalhe ────────────────────────────────────────────────────
@@ -184,7 +208,7 @@ async function showDetail(number){
     <div style="margin-bottom:16px">
       <div style="font-size:17px;font-weight:700;margin-bottom:8px">${esc(t.title)}</div>
       <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">
-        ${statusPill(t.status)} ${catPill(t.category)}
+        ${statusPill(t.status)} ${catPill(t.category)} ${t.archived ? pill('📦 Arquivado','#5C6576') : ''}
       </div>
       <div style="font-size:11px;color:var(--muted2)">#${t.number} · ${fmtDateTime(t.createdAt)}</div>
     </div>
@@ -266,7 +290,15 @@ async function showDetail(number){
     btn.textContent='A enviar...';
     const params={number,body:val};
     if(statusChanged) params.status=selectedStatus;
-    const res=await fetch(Auth.API_URL+'?'+new URLSearchParams({action:'addComment',pin:Auth.getStoredPin()||'',...params})).then(r=>r.json());
+    let res;
+    try {
+      const r = await fetch(Auth.API_URL+'?'+new URLSearchParams({action:'addComment',pin:Auth.getStoredPin()||'',...params}));
+      const text = await r.text();
+      try { res = JSON.parse(text); }
+      catch(e) { res = { ok:false, error: 'Resposta inesperada do servidor (' + r.status + '): ' + text.slice(0,150) }; }
+    } catch(e) {
+      res = { ok:false, error: 'Erro de rede: ' + e.message };
+    }
     btn.disabled=false; attachBtn.disabled=false; btn.textContent='Responder';
     if(res.ok) showDetail(number);
     else msg.textContent='Erro: '+(res.error||'desconhecido');
