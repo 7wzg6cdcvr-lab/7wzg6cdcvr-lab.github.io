@@ -126,16 +126,18 @@ async function apiFetch(action, params){
   return r.json();
 }
 
-// Pedido sem cache nenhuma — usado nas escritas (responder, mudar estado,
-// mudar categoria, criar ticket). Sem isto, o browser pode devolver uma
-// resposta antiga guardada em cache para um URL igual (mesmos parâmetros),
-// mesmo depois do servidor ter sido corrigido.
-function noCacheParams(params){
-  return new URLSearchParams({ ...params, _t: Date.now() });
-}
-async function noCacheFetch(params){
-  const url = Auth.API_URL + '?' + noCacheParams(params).toString();
-  const r = await fetch(url, { cache: 'no-store' });
+// Pedido POST — o doGet só reconhece leituras (listTickets, getTicket...);
+// as escritas (responder, mudar estado, mudar categoria, criar ticket)
+// só estão ligadas no doPost. Usar GET para isto caía sempre no
+// "apiRoute_()" por defeito (dados do Portfolio), daí o erro sem sentido.
+async function postToScript(params){
+  const { action, pin, ...body } = params;
+  const url = Auth.API_URL + '?' + new URLSearchParams({ action, pin }).toString();
+  const r = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({ action, pin, ...body })
+  });
   const text = await r.text();
   try { return JSON.parse(text); }
   catch(e) { return { ok:false, error: 'Resposta inesperada do servidor (' + r.status + '): ' + text.slice(0,150) }; }
@@ -273,7 +275,7 @@ async function showDetail(number){
   // Category change
   $('dm-t-category').onchange = async e=>{
     const val=e.target.value; e.target.disabled=true;
-    const res = val ? await noCacheFetch({action:'setCategory',pin:Auth.getStoredPin()||'',number,category:val}) : {ok:true};
+    const res = val ? await postToScript({action:'setCategory',pin:Auth.getStoredPin()||'',number,category:val}) : {ok:true};
     e.target.disabled=false;
     if (!res.ok) $('dm-t-detail-msg').textContent='Erro: '+(res.error||'desconhecido');
   };
@@ -307,7 +309,7 @@ async function showDetail(number){
     if(statusChanged) params.status=selectedStatus;
     let res;
     try {
-      res = await noCacheFetch(params);
+      res = await postToScript(params);
     } catch(e) {
       res = { ok:false, error: 'Erro de rede: ' + e.message };
     }
@@ -357,13 +359,13 @@ function showNew(){
     const btn=$('dm-t-new-send'), msg=$('dm-t-new-msg');
     if(!title){msg.textContent='Escreve pelo menos um título.';return;}
     btn.disabled=true; attachBtn.disabled=true; btn.textContent='A criar...';
-    const res = await noCacheFetch({action:'submitTicket',pin:Auth.getStoredPin()||'',title,body:desc,category});
+    const res = await postToScript({action:'submitTicket',pin:Auth.getStoredPin()||'',title,body:desc,category});
     if(!res.ok){btn.disabled=false;attachBtn.disabled=false;btn.textContent='Criar ticket';msg.textContent='Erro: '+(res.error||'desconhecido');return;}
     if(pendingNewFile){
       btn.textContent='A enviar anexo...';
       const b64=await readFileAsBase64(pendingNewFile);
       const up=await apiUpload(res.number,pendingNewFile.name,pendingNewFile.type,b64);
-      if(up.ok) await noCacheFetch({action:'addComment',pin:Auth.getStoredPin()||'',number:res.number,body:up.markdown});
+      if(up.ok) await postToScript({action:'addComment',pin:Auth.getStoredPin()||'',number:res.number,body:up.markdown});
     }
     showDetail(res.number);
   };
