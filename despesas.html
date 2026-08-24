@@ -9,8 +9,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icons/icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
-<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
-<title>DC Despesas</title>
+<title>DC Garantias</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
 @font-face{font-family:'Cybertruck';src:url('fonts/Cybertruck-Regular.ttf') format('truetype');font-weight:400;font-style:normal;font-display:swap;}
@@ -30,47 +29,27 @@ body{min-height:100vh;background:var(--bg);color:var(--text);font-family:'DM San
 .topbar-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .brand{display:flex;align-items:center;min-width:0;flex:1}
 .brand-logo{height:110px;width:auto;display:block}
-.brand-txt{display:flex;flex-direction:column;margin-left:6px}
-.brand-family{font-family:'Cybertruck',sans-serif;font-size:20px;letter-spacing:.06em;color:#B0B5BD;line-height:1.1}
-.brand-sub{font-family:'Futura','Century Gothic',Arial,sans-serif;font-size:12px;font-weight:300;letter-spacing:.14em;color:var(--muted)}
-.icon-btn{background:var(--surface3);color:var(--text);border:1px solid var(--border);border-radius:10px;width:34px;height:34px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;text-decoration:none}
+.icon-btn{background:var(--surface3);color:var(--text);border:1px solid var(--border);border-radius:10px;width:40px;height:40px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;text-decoration:none}
 .icon-btn:active{transform:scale(.92)}
-.icon-btn.spinning svg{animation:spin .7s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
 
 .app{padding:16px}
 
-/* Grelha de meses */
-.mes-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.mes-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px 16px;cursor:pointer;position:relative;overflow:hidden;transition:border-color .15s}
-.mes-card:active{transform:scale(.97)}
-.mes-card.current{border-color:var(--amber)}
-.mes-card.current::after{content:'atual';position:absolute;top:8px;right:10px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--amber)}
-.mes-label{font-size:17px;font-weight:700}
-.mes-sub{font-size:11px;color:var(--muted);margin-top:4px}
+.gar-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:10px;cursor:pointer;transition:border-color .15s}
+.gar-card:active{transform:scale(.98)}
+.gar-nome{font-size:15px;font-weight:700;margin-bottom:4px}
+.gar-meta{font-size:12px;color:var(--muted);margin-bottom:10px}
+.gar-dias{font-size:12px;font-weight:600;margin-bottom:6px}
+.gar-bar-bg{height:6px;background:var(--surface3);border-radius:3px;overflow:hidden}
+.gar-bar{height:6px;border-radius:3px;transition:width .4s ease}
 
-/* Detalhe do mês */
-.back-btn{background:none;border:none;color:var(--muted);font-size:13px;cursor:pointer;font-family:inherit;padding:0;display:flex;align-items:center;gap:5px;margin-bottom:16px}
-.kpi-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px}
-.kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);padding:12px;position:relative;overflow:hidden}
-.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--kpi-color,var(--amber))}
-.kpi-label{font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:5px}
-.kpi-value{font-family:'DM Mono',monospace;font-size:clamp(12px,3.5vw,16px);font-weight:500;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.empty{text-align:center;padding:60px 20px;color:var(--muted)}
+.empty-icon{font-size:48px;margin-bottom:12px}
 
-.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:12px}
-.card-title{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:14px}
-
-/* Gráfico de barras horizontal */
-.cat-row{display:grid;grid-template-columns:110px 1fr 70px;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border-soft)}
-.cat-row:last-child{border:none}
-.cat-name{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.cat-bar-bg{height:8px;background:var(--surface3);border-radius:4px;overflow:hidden}
-.cat-bar{height:8px;border-radius:4px;background:var(--amber);transition:width .4s ease}
-.cat-val{font-family:'DM Mono',monospace;font-size:11.5px;text-align:right;white-space:nowrap}
-
-/* Skeleton */
 .skel{background:linear-gradient(90deg,var(--surface) 25%,var(--surface2) 50%,var(--surface) 75%);background-size:200% 100%;animation:shimmer 1.4s ease-in-out infinite;border-radius:var(--r-sm)}
 @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+.add-fab{position:fixed;bottom:calc(24px + env(safe-area-inset-bottom));right:16px;background:var(--gold);color:#1a1305;border:none;border-radius:50%;width:56px;height:56px;font-size:28px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(210,161,58,.4);z-index:50}
+.add-fab:active{transform:scale(.92)}
 </style>
 </head>
 <body>
@@ -78,18 +57,15 @@ body{min-height:100vh;background:var(--bg);color:var(--text);font-family:'DM San
 
 <div class="topbar">
   <div class="topbar-row">
-    <div class="brand" style="display:flex;align-items:center">
-      <img class="brand-logo" src="logo.png" alt="DC Family Finances">
-      <span class="brand-sub-label" style="font-family:'Cybertruck',sans-serif;font-size:22px;letter-spacing:.06em;color:#B0B5BD;margin-left:8px">FINANCES</span>
+    <div class="brand">
+      <img class="brand-logo" src="logo.png" alt="DC Family">
+      <span style="font-family:'Cybertruck',sans-serif;font-size:22px;letter-spacing:.06em;color:#B0B5BD;margin-left:8px">GARANTIAS</span>
     </div>
     <div style="display:flex;gap:8px">
       <a class="icon-btn" href="./index.html" title="Início">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>
       </a>
-      <button class="icon-btn" onclick="openAddMonth()" title="Novo mês">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-      </button>
-      <button class="icon-btn" id="refresh-btn" onclick="refresh()" title="Atualizar">
+      <button class="icon-btn" id="refresh-btn" onclick="loadGarantias()" title="Atualizar">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-3-6.7M21 4v5h-5"/></svg>
       </button>
     </div>
@@ -99,644 +75,223 @@ body{min-height:100vh;background:var(--bg);color:var(--text);font-family:'DM San
 <div class="app" id="app">
   <!-- preenchido pelo JS -->
 </div>
-</div>
 
+<button class="add-fab" onclick="openAddGarantia()" title="Adicionar garantia">+</button>
+
+</div>
 <script src="auth.js"></script>
 <script src="tickets.js"></script>
 <script src="push.js"></script>
 <script>
-const eur = v => (v<0?'-':'')+'€'+Math.abs(v).toLocaleString('pt-PT',{minimumFractionDigits:2,maximumFractionDigits:2});
-
-// POST ao Apps Script, com uma repetição automática — o XMLHttpRequest
-// foi tentado como alternativa ao fetch mas causa bloqueio de CORS
-// (o fetch é o que realmente funciona aqui); a repetição cobre falhas
-// de rede pontuais, incluindo o "Load failed" ocasional no Safari/iOS.
-async function postToScript(url, payload) {
-  const r = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify(payload)
-  });
-  return await r.json();
-}
 const $ = id => document.getElementById(id);
 const API = () => Auth.API_URL + '?pin=' + encodeURIComponent(Auth.getStoredPin()||'');
+const eur = v => '€'+Math.abs(v).toLocaleString('pt-PT',{minimumFractionDigits:2,maximumFractionDigits:2});
 
-let meses = [];
-let currentView = 'grid'; // 'grid' | 'detail'
+const CATEGORIAS_GAR = ['Eletrodomésticos','Eletrónica','Automóvel','Casa','Saúde','Outros'];
+const TIPOS_GAR = ['Geral','Bateria','Motor','Ecrã','Consumíveis','Adicional'];
+const DURACOES = [1, 2, 3, 4, 5, 8, 10];
+const FIELD_STYLE = "width:100%;padding:10px;margin-top:6px;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#181D26;color:#F2F4F7;font-size:14px;font-family:inherit";
 
-// ── Esqueleto enquanto carrega ────────────────────────────────
-function showSkeleton(){
-  $('app').innerHTML = `
-    <div class="mes-grid">
-      ${Array(6).fill('<div class="skel" style="height:74px"></div>').join('')}
+// ── Cores por estado ──────────────────────────────────────────
+function estadoCor(dias, duracaoAnos) {
+  if (dias < 0)  return { cor:'var(--coral)',  label:'Expirada',              pct: 100 };
+  const total = duracaoAnos * 365;
+  const pct   = Math.round((1 - dias / total) * 100);
+  if (dias < 30) return { cor:'var(--coral)',  label:`${dias}d restantes`,    pct };
+  if (dias < 90) return { cor:'var(--amber)',  label:`${dias}d restantes`,    pct };
+  const meses = Math.floor(dias / 30);
+  return         { cor:'var(--mint)',   label:`${meses} meses restantes`, pct };
+}
+
+// ── Renderiza a lista ─────────────────────────────────────────
+function renderGarantias(list) {
+  if (!list.length) {
+    $('app').innerHTML = `<div class="empty">
+      <div class="empty-icon">🛡️</div>
+      <div style="font-size:15px;font-weight:700;margin-bottom:6px">Sem garantias registadas</div>
+      <div style="font-size:13px">Toca no + para adicionar a primeira</div>
     </div>`;
-}
-function showDetailSkeleton(label){
-  $('app').innerHTML = `
-    <button class="back-btn" onclick="showGrid()">‹ Todos os meses</button>
-    <div style="font-size:18px;font-weight:700;margin-bottom:16px">${label}</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px">
-      ${Array(3).fill('<div class="skel" style="height:60px"></div>').join('')}
-    </div>
-    <div class="skel" style="height:300px"></div>`;
-}
-
-// ── Grelha de meses ───────────────────────────────────────────
-const EMERGENCY_GOAL = 10000;
-let globalKPIs = null; // carrega com loadIndex
-
-function showGrid(){
-  currentView = 'grid';
-  $('refresh-btn').classList.remove('spinning');
-  if (!meses.length) { showSkeleton(); loadIndex(); return; }
-  renderGrid();
-}
-
-async function showDashboard(){
-  currentView = 'dashboard';
-  $('app').innerHTML = `
-    <button class="back-btn" onclick="showGrid()">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-      Todos os meses
-    </button>
-    <div style="font-size:18px;font-weight:700;margin-bottom:16px">Dashboard Anual</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
-      ${Array(4).fill('<div class="skel" style="height:62px"></div>').join('')}
-    </div>`;
-
-  if (!globalKPIs) {
-    try {
-      const r = await fetch(API()+'&action=despesasData');
-      const g = await r.json();
-      if (!g.error) globalKPIs = g;
-    } catch(e) {}
-  }
-
-  if (currentView !== 'dashboard') return; // saiu entretanto
-
-  const g = globalKPIs;
-  if (!g) {
-    $('app').innerHTML += `<p style="color:var(--coral)">Erro a carregar dados.</p>`;
     return;
   }
-
-  const fundoVal = g.fundoEmergencia || 0;
-  const emergPct = Math.min(Math.round(fundoVal / EMERGENCY_GOAL * 100), 100);
-
-  $('app').innerHTML = `
-    <button class="back-btn" onclick="showGrid()">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-      Todos os meses
-    </button>
-    <div style="font-size:18px;font-weight:700;margin-bottom:16px">Dashboard Anual</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
-      <div class="kpi" style="--kpi-color:var(--mint)">
-        <div class="kpi-label">Total Receitas</div>
-        <div class="kpi-value">${eur(g.totalRec)}</div>
-      </div>
-      <div class="kpi" style="--kpi-color:var(--coral)">
-        <div class="kpi-label">Total Despesas</div>
-        <div class="kpi-value">${eur(g.totalDesp)}</div>
-      </div>
-      <div class="kpi" style="--kpi-color:var(--sapphire)">
-        <div class="kpi-label">Total Poupanças</div>
-        <div class="kpi-value">${eur(g.totalPoup)}</div>
-      </div>
-      <div class="kpi" style="--kpi-color:var(--amber);position:relative">
-        <button onclick="openEditFundo()" title="Editar" style="position:absolute;top:10px;right:10px;background:none;border:none;color:var(--muted2);cursor:pointer;padding:2px;line-height:1;display:flex">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-        </button>
-        <div class="kpi-label">Fundo Emergência</div>
-        <div class="kpi-value">${emergPct}%</div>
-        <div style="margin-top:6px;height:4px;background:var(--surface3);border-radius:2px">
-          <div style="height:4px;border-radius:2px;background:var(--amber);width:${emergPct}%"></div>
+  $('app').innerHTML = list.map(g => {
+    const { cor, label, pct } = estadoCor(g.diasRestantes, g.duracaoAnos);
+    return `<div class="gar-card" onclick="openDetail(${JSON.stringify(g).replace(/"/g,'&quot;')})">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
+        <div style="min-width:0">
+          <div class="gar-nome">${g.nome}${g.tipo && g.tipo!=='Geral' ? ` <span style="font-size:11px;font-weight:500;color:var(--amber);background:rgba(240,169,58,0.15);padding:2px 6px;border-radius:8px">${g.tipo}</span>` : ''}</div>
+          <div class="gar-meta">${g.categoria}${g.categoria?' · ':''}Comprado em ${g.dataCompra} · ${g.duracaoAnos} ano${g.duracaoAnos>1?'s':''}</div>
         </div>
-        <div style="font-size:10px;color:var(--muted2);margin-top:3px">${eur(fundoVal)} / €10.000</div>
+        <div style="font-size:11px;color:var(--muted2);flex-shrink:0;text-align:right">até ${g.dataFim}</div>
       </div>
+      <div class="gar-dias" style="color:${cor}">${label}</div>
+      <div class="gar-bar-bg"><div class="gar-bar" style="width:${Math.min(pct,100)}%;background:${cor}"></div></div>
     </div>`;
+  }).join('');
 }
 
-// ── Últimos 5 movimentos do mês atual ─────────────────────────
-let movRecentes = [];
-let movRecentesLoaded = false;
-const TIPO_LABEL = { despesa:'Despesa', receita:'Receita', poupanca:'Poupança' };
-const TIPO_COLOR = { despesa:'var(--coral)', receita:'var(--mint)', poupanca:'var(--sapphire)' };
-
-function renderRecentesMovHTML(){
-  if (!movRecentesLoaded) return `<div style="color:var(--muted);font-size:13px">A carregar…</div>`;
-  if (!movRecentes.length) return `<div style="color:var(--muted);font-size:13px">Sem movimentos este mês.</div>`;
-  return movRecentes.map(m=>`
-    <div style="display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.05);cursor:pointer"
-         onclick="openEditMov(${JSON.stringify(m).replace(/"/g,'&quot;')})">
-      <span style="width:8px;height:8px;border-radius:50%;background:${TIPO_COLOR[m.tipo]||'var(--muted)'};flex-shrink:0"></span>
-      <div style="flex:1;min-width:0">
-        <div style="font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${m.col1||'—'}${m.col2?' · '+m.col2:''}</div>
-        <div style="font-size:11px;color:var(--muted);margin-top:3px">${m.data} · ${TIPO_LABEL[m.tipo]||m.tipo}</div>
-      </div>
-      <div style="text-align:right;flex-shrink:0">
-        <div style="font-family:'DM Mono',monospace;font-size:13px;font-weight:600;color:${TIPO_COLOR[m.tipo]||'var(--text)'}">${eur(m.valor)}</div>
-        <div style="font-size:10.5px;color:var(--muted2)">✏️ editar</div>
-      </div>
-    </div>`).join('');
-}
-
-function loadRecentesMovimentos(){
-  fetch(API()+'&action=despesasRecentes').then(r=>r.json()).then(d=>{
-    movRecentesLoaded = true;
-    if (d.ok) movRecentes = d.recentes;
-    const el = $('mov-recentes-list');
-    if (el) el.innerHTML = renderRecentesMovHTML();
-  }).catch(()=>{
-    movRecentesLoaded = true;
-    const el = $('mov-recentes-list');
-    if (el) el.innerHTML = renderRecentesMovHTML();
-  });
-}
-
-function renderGlobalKPIs(){
-  if (!globalKPIs) return `
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
-      ${Array(4).fill('<div class="skel" style="height:62px"></div>').join('')}
-    </div>`;
-  const g = globalKPIs;
-  const fundoVal = g.fundoEmergencia || 0;
-  const emergPct = Math.min(Math.round(fundoVal / EMERGENCY_GOAL * 100), 100);
-  return `
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
-      <div class="kpi" style="--kpi-color:var(--mint)">
-        <div class="kpi-label">Total Receitas</div>
-        <div class="kpi-value">${eur(g.totalRec)}</div>
-      </div>
-      <div class="kpi" style="--kpi-color:var(--coral)">
-        <div class="kpi-label">Total Despesas</div>
-        <div class="kpi-value">${eur(g.totalDesp)}</div>
-      </div>
-      <div class="kpi" style="--kpi-color:var(--sapphire)">
-        <div class="kpi-label">Total Poupanças</div>
-        <div class="kpi-value">${eur(g.totalPoup)}</div>
-      </div>
-      <div class="kpi" style="--kpi-color:var(--amber);position:relative">
-        <button onclick="openEditFundo()" title="Editar" style="position:absolute;top:10px;right:10px;background:none;border:none;color:var(--muted2);cursor:pointer;padding:2px;line-height:1;display:flex">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-        </button>
-        <div class="kpi-label">Fundo Emergência</div>
-        <div class="kpi-value">${emergPct}%</div>
-        <div style="margin-top:6px;height:4px;background:var(--surface3);border-radius:2px">
-          <div style="height:4px;border-radius:2px;background:var(--amber);width:${emergPct}%"></div>
-        </div>
-        <div style="font-size:10px;color:var(--muted2);margin-top:3px">${eur(fundoVal)} / €10.000</div>
-      </div>
-    </div>`;
-}
-
-function renderGrid(){
-  $('app').innerHTML = `
-    <button onclick="showDashboard()" style="width:100%;padding:14px;border:none;border-radius:14px;background:var(--surface);border:1px solid var(--border);color:var(--muted);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:14px;display:flex;align-items:center;justify-content:center;gap:8px">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-      Dashboard Anual
-    </button>
-    <div class="mes-grid">
-      ${meses.map(m=>`
-        <div class="mes-card${m.current?' current':''}" onclick="openMes('${m.id}','${m.label}',${!!m.current})">
-          <div class="mes-label">${m.label}</div>
-          <div class="mes-sub">${m.current?'Mês atual':'Ver detalhes'}</div>
-        </div>`).join('')}
-    </div>`;
-}
-
-async function loadIndex(){
+// ── Carrega garantias ─────────────────────────────────────────
+async function loadGarantias() {
+  $('app').innerHTML = `${[1,2,3].map(()=>'<div class="skel" style="height:90px;margin-bottom:10px"></div>').join('')}`;
   try {
-    const r = await fetch(API()+'&action=despesasIndex');
+    const r = await fetch(API() + '&action=garantiasLista');
     const d = await r.json();
-    if (d.error) { $('app').innerHTML=`<p style="color:var(--coral)">${d.error}</p>`; return; }
-    meses = d;
-    // Dashboard anual só carrega se o utilizador carregar no botão
-    renderGrid();
+    if (!d.ok) { $('app').innerHTML = `<p style="color:var(--coral);padding:20px">${d.error}</p>`; return; }
+    renderGarantias(d.garantias);
   } catch(e) {
-    $('app').innerHTML = `<p style="color:var(--coral)">Erro a carregar: ${e.message}</p>`;
+    $('app').innerHTML = `<p style="color:var(--coral);padding:20px">Erro de rede: ${e.message}</p>`;
   }
 }
 
-// ── Detalhe de um mês ─────────────────────────────────────────
-let viewingFileId = null;
-let viewingLabel = null;
-let viewingIsCurrent = false;
-
-async function openMes(fileId, label, isCurrent){
-  currentView = 'detail';
-  viewingFileId = fileId;
-  viewingLabel = label;
-  viewingIsCurrent = !!isCurrent;
-  if (viewingIsCurrent) { movRecentesLoaded = false; movRecentes = []; }
-  showDetailSkeleton(label);
-  try {
-    const r = await fetch(API()+`&action=despesasMes&fileId=${encodeURIComponent(fileId)}`);
-    const d = await r.json();
-    if (d.error) { $('app').innerHTML=`<button class="back-btn" onclick="showGrid()">‹ Voltar</button><p style="color:var(--coral)">${d.error}</p>`; return; }
-    renderDetail(label, d, viewingIsCurrent);
-  } catch(e) {
-    $('app').innerHTML = `<button class="back-btn" onclick="showGrid()">‹ Voltar</button><p style="color:var(--coral)">Erro a carregar: ${e.message}</p>`;
-  }
-}
-
-function renderDetail(label, d, isCurrent){
-  const cats = d.categorias || [];
-  const maxVal = cats.length ? cats[0].total : 1;
-
-  $('app').innerHTML = `
-    <button class="back-btn" onclick="showGrid()">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-      Todos os meses
-    </button>
-    <div style="font-size:18px;font-weight:700;margin-bottom:16px">${label}</div>
-
-    <div class="kpi-row">
-      <div class="kpi" style="--kpi-color:var(--mint)">
-        <div class="kpi-label">Receitas</div>
-        <div class="kpi-value">${eur(d.totalRec)}</div>
+// ── Modal de detalhe / apagar ─────────────────────────────────
+function openDetail(g) {
+  const { cor, label } = estadoCor(g.diasRestantes, g.duracaoAnos);
+  document.body.insertAdjacentHTML('beforeend', `
+  <div id="det-modal" style="position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9000;display:flex;align-items:flex-end">
+    <div style="background:#12161D;border-radius:20px 20px 0 0;width:100%;padding:20px 16px calc(20px + env(safe-area-inset-bottom))">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+        <div style="font-size:16px;font-weight:700">${g.nome}</div>
+        <button onclick="$('det-modal').remove()" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;line-height:1">×</button>
       </div>
-      <div class="kpi" style="--kpi-color:var(--coral)">
-        <div class="kpi-label">Despesas</div>
-        <div class="kpi-value">${eur(d.totalDesp)}</div>
-      </div>
-      <div class="kpi" style="--kpi-color:var(--sapphire)">
-        <div class="kpi-label">Poupanças</div>
-        <div class="kpi-value">${eur(d.totalPoup)}</div>
-      </div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:6px">${g.tipo||'Geral'} · ${g.categoria} · ${g.duracaoAnos} ano${g.duracaoAnos>1?'s':''}</div>
+      <div style="font-size:13px;margin-bottom:4px">Comprado em <strong>${g.dataCompra}</strong></div>
+      <div style="font-size:13px;margin-bottom:14px">Garantia até <strong>${g.dataFim}</strong></div>
+      <div style="font-size:15px;font-weight:700;color:${cor};margin-bottom:20px">${label}</div>
+      ${g.driveUrl ? `<a href="${g.driveUrl}" target="_blank" style="display:flex;align-items:center;gap:8px;background:var(--surface3);border:1px solid var(--border);border-radius:10px;padding:12px;color:var(--text);text-decoration:none;margin-bottom:14px;font-size:13px">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+        Ver fatura
+      </a>` : '<div style="font-size:13px;color:var(--muted2);margin-bottom:14px">Sem fatura anexada</div>'}
+      <button onclick="confirmDelete(${g.row},'${g.nome.replace(/'/g,"\\'")}','${g.driveId}')" style="width:100%;padding:14px;border:none;border-radius:12px;background:var(--coral);color:#fff;font-weight:700;font-size:15px;cursor:pointer;font-family:inherit">
+        Eliminar garantia
+      </button>
     </div>
-
-    ${isCurrent && d.saldoMensal != null ? `
-    <div class="kpi" style="--kpi-color:${d.saldoMensal >= 0 ? 'var(--mint)' : 'var(--coral)'};margin-bottom:12px">
-      <div class="kpi-label">Saldo Mensal</div>
-      <div class="kpi-value" style="color:${d.saldoMensal >= 0 ? 'var(--mint)' : 'var(--coral)'}">${eur(d.saldoMensal)}</div>
-    </div>` : ''}
-
-    ${isCurrent ? `
-    <div class="card">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-        <div class="card-title" style="margin-bottom:0">ÚLTIMOS MOVIMENTOS</div>
-        <button onclick="openAddMov()" style="background:#D2A13A;border:none;border-radius:8px;color:#1a1305;font-size:12px;font-weight:700;padding:6px 12px;cursor:pointer;font-family:inherit">+ Adicionar</button>
-      </div>
-      <div id="mov-recentes-list">${renderRecentesMovHTML()}</div>
-    </div>` : ''}
-
-    <div class="card">
-      <div class="card-title">DESPESAS POR CATEGORIA</div>
-      ${cats.map(c=>`
-        <div class="cat-row">
-          <div class="cat-name">${c.cat}</div>
-          <div class="cat-bar-bg"><div class="cat-bar" style="width:${Math.round(c.total/maxVal*100)}%"></div></div>
-          <div class="cat-val">${eur(c.total)}</div>
-        </div>`).join('')}
-    </div>`;
-
-  if (isCurrent) loadRecentesMovimentos();
+  </div>`);
 }
 
-// ── Refresh ───────────────────────────────────────────────────
-function refresh(){
-  const btn = $('refresh-btn');
-  btn.classList.add('spinning');
-  if (currentView === 'detail' && viewingFileId) {
-    openMes(viewingFileId, viewingLabel, viewingIsCurrent);
-  } else if (currentView === 'dashboard') {
-    globalKPIs = null;
-    showDashboard();
-  } else {
-    meses = [];
-    globalKPIs = null;
-    showGrid();
+async function confirmDelete(row, nome, driveId) {
+  if (!confirm(`Eliminar a garantia de "${nome}"?`)) return;
+  $('det-modal').remove();
+  try {
+    const params = new URLSearchParams({ action:'garantiasDelete', pin:Auth.getStoredPin()||'', row, driveId });
+    await fetch(Auth.API_URL + '?' + params.toString());
+    loadGarantias();
+  } catch(e) { alert('Erro: ' + e.message); }
+}
+
+// ── Modal de adicionar ────────────────────────────────────────
+function openAddGarantia() {
+  const today = new Date().toISOString().slice(0,10);
+  document.body.insertAdjacentHTML('beforeend', `
+  <div id="add-modal" style="position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9000;display:flex;align-items:flex-end">
+    <div style="background:#12161D;border-radius:20px 20px 0 0;width:100%;max-height:90vh;overflow-y:auto;padding:20px 16px calc(20px + env(safe-area-inset-bottom))">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+        <div style="font-size:16px;font-weight:700">Nova garantia</div>
+        <button onclick="$('add-modal').remove()" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;line-height:1">×</button>
+      </div>
+
+      <label style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Produto <span style="color:var(--coral)">*</span></label>
+      <input id="g-nome" type="text" placeholder="ex: Samsung TV 65&quot;" style="${FIELD_STYLE};margin:6px 0 14px">
+
+      <label style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Tipo de garantia</label>
+      <select id="g-tipo" style="${FIELD_STYLE};margin:6px 0 14px">
+        ${TIPOS_GAR.map(t=>`<option>${t}</option>`).join('')}
+      </select>
+
+      <label style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Categoria</label>
+      <select id="g-cat" style="${FIELD_STYLE};margin:6px 0 14px">
+        ${CATEGORIAS_GAR.map(c=>`<option>${c}</option>`).join('')}
+      </select>
+
+      <label style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Data de compra <span style="color:var(--coral)">*</span></label>
+      <input id="g-data" type="date" value="${today}" style="${FIELD_STYLE};margin:6px 0 14px">
+
+      <label style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Duração da garantia <span style="color:var(--coral)">*</span></label>
+      <select id="g-dur" style="${FIELD_STYLE};margin:6px 0 14px">
+        ${DURACOES.map(d=>`<option value="${d}"${d===2?' selected':''}>${d} ano${d>1?'s':''}</option>`).join('')}
+      </select>
+
+      <label style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Fatura (foto ou PDF, opcional)</label>
+      <input id="g-file" type="file" accept="image/*,application/pdf" style="${FIELD_STYLE};margin:6px 0 20px;padding:8px">
+
+      <div id="g-msg" style="font-size:12.5px;color:var(--coral);min-height:16px;margin-bottom:10px;text-align:center"></div>
+      <button onclick="submitGarantia()" id="g-submit" style="width:100%;padding:14px;border:none;border-radius:12px;background:#D2A13A;color:#1a1305;font-weight:700;font-size:15px;cursor:pointer;font-family:inherit">
+        Adicionar garantia
+      </button>
+    </div>
+  </div>`);
+}
+
+async function submitGarantia() {
+  const btn=$('g-submit'), msg=$('g-msg');
+  btn.disabled=true; btn.textContent='A guardar...';
+  const restore=()=>{ btn.disabled=false; btn.textContent='Adicionar garantia'; };
+
+  const nome = $('g-nome').value.trim();
+  const tipo = $('g-tipo').value;
+  const cat  = $('g-cat').value;
+  const rawData = $('g-data').value;
+  const dur  = $('g-dur').value;
+  const file = $('g-file').files[0];
+
+  if (!nome)    { msg.textContent='Indica o nome do produto.'; restore(); return; }
+  if (!rawData) { msg.textContent='Indica a data de compra.'; restore(); return; }
+
+  const dataCompra = rawData.split('-').reverse().join('/'); // dd/MM/yyyy
+
+  // Lê o ficheiro como base64 se existir
+  let filename='', filedata='', mimetype='';
+  if (file) {
+    if (file.size > 5 * 1024 * 1024) { msg.textContent='Ficheiro demasiado grande (máx. 5 MB).'; restore(); return; }
+    filedata = await new Promise((res,rej) => {
+      const r = new FileReader();
+      r.onload = () => res(r.result.split(',')[1]);
+      r.onerror = () => rej(new Error('Erro ao ler ficheiro'));
+      r.readAsDataURL(file);
+    });
+    filename = file.name;
+    mimetype = file.type;
+  }
+
+  const payload = {
+    action: 'garantiasAdd',
+    pin: Auth.getStoredPin()||'',
+    nome, tipo, categoria: cat, dataCompra, duracaoAnos: dur,
+    filename, filedata, mimetype,
+  };
+
+  // Garantias com ficheiro usam POST (base64 demasiado grande para URL).
+  // Retry até 3 vezes para cobrir a falha silenciosa do Apps Script na 1ª chamada.
+  async function doPost(attempt) {
+    const r = await fetch(Auth.API_URL + '?action=garantiasAdd&pin=' + encodeURIComponent(payload.pin), {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload),
+    });
+    const d = await r.json();
+    if (!d.ok && attempt < 3) {
+      await new Promise(res => setTimeout(res, 600 * attempt));
+      return doPost(attempt + 1);
+    }
+    return d;
+  }
+
+  try {
+    const d = await doPost(1);
+    if (!d.ok) { msg.textContent='Erro: '+(d.error||'desconhecido'); restore(); return; }
+    $('add-modal').remove();
+    loadGarantias();
+  } catch(e) {
+    msg.textContent='Erro de rede: '+e.message;
+    restore();
   }
 }
 
-// ── Arranque ─────────────────────────────────────────────────
+// ── Arranque ──────────────────────────────────────────────────
 Auth.protect(function(){
   $('app-content').style.display = 'block';
   if (window.Tickets) Tickets.refreshBadge();
   Push.init();
-  // Força sempre carregar os meses — não depende de cache em memória
-  showSkeleton();
-  loadIndex();
+  loadGarantias();
 });
-// ── Modal de adicionar movimento ──────────────────────────────
-// Listas de categorias — carregadas da aba "Categorias" da folha do mês
-// atual (endpoint despesasCategorias). Enquanto não carregam, usam uma
-// lista de reserva mínima para o modal não ficar vazio.
-let CATEGORIAS_DESPESA = ['Saude','Beleza','Supermercados','Telecom/Subscricoes','Educacao','Transportes','Vestuario','Desporto','Habitacao','Restaurantes','Ferias','Seguros','Diversos'];
-let CATEGORIAS_RECEITA = ['Vencimentos','Apoios','Outros','Reembolsos'];
-let CODIGOS_PAGAMENTO  = ['R','MB','TB','PS','SR','DD','CC'];
-let categoriasLoaded   = false;
-
-function loadCategorias(){
-  if (categoriasLoaded) return Promise.resolve();
-  return fetch(API() + '&action=despesasCategorias')
-    .then(r => r.json())
-    .then(d => {
-      if (d.ok) {
-        if (d.catDespesa.length) CATEGORIAS_DESPESA = d.catDespesa;
-        if (d.pagamento.length)  CODIGOS_PAGAMENTO  = d.pagamento;
-        if (d.catReceita.length) CATEGORIAS_RECEITA = d.catReceita;
-        categoriasLoaded = true;
-      }
-    })
-    .catch(() => {}); // se falhar, mantém as listas de reserva
-}
-const FIELD_STYLE = "width:100%;padding:10px;margin-top:6px;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#181D26;color:#F2F4F7;font-size:14px;font-family:inherit";
-
-// Cada tipo define a ordem dos campos. Tipo vem sempre primeiro, seguido
-// de Data, em todos os tipos. Na Despesa, Categoria e Descrição vêm antes
-// do Valor, e há um campo extra (Pagamento) que só existe nessa folha.
-function movFieldsConfig(tipo){
-  if (tipo==='receita') return {
-    order: ['tipo','data','col2','valor','col1'],
-    col1: { label:'Fonte',     type:'text', placeholder:'opcional' },
-    col2: { label:'Categoria', type:'select', options: CATEGORIAS_RECEITA, required:true }
-  };
-  if (tipo==='poupanca') return {
-    order: ['tipo','data','valor','col1','col2'],
-    col1: { label:'Tipo',      type:'text', placeholder:'ex: Fundo Emergência' },
-    col2: { label:'Descrição', type:'text', placeholder:'opcional' }
-  };
-  return { // despesa
-    order: ['tipo','data','col1','col2','valor','pagamento'],
-    col1: { label:'Categoria',  type:'select', options: CATEGORIAS_DESPESA },
-    col2: { label:'Descrição',  type:'text',   placeholder:'opcional' },
-    pagamento: { label:'Pagamento', type:'select', options: CODIGOS_PAGAMENTO }
-  };
-}
-
-function movLabel_(text){
-  return `<label style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">${text}</label>`;
-}
-
-function movBlockHTML(token, cfg, vals, isEdit){
-  if (token === 'tipo') {
-    return `
-      ${movLabel_('Tipo' + (isEdit?' <span style="text-transform:none;letter-spacing:0">(não editável)</span>':''))}
-      <select id="mv-tipo" onchange="updateMovFields()" ${isEdit?'disabled':''} style="${FIELD_STYLE};margin:6px 0 14px${isEdit?';opacity:.55':''}">
-        <option value="despesa"${vals.tipo==='despesa'?' selected':''}>Despesa</option>
-        <option value="receita"${vals.tipo==='receita'?' selected':''}>Receita</option>
-        <option value="poupanca"${vals.tipo==='poupanca'?' selected':''}>Poupança</option>
-      </select>`;
-  }
-  if (token === 'data') {
-    return `
-      ${movLabel_('Data')}
-      <input id="mv-data" type="date" value="${vals.dataISO||''}" style="${FIELD_STYLE};margin:6px 0 14px">`;
-  }
-  if (token === 'valor') {
-    return `
-      ${movLabel_('Valor (€)')}
-      <input id="mv-valor" type="number" step="0.01" value="${vals.valor||''}" placeholder="0.00" style="${FIELD_STYLE};margin:6px 0 14px">`;
-  }
-  // qualquer campo dinâmico definido no cfg (col1, col2, pagamento, ...)
-  const fcfg = cfg[token];
-  const currentVal = vals[token];
-  const field = fcfg.type==='select'
-    ? `<select id="mv-${token}" style="${FIELD_STYLE}">${(fcfg.options||[]).map(c=>`<option${c===currentVal?' selected':''}>${c}</option>`).join('')}</select>`
-    : `<input id="mv-${token}" type="text" value="${currentVal||''}" placeholder="${fcfg.placeholder||''}" style="${FIELD_STYLE}">`;
-  const reqMark = fcfg.required ? ' <span style="color:var(--coral)">*</span>' : '';
-  return `
-    ${movLabel_(fcfg.label + reqMark)}
-    <div style="margin:6px 0 14px">${field}</div>`;
-}
-
-function renderMovFieldsHTML(tipo, vals, isEdit){
-  const cfg = movFieldsConfig(tipo);
-  return cfg.order.map(tok => movBlockHTML(tok, cfg, vals, isEdit)).join('');
-}
-
-function updateMovFields(){
-  const tipo = $('mv-tipo').value;
-  const isEdit = !!$('mv-row');
-  const vals = {
-    tipo,
-    dataISO: $('mv-data') ? $('mv-data').value : '',
-    valor: $('mv-valor') ? $('mv-valor').value : '',
-    col1: '', col2: '', pagamento: '', // ao trocar de tipo os campos mudam de significado
-  };
-  $('mv-fields').innerHTML = renderMovFieldsHTML(tipo, vals, isEdit);
-}
-
-function modalMovHTML(s){
-  const isEdit = !!s;
-  const v = s || {};
-  const tipoAtual = v.tipo || 'despesa';
-  const vals = {
-    tipo: tipoAtual,
-    dataISO: isEdit ? v.data.split('/').reverse().join('-') : new Date().toISOString().slice(0,10),
-    valor: isEdit ? v.valor : '',
-    col1: isEdit ? v.col1 : '',
-    col2: isEdit ? v.col2 : '',
-    pagamento: isEdit ? (v.pagamento || '') : '',
-  };
-  return `
-  <div id="mov-modal" style="position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9000;display:flex;align-items:flex-end">
-    <div style="background:#12161D;border-radius:20px 20px 0 0;width:100%;max-height:90vh;overflow-y:auto;padding:20px 16px calc(20px + env(safe-area-inset-bottom))">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
-        <div style="font-size:16px;font-weight:700">${isEdit?'Editar movimento':'Novo movimento'}</div>
-        <button onclick="closeMovModal()" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;line-height:1">×</button>
-      </div>
-      ${isEdit?`<input type="hidden" id="mv-row" value="${v.row}">`:''}
-
-      <div id="mv-fields">${renderMovFieldsHTML(tipoAtual, vals, isEdit)}</div>
-
-      <div id="mv-msg" style="font-size:12.5px;color:var(--coral);min-height:16px;margin-bottom:10px;text-align:center"></div>
-      <button onclick="submitMov(${isEdit?1:0})" id="mv-submit"
-        style="width:100%;padding:14px;border:none;border-radius:12px;background:#D2A13A;color:#1a1305;font-weight:700;font-size:15px;cursor:pointer;font-family:inherit">
-        ${isEdit?'Guardar alterações':'Adicionar movimento'}
-      </button>
-    </div>
-  </div>`;
-}
-
-function openAddMov(){
-  document.body.insertAdjacentHTML('beforeend', modalMovHTML(null));
-  // Carrega categorias em background — se chegarem antes de submeter, actualiza os selects
-  if (!categoriasLoaded) {
-    loadCategorias().then(() => {
-      const m = $('mv-fields');
-      if (m) $('mv-fields').innerHTML = renderMovFieldsHTML($('mv-tipo').value, {
-        tipo: $('mv-tipo').value,
-        dataISO: $('mv-data') ? $('mv-data').value : '',
-        valor: $('mv-valor') ? $('mv-valor').value : '',
-        col1: '', col2: '', pagamento: '',
-      }, false);
-    });
-  }
-}
-function openEditMov(m){
-  document.body.insertAdjacentHTML('beforeend', modalMovHTML(m));
-  if (!categoriasLoaded) loadCategorias();
-}
-function closeMovModal(){ const m=$('mov-modal'); if(m) m.remove(); }
-
-async function submitMov(isEdit){
-  const btn=$('mv-submit'), msg=$('mv-msg');
-  btn.disabled=true; btn.textContent='A guardar...';
-  const restore = () => { btn.disabled=false; btn.textContent=isEdit?'Guardar alterações':'Adicionar movimento'; };
-
-  const rawDate = $('mv-data').value;
-  const data = rawDate ? rawDate.split('-').reverse().join('/') : '';
-  const tipo = $('mv-tipo').value;
-  const valor = ($('mv-valor').value||'').replace(',','.');
-  const col1 = $('mv-col1') ? $('mv-col1').value.trim() : '';
-  const col2 = $('mv-col2') ? $('mv-col2').value.trim() : '';
-  const pagamento = $('mv-pagamento') ? $('mv-pagamento').value.trim() : '';
-
-  if (!data) { msg.textContent='Indica a data.'; restore(); return; }
-  if (!valor || Number(valor) <= 0) {
-    msg.textContent = 'Indica um valor válido.';
-    restore();
-    return;
-  }
-
-  // Valida campos obrigatórios consoante o tipo
-  const cfg = movFieldsConfig(tipo);
-  for (const tok of ['col1','col2']) {
-    if (cfg[tok] && cfg[tok].required) {
-      const val = tok==='col1' ? col1 : col2;
-      if (!val) {
-        msg.textContent = `Indica ${cfg[tok].label.toLowerCase()}.`;
-        restore();
-        return;
-      }
-    }
-  }
-  // Categoria (col1) obrigatória em todos os tipos
-  if (!col1) { msg.textContent = 'Indica a categoria.'; restore(); return; }
-  // Pagamento obrigatório só nas despesas
-  if (tipo === 'despesa' && !pagamento) { msg.textContent = 'Indica o pagamento.'; restore(); return; }
-
-  const payload = { action: isEdit?'despesasEdit':'despesasAdd', pin:Auth.getStoredPin()||'', tipo, data, valor, col1, col2, pagamento };
-  if (isEdit) payload.row = parseInt($('mv-row').value);
-
-  try {
-    const url = Auth.API_URL+'?'+new URLSearchParams({action:payload.action,pin:payload.pin});
-    const d = await postToScript(url, payload);
-    if(!d.ok){ msg.textContent='Erro: '+(d.error||'desconhecido'); restore(); return; }
-    closeMovModal();
-    if (viewingFileId) openMes(viewingFileId, viewingLabel, viewingIsCurrent);
-  } catch(e){
-    msg.textContent='Erro de rede: '+e.message;
-    restore();
-  }
-}
-// ── Modal de registar novo mês ────────────────────────────────
-function modalAddMonthHTML(){
-  const now = new Date();
-  const suggestedCode = String(now.getFullYear()) + String(now.getMonth()+1).padStart(2,'0');
-  return `
-  <div id="month-modal" style="position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9000;display:flex;align-items:flex-end">
-    <div style="background:#12161D;border-radius:20px 20px 0 0;width:100%;max-height:90vh;overflow-y:auto;padding:20px 16px calc(20px + env(safe-area-inset-bottom))">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
-        <div style="font-size:16px;font-weight:700">Novo mês</div>
-        <button onclick="closeMonthModal()" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;line-height:1">×</button>
-      </div>
-
-      <p style="font-size:12.5px;color:var(--muted);margin:0 0 16px;line-height:1.5">
-        Cria a folha do mês novo no Google Sheets (por exemplo, duplicando a do mês anterior). Depois cola aqui o código do mês e o ID do ficheiro — a parte do link entre <code>/d/</code> e <code>/edit</code>.
-      </p>
-
-      <label style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Código do mês (AAAAMM)</label>
-      <input id="mo-code" type="text" value="${suggestedCode}" placeholder="ex: 202609" maxlength="6"
-        style="width:100%;padding:10px;margin:6px 0 14px;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#181D26;color:#F2F4F7;font-size:14px;font-family:inherit">
-
-      <label style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">ID do ficheiro Google Sheets</label>
-      <input id="mo-id" type="text" placeholder="cola aqui o ID"
-        style="width:100%;padding:10px;margin:6px 0 20px;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#181D26;color:#F2F4F7;font-size:14px;font-family:inherit">
-
-      <div id="mo-msg" style="font-size:12.5px;color:var(--coral);min-height:16px;margin-bottom:10px;text-align:center"></div>
-      <button onclick="submitAddMonth()" id="mo-submit"
-        style="width:100%;padding:14px;border:none;border-radius:12px;background:#D2A13A;color:#1a1305;font-weight:700;font-size:15px;cursor:pointer;font-family:inherit">
-        Adicionar mês
-      </button>
-    </div>
-  </div>`;
-}
-
-function openAddMonth(){ document.body.insertAdjacentHTML('beforeend', modalAddMonthHTML()); }
-function closeMonthModal(){ const m=$('month-modal'); if(m) m.remove(); }
-
-async function submitAddMonth(){
-  const btn=$('mo-submit'), msg=$('mo-msg');
-  btn.disabled=true; btn.textContent='A guardar...';
-  const restore = () => { btn.disabled=false; btn.textContent='Adicionar mês'; };
-
-  const code = $('mo-code').value.trim();
-  const id = $('mo-id').value.trim();
-
-  if (!/^\d{6}$/.test(code)) { msg.textContent='Código deve ter 6 dígitos, ex: 202609.'; restore(); return; }
-  if (!id) { msg.textContent='Cola o ID do ficheiro.'; restore(); return; }
-
-  const payload = { action:'despesasRegistarMes', pin:Auth.getStoredPin()||'', code, id };
-
-  try {
-    const url = Auth.API_URL+'?'+new URLSearchParams({action:payload.action,pin:payload.pin});
-    const d = await postToScript(url, payload);
-    if(!d.ok){ msg.textContent='Erro: '+(d.error||'desconhecido'); restore(); return; }
-    closeMonthModal();
-    meses = [];
-    globalKPIs = null;
-    showGrid(); // recarrega a grelha, já com o mês novo
-  } catch(e){
-    msg.textContent='Erro de rede: '+e.message;
-    restore();
-  }
-}
-// ── Modal de editar o Fundo de Emergência ──────────────────────
-function modalFundoHTML(currentVal){
-  return `
-  <div id="fundo-modal" style="position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9000;display:flex;align-items:flex-end">
-    <div style="background:#12161D;border-radius:20px 20px 0 0;width:100%;max-height:90vh;overflow-y:auto;padding:20px 16px calc(20px + env(safe-area-inset-bottom))">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
-        <div style="font-size:16px;font-weight:700">Fundo de Emergência</div>
-        <button onclick="closeFundoModal()" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;line-height:1">×</button>
-      </div>
-
-      <label style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Valor atual (€)</label>
-      <input id="fu-valor" type="number" step="0.01" value="${currentVal||''}" placeholder="0.00"
-        style="width:100%;padding:10px;margin:6px 0 20px;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#181D26;color:#F2F4F7;font-size:14px;font-family:inherit">
-
-      <div id="fu-msg" style="font-size:12.5px;color:var(--coral);min-height:16px;margin-bottom:10px;text-align:center"></div>
-      <button onclick="submitFundo()" id="fu-submit"
-        style="width:100%;padding:14px;border:none;border-radius:12px;background:#D2A13A;color:#1a1305;font-weight:700;font-size:15px;cursor:pointer;font-family:inherit">
-        Guardar
-      </button>
-    </div>
-  </div>`;
-}
-
-function openEditFundo(){
-  const current = globalKPIs ? (globalKPIs.fundoEmergencia || 0) : 0;
-  document.body.insertAdjacentHTML('beforeend', modalFundoHTML(current));
-}
-function closeFundoModal(){ const m=$('fundo-modal'); if(m) m.remove(); }
-
-async function submitFundo(){
-  const btn=$('fu-submit'), msg=$('fu-msg');
-  btn.disabled=true; btn.textContent='A guardar...';
-  const restore = () => { btn.disabled=false; btn.textContent='Guardar'; };
-
-  const valorRaw = ($('fu-valor').value||'').replace(',','.');
-  if (!valorRaw || Number(valorRaw) < 0) { msg.textContent='Indica um valor válido.'; restore(); return; }
-
-  const payload = { action:'despesasFundoSet', pin:Auth.getStoredPin()||'', valor: valorRaw };
-
-  try {
-    const url = Auth.API_URL+'?'+new URLSearchParams({action:payload.action,pin:payload.pin});
-    const d = await postToScript(url, payload);
-    if(!d.ok){ msg.textContent='Erro: '+(d.error||'desconhecido'); restore(); return; }
-    closeFundoModal();
-    if (globalKPIs) globalKPIs.fundoEmergencia = Number(valorRaw);
-    if (currentView === 'grid') renderGrid();
-    else if (currentView === 'dashboard') showDashboard();
-  } catch(e){
-    msg.textContent='Erro de rede: '+e.message;
-    restore();
-  }
-}
 </script>
 </body>
 </html>
