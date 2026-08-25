@@ -50,7 +50,8 @@ body{
 }
 /* Esconde a bottom bar quando um modal está aberto — evita o sombreado
    que o iOS renderiza por cima dos modais */
-body.modal-open .bottom-bar{ opacity:0; pointer-events:none; }
+body.modal-open .bottom-bar,
+body.modal-open #dm-logout-btn{ opacity:0; pointer-events:none; }
 .bottom-pill{
   pointer-events:all;
   display:flex;
@@ -117,7 +118,7 @@ body.modal-open .bottom-bar{ opacity:0; pointer-events:none; }
 <div id="app-content" style="display:none;width:100%;flex:1;flex-direction:column;align-items:center">
 <div class="main-content">
 
-<button onclick="if(confirm('Sair?')){Auth.logout();}" style="position:absolute;top:calc(12px + env(safe-area-inset-top));left:16px;background:none;border:none;color:rgba(255,255,255,0.2);cursor:pointer;padding:6px;line-height:0" title="Sair">
+<button id="dm-logout-btn" onclick="if(confirm('Sair?')){Auth.logout();}" style="position:fixed;bottom:calc(16px + env(safe-area-inset-bottom));left:16px;background:none;border:none;color:rgba(255,255,255,0.2);cursor:pointer;padding:6px;line-height:0;z-index:40" title="Sair">
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
 </button>
 
