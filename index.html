@@ -176,7 +176,7 @@ body.modal-open .bottom-bar{ opacity:0; pointer-events:none; }
 <div class="bottom-bar">
   <div class="bottom-pill">
 
-    <button onclick="document.body.classList.add('modal-open');Tickets.open()" title="Tickets" class="bpill-btn" style="position:relative">
+    <button onclick="document.body.classList.add('modal-open');Tickets.open();setTimeout(()=>{const c=document.getElementById('dm-t-close');if(c&&!c._patched){c._patched=true;const orig=c.onclick;c.onclick=function(e){document.body.classList.remove('modal-open');if(orig)orig.call(this,e);};}}  ,100);" title="Tickets" class="bpill-btn" style="position:relative">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M3 9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-4Z"/>
         <path d="M13 5v2M13 17v2M13 11v2"/>
@@ -248,12 +248,12 @@ body.modal-open .bottom-bar{ opacity:0; pointer-events:none; }
     const ticketNum = new URLSearchParams(location.search).get('ticket');
     if (ticketNum) Tickets.openTicket(parseInt(ticketNum, 10));
 
-    // Remove a classe modal-open quando o modal dos Tickets é fechado
+    // Remove a classe modal-open quando os modais de Tickets ou Garantias são fechados
     new MutationObserver(() => {
-      if (!document.getElementById('dm-tickets') && !document.getElementById('dm-gar')) {
+      if (!document.getElementById('dm-ticket') && !document.getElementById('dm-gar')) {
         document.body.classList.remove('modal-open');
       }
-    }).observe(document.body, { childList: true });
+    }).observe(document.body, { childList: true, subtree: false });
   });
 </script>
 </body>
