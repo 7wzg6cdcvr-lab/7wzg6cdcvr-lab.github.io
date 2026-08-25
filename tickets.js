@@ -141,29 +141,22 @@ const Tickets = (() => {
   }
 
   function tableHeaderHTML(){
-    return `<div style="display:flex;gap:0;padding:6px 4px;border-bottom:1px solid rgba(255,255,255,0.1);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#5C6576;white-space:nowrap">
-      <div style="width:46px;flex-shrink:0">#</div>
-      <div style="width:64px;flex-shrink:0">Data</div>
-      <div style="flex:1;min-width:120px;padding-right:8px">Assunto</div>
-      <div style="width:88px;flex-shrink:0">Estado</div>
-      <div style="width:76px;flex-shrink:0">Categoria</div>
-      <div style="width:48px;flex-shrink:0;text-align:right">Dias</div>
-      <div style="width:70px;flex-shrink:0;padding-left:8px">Criado por</div>
+    return `<div style="display:flex;align-items:center;gap:0;padding:6px 4px;border-bottom:1px solid rgba(255,255,255,0.1);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#5C6576">
+      <div style="width:38px;flex-shrink:0">#</div>
+      <div style="width:26px;flex-shrink:0">Cat</div>
+      <div style="flex:1;min-width:0;padding-right:8px">Assunto</div>
+      <div style="width:82px;flex-shrink:0;text-align:right">Estado</div>
     </div>`;
   }
 
   function rowHTML(t){
     const statusColor = STATUS_COLOR[t.status] || '#5C6576';
-    const catColor = CAT_COLOR[t.category] || '#8B95A5';
     return `
-      <div class="dm-t-row" data-n="${t.number}" style="display:flex;align-items:center;gap:0;padding:11px 4px;border-bottom:1px solid rgba(255,255,255,0.06);cursor:pointer;white-space:nowrap;font-size:12px">
-        <div style="width:46px;flex-shrink:0;color:#5C6576">#${t.number}</div>
-        <div style="width:64px;flex-shrink:0;color:#8B95A5">${fmtDate(t.createdAt)}</div>
-        <div style="flex:1;min-width:120px;padding-right:8px;color:#F2F4F7;font-weight:500;overflow:hidden;text-overflow:ellipsis">${esc(t.title)}</div>
-        <div style="width:88px;flex-shrink:0"><span style="display:inline-block;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:600;background:${statusColor}22;color:${statusColor};border:1px solid ${statusColor}44;white-space:nowrap">${t.status}</span></div>
-        <div style="width:76px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;color:${catColor}">${t.category ? (CAT_ICON[t.category]||'')+' '+t.category : '—'}</div>
-        <div style="width:48px;flex-shrink:0;text-align:right;color:#8B95A5">${t.dias}d</div>
-        <div style="width:70px;flex-shrink:0;padding-left:8px;color:#8B95A5;overflow:hidden;text-overflow:ellipsis">${esc(t.author||'—')}</div>
+      <div class="dm-t-row" data-n="${t.number}" style="display:flex;align-items:center;gap:0;padding:12px 4px;border-bottom:1px solid rgba(255,255,255,0.06);cursor:pointer;font-size:12.5px">
+        <div style="width:38px;flex-shrink:0;color:#5C6576">#${t.number}</div>
+        <div style="width:26px;flex-shrink:0;font-size:14px" title="${t.category||''}">${t.category ? (CAT_ICON[t.category]||'📁') : ''}</div>
+        <div style="flex:1;min-width:0;padding-right:8px;color:#F2F4F7;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(t.title)}</div>
+        <div style="width:82px;flex-shrink:0;text-align:right"><span style="display:inline-block;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:600;background:${statusColor}22;color:${statusColor};border:1px solid ${statusColor}44;white-space:nowrap">${t.status}</span></div>
       </div>`;
   }
 
@@ -187,9 +180,7 @@ const Tickets = (() => {
     const resolvidos = cache.filter(t => t.status === 'Resolvido' && !t.archived);
     const arquivados = cache.filter(t => t.archived);
 
-    const tableWrap = (rowsHTML) => `<div style="overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -4px">
-      <div style="min-width:460px;padding:0 4px">${tableHeaderHTML()}${rowsHTML}</div>
-    </div>`;
+    const tableWrap = (rowsHTML) => `${tableHeaderHTML()}${rowsHTML}`;
 
     body.innerHTML = `
       <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:#8B95A5;margin-bottom:4px">Em Aberto${abertos.length?' ('+abertos.length+')':''}</div>
