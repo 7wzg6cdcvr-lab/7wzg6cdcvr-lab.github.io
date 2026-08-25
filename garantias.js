@@ -29,7 +29,7 @@ const Garantias = (() => {
     document.getElementById('dm-g-new').onclick = openAddGarantia;
     loadGarantias();
   }
-  function close(){ const el = document.getElementById('dm-gar'); if (el) el.remove(); }
+  function close(){ const el = document.getElementById('dm-gar'); if (el) el.remove(); document.body.classList.remove('modal-open'); }
 
   // ── Cores por estado ──────────────────────────────────────────
   function estadoCor(dias, duracaoAnos){
