@@ -13,7 +13,7 @@ const Garantias = (() => {
   function shellHTML(){
     return `
     <div id="dm-gar" style="position:fixed;inset:0;background:#0A0D12;z-index:9998;display:flex;flex-direction:column;font-family:'DM Sans',sans-serif">
-      <div style="display:flex;align-items:center;gap:10px;padding:calc(14px + env(safe-area-inset-top)) 16px 14px;border-bottom:1px solid rgba(255,255,255,0.06)">
+      <div style="display:flex;align-items:center;gap:10px;padding:calc(28px + env(safe-area-inset-top)) 16px 14px;border-bottom:1px solid rgba(255,255,255,0.06)">
         <div style="flex:1;font-size:16px;font-weight:600;color:#F2F4F7">Garantias</div>
         <button id="dm-g-new" style="background:#212938;border:1px solid rgba(255,255,255,0.08);color:#F4D27A;font-size:13px;font-weight:600;padding:7px 12px;border-radius:9px;cursor:pointer;font-family:inherit">+ Nova</button>
         <button id="dm-g-close" style="background:none;border:none;color:#8B95A5;font-size:24px;cursor:pointer;line-height:1;padding:0 0 0 6px">×</button>
