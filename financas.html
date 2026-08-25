@@ -78,9 +78,12 @@ body{min-height:100vh;background:var(--bg);color:var(--text);font-family:'DM San
 
 <div class="topbar">
   <div class="topbar-row">
-    <div class="brand" style="display:flex;align-items:center">
-      <img class="brand-logo" src="logo.png" alt="DC Family Finances">
-      <span class="brand-sub-label" style="font-family:'Cybertruck',sans-serif;font-size:22px;letter-spacing:.06em;color:#B0B5BD;margin-left:8px">FINANCES</span>
+    <div class="brand" style="display:flex;flex-direction:column">
+      <div style="display:flex;align-items:center">
+        <img class="brand-logo" src="logo.png" alt="DC Family Finances">
+        <span style="font-family:'DM Sans',sans-serif;font-weight:600;font-size:15.5px;color:#F2F4F7;margin-left:8px">Finanças</span>
+      </div>
+      <span style="font-family:'DM Sans',sans-serif;font-size:12.5px;color:var(--muted);margin-left:8px;margin-top:2px">Receitas, despesas &amp; poupanças</span>
     </div>
     <div style="display:flex;gap:8px">
       <a class="icon-btn" href="./index.html" title="Início">
@@ -99,6 +102,8 @@ body{min-height:100vh;background:var(--bg);color:var(--text);font-family:'DM San
 <div class="app" id="app">
   <!-- preenchido pelo JS -->
 </div>
+
+<button id="fab-add-mov" onclick="openAddMov()" style="display:none;position:fixed;bottom:calc(24px + env(safe-area-inset-bottom));right:16px;background:#D2A13A;color:#1a1305;border:none;border-radius:50%;width:56px;height:56px;font-size:28px;cursor:pointer;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(210,161,58,.4);z-index:50;font-family:inherit;line-height:1">+</button>
 </div>
 
 <script src="auth.js"></script>
@@ -155,6 +160,7 @@ function showGrid(){
 
 async function showDashboard(){
   currentView = 'dashboard';
+  $('fab-add-mov').style.display = 'none';
   $('app').innerHTML = `
     <button class="back-btn" onclick="showGrid()">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
@@ -291,6 +297,7 @@ function renderGlobalKPIs(){
 }
 
 function renderGrid(){
+  $('fab-add-mov').style.display = 'none';
   $('app').innerHTML = `
     <button onclick="showDashboard()" style="width:100%;padding:14px;border:none;border-radius:14px;background:var(--surface);border:1px solid var(--border);color:var(--muted);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:14px;display:flex;align-items:center;justify-content:center;gap:8px">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
@@ -343,6 +350,7 @@ async function openMes(fileId, label, isCurrent){
 function renderDetail(label, d, isCurrent){
   const cats = d.categorias || [];
   const maxVal = cats.length ? cats[0].total : 1;
+  $('fab-add-mov').style.display = isCurrent ? 'flex' : 'none';
 
   $('app').innerHTML = `
     <button class="back-btn" onclick="showGrid()">
@@ -374,10 +382,7 @@ function renderDetail(label, d, isCurrent){
 
     ${isCurrent ? `
     <div class="card">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-        <div class="card-title" style="margin-bottom:0">ÚLTIMOS MOVIMENTOS</div>
-        <button onclick="openAddMov()" style="background:#D2A13A;border:none;border-radius:8px;color:#1a1305;font-size:12px;font-weight:700;padding:6px 12px;cursor:pointer;font-family:inherit">+ Adicionar</button>
-      </div>
+      <div class="card-title" style="margin-bottom:14px">ÚLTIMOS MOVIMENTOS</div>
       <div id="mov-recentes-list">${renderRecentesMovHTML()}</div>
     </div>` : ''}
 
