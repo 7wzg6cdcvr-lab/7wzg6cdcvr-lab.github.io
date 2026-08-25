@@ -46,7 +46,11 @@ body{
   padding:8px 20px calc(8px + env(safe-area-inset-bottom));
   z-index:50;
   pointer-events:none;
+  transition:opacity .15s;
 }
+/* Esconde a bottom bar quando um modal está aberto — evita o sombreado
+   que o iOS renderiza por cima dos modais */
+body.modal-open .bottom-bar{ opacity:0; pointer-events:none; }
 .bottom-pill{
   pointer-events:all;
   display:flex;
@@ -55,10 +59,17 @@ body{
   border-radius:22px;
   background:#181D26;
   border:1px solid rgba(255,255,255,0.1);
-  box-shadow:
-    0 8px 32px rgba(0,0,0,0.4),
-    0 1px 0 rgba(255,255,255,0.06) inset;
+  box-shadow:0 8px 32px rgba(0,0,0,0.4);
 }
+.bpill-btn{
+  display:flex;flex-direction:column;align-items:center;gap:4px;
+  background:none;border:none;
+  color:#8B95A5;
+  cursor:pointer;padding:7px 20px;border-radius:18px;
+  transition:background .15s,color .15s;
+  font-family:inherit;position:relative;text-decoration:none;
+}
+.bpill-btn:active,.bpill-btn.active{ background:rgba(210,161,58,0.15); color:#F4D27A; }
 .tagline{
   font-family:'Cybertruck','Chakra Petch',sans-serif;font-weight:400;
   font-size:clamp(34px,11vw,50px);letter-spacing:.08em;text-transform:uppercase;
@@ -165,8 +176,8 @@ body{
 <div class="bottom-bar">
   <div class="bottom-pill">
 
-    <button onclick="Tickets.open()" title="Tickets" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;background:none;border:none;color:rgba(255,255,255,0.75);cursor:pointer;padding:7px 18px;border-radius:18px;transition:background .15s;font-family:inherit;position:relative" onmousedown="this.style.background='rgba(255,255,255,0.12)'" onmouseup="this.style.background=''" ontouchstart="this.style.background='rgba(255,255,255,0.12)'" ontouchend="this.style.background=''">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+    <button onclick="document.body.classList.add('modal-open');Tickets.open()" title="Tickets" class="bpill-btn" style="position:relative">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M3 9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-4Z"/>
         <path d="M13 5v2M13 17v2M13 11v2"/>
       </svg>
@@ -176,16 +187,16 @@ body{
         font-size:10px;font-weight:700;align-items:center;justify-content:center;border:2px solid transparent"></span>
     </button>
 
-    <button onclick="Garantias.open()" style="display:flex;flex-direction:column;align-items:center;gap:4px;background:none;border:none;color:rgba(255,255,255,0.75);cursor:pointer;padding:7px 18px;border-radius:18px;transition:background .15s;font-family:inherit" onmousedown="this.style.background='rgba(255,255,255,0.12)'" onmouseup="this.style.background=''" ontouchstart="this.style.background='rgba(255,255,255,0.12)'" ontouchend="this.style.background=''">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+    <button onclick="document.body.classList.add('modal-open');Garantias.open()" class="bpill-btn">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
         <path d="M9 12l2 2 4-4"/>
       </svg>
       <span style="font-size:10px;font-weight:500">Garantias</span>
     </button>
 
-    <button id="dm-push-btn" onclick="enablePush()" style="display:none;flex-direction:column;align-items:center;gap:4px;background:none;border:none;color:rgba(255,255,255,0.75);cursor:pointer;padding:7px 18px;border-radius:18px;font-family:inherit">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+    <button id="dm-push-btn" onclick="enablePush()" class="bpill-btn" style="display:none">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
       <span style="font-size:10px;font-weight:500">Alertas</span>
     </button>
 
@@ -236,6 +247,13 @@ body{
 
     const ticketNum = new URLSearchParams(location.search).get('ticket');
     if (ticketNum) Tickets.openTicket(parseInt(ticketNum, 10));
+
+    // Remove a classe modal-open quando o modal dos Tickets é fechado
+    new MutationObserver(() => {
+      if (!document.getElementById('dm-tickets') && !document.getElementById('dm-gar')) {
+        document.body.classList.remove('modal-open');
+      }
+    }).observe(document.body, { childList: true });
   });
 </script>
 </body>
