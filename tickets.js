@@ -42,7 +42,7 @@ const Tickets = (() => {
   function shellHTML(){
     return `
     <div id="dm-ticket" style="position:fixed;inset:0;background:#0A0D12;z-index:9998;display:flex;flex-direction:column;font-family:'DM Sans',sans-serif">
-      <div style="display:flex;align-items:center;gap:10px;padding:calc(14px + env(safe-area-inset-top)) 16px 14px;border-bottom:1px solid rgba(255,255,255,0.06)">
+      <div style="display:flex;align-items:center;gap:10px;padding:calc(28px + env(safe-area-inset-top)) 16px 14px;border-bottom:1px solid rgba(255,255,255,0.06)">
         <button id="dm-t-back" style="background:none;border:none;color:#8B95A5;font-size:20px;cursor:pointer;display:none;padding:0 4px 0 0">‹</button>
         <div id="dm-t-title" style="flex:1;font-size:16px;font-weight:600;color:#F2F4F7">Tickets</div>
         <button id="dm-t-new" style="background:#212938;border:1px solid rgba(255,255,255,0.08);color:#F4D27A;font-size:13px;font-weight:600;padding:7px 12px;border-radius:9px;cursor:pointer;font-family:inherit">+ Novo</button>
