@@ -52,22 +52,24 @@ button{
   top:calc(18px + env(safe-area-inset-top));
   left:16px;
   z-index:200;
-  /* sem background, sem border, sem box-shadow */
-  background:none !important;
-  border:none !important;
+  background:transparent !important;
+  border:0 !important;
   box-shadow:none !important;
+  -webkit-box-shadow:none !important;
   -webkit-appearance:none !important;
   appearance:none !important;
   outline:none !important;
+  -webkit-tap-highlight-color:rgba(0,0,0,0) !important;
   color:rgba(255,255,255,0.55);
   cursor:pointer;
   padding:8px;
   display:flex;flex-direction:column;gap:5px;align-items:center;justify-content:center;
-  border-radius:10px;
-  -webkit-tap-highlight-color:transparent !important;
+  /* SEM border-radius aqui — causava highlight de sistema no iOS 15 Pro */
   touch-action:manipulation;
   user-select:none;
   -webkit-user-select:none;
+  filter:none;
+  -webkit-filter:none;
 }
 #menu-btn span{
   display:block;width:20px;height:2px;border-radius:2px;
@@ -193,7 +195,9 @@ body.drawer-open #drawer{ transform:translateX(0); }
 <div id="menu-btn" role="button" aria-label="Menu" tabindex="0"
      onclick="openDrawer()"
      onkeydown="if(event.key==='Enter'||event.key===' ')openDrawer()">
-  <span></span><span></span><span></span>
+  <div style="display:flex;flex-direction:column;gap:5px;align-items:center;justify-content:center;border-radius:10px">
+    <span></span><span></span><span></span>
+  </div>
 </div>
 
 <!-- Drawer overlay -->
