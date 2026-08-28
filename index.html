@@ -34,6 +34,13 @@ body{
   display:flex;flex-direction:column;align-items:center;
   padding:calc(env(safe-area-inset-top)) 20px 0;
 }
+/* Reset iOS button styles globally */
+button{
+  -webkit-appearance:none;
+  appearance:none;
+  -webkit-tap-highlight-color:transparent;
+  outline:none;
+}
 .main-content{
   flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
   width:100%;max-width:420px;padding-bottom:calc(24px + env(safe-area-inset-bottom));
@@ -47,19 +54,25 @@ body{
   top:calc(10px + env(safe-area-inset-top));
   left:16px;
   z-index:200;
-  background:none;border:none;
-  color:rgba(255,255,255,0.45);
-  cursor:pointer;padding:8px;line-height:0;
+  -webkit-appearance:none;
+  appearance:none;
+  background:transparent;
+  border:none;
+  outline:none;
+  color:rgba(255,255,255,0.5);
+  cursor:pointer;
+  padding:8px;
+  line-height:0;
   display:flex;flex-direction:column;gap:5px;align-items:center;justify-content:center;
   border-radius:10px;
-  transition:color .15s, background .15s;
+  transition:color .15s;
+  -webkit-tap-highlight-color:transparent;
+  touch-action:manipulation;
 }
-#menu-btn:active{ color:var(--gold-light); background:rgba(255,255,255,0.06); }
 #menu-btn span{
   display:block;width:20px;height:2px;border-radius:2px;
   background:currentColor;transition:transform .22s, opacity .22s;
 }
-/* Animação X quando aberto */
 body.drawer-open #menu-btn span:nth-child(1){ transform:translateY(7px) rotate(45deg); }
 body.drawer-open #menu-btn span:nth-child(2){ opacity:0; }
 body.drawer-open #menu-btn span:nth-child(3){ transform:translateY(-7px) rotate(-45deg); }
@@ -95,20 +108,20 @@ body.drawer-open #drawer{
   transform:translateX(0);
 }
 
-/* Drawer header */
 .drawer-header{
   display:flex;align-items:center;justify-content:space-between;
   padding:14px 16px 12px;
   border-bottom:1px solid var(--border);
 }
 .drawer-close{
-  background:none;border:none;color:var(--muted);cursor:pointer;
+  -webkit-appearance:none;appearance:none;
+  background:transparent;border:none;outline:none;
+  color:var(--muted);cursor:pointer;
   padding:6px;line-height:0;border-radius:8px;
-  transition:color .15s,background .15s;
+  -webkit-tap-highlight-color:transparent;
+  touch-action:manipulation;
 }
-.drawer-close:active{background:rgba(255,255,255,0.06);color:var(--text)}
 
-/* Drawer profile */
 .drawer-profile{
   display:flex;align-items:center;gap:12px;
   padding:20px 16px 16px;
@@ -122,15 +135,17 @@ body.drawer-open #drawer{
 .drawer-username{ font-size:15px;font-weight:600 }
 .drawer-sub{ font-size:11.5px;color:var(--muted);margin-top:2px }
 
-/* Drawer nav items */
 .drawer-nav{ flex:1;overflow-y:auto;padding:8px 0 }
 .drawer-item{
+  -webkit-appearance:none;appearance:none;
   display:flex;align-items:center;gap:13px;
   width:100%;padding:13px 16px;
-  background:none;border:none;color:var(--text);
+  background:transparent;border:none;outline:none;
+  color:var(--text);
   font-family:inherit;font-size:14.5px;font-weight:500;
   cursor:pointer;text-align:left;
-  transition:background .12s;
+  -webkit-tap-highlight-color:transparent;
+  touch-action:manipulation;
   text-decoration:none;
 }
 .drawer-item:active{ background:rgba(255,255,255,0.05) }
@@ -146,7 +161,6 @@ body.drawer-open #drawer{
   display:none;align-items:center;justify-content:center;
   margin-left:auto;
 }
-
 .drawer-divider{
   height:1px;background:var(--border);margin:8px 16px;
 }
@@ -180,18 +194,18 @@ body.modal-open #menu-btn{ opacity:0;pointer-events:none }
 <div id="app-content" style="display:none;width:100%;flex:1;flex-direction:column;align-items:center">
 
 <!-- Hamburger -->
-<button id="menu-btn" onclick="openDrawer()" aria-label="Menu">
+<button id="menu-btn" onclick="openDrawer()" aria-label="Menu" type="button">
   <span></span><span></span><span></span>
 </button>
 
-<!-- Drawer overlay (fecha ao clicar fora) -->
+<!-- Drawer overlay -->
 <div id="drawer-overlay" onclick="closeDrawer()"></div>
 
 <!-- Drawer panel -->
 <div id="drawer" role="dialog" aria-label="Menu de navegação">
   <div class="drawer-header">
     <img src="logo.png" alt="DC Family" style="height:28px;width:auto;opacity:.9">
-    <button class="drawer-close" onclick="closeDrawer()" aria-label="Fechar">
+    <button class="drawer-close" onclick="closeDrawer()" aria-label="Fechar" type="button">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
     </button>
   </div>
@@ -207,8 +221,7 @@ body.modal-open #menu-btn{ opacity:0;pointer-events:none }
   </div>
 
   <nav class="drawer-nav">
-    <!-- Tickets -->
-    <button class="drawer-item" onclick="closeDrawer();setTimeout(()=>{document.body.classList.add('modal-open');Tickets.open();setTimeout(()=>{const c=document.getElementById('dm-t-close');if(c&&!c._patched){c._patched=true;const orig=c.onclick;c.onclick=function(e){document.body.classList.remove('modal-open');if(orig)orig.call(this,e);};}},100);},260)">
+    <button class="drawer-item" type="button" onclick="closeDrawer();setTimeout(()=>{document.body.classList.add('modal-open');Tickets.open();setTimeout(()=>{const c=document.getElementById('dm-t-close');if(c&&!c._patched){c._patched=true;const orig=c.onclick;c.onclick=function(e){document.body.classList.remove('modal-open');if(orig)orig.call(this,e);};}},100);},260)">
       <div class="drawer-item-icon" style="background:rgba(99,102,241,0.15);color:#818CF8">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-4Z"/><path d="M13 5v2M13 17v2M13 11v2"/></svg>
       </div>
@@ -216,16 +229,14 @@ body.modal-open #menu-btn{ opacity:0;pointer-events:none }
       <span id="drawer-t-badge" class="drawer-badge"></span>
     </button>
 
-    <!-- Garantias -->
-    <button class="drawer-item" onclick="closeDrawer();setTimeout(()=>{document.body.classList.add('modal-open');Garantias.open();},260)">
+    <button class="drawer-item" type="button" onclick="closeDrawer();setTimeout(()=>{document.body.classList.add('modal-open');Garantias.open();},260)">
       <div class="drawer-item-icon" style="background:rgba(52,211,153,0.15);color:#34D399">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
       </div>
       Garantias
     </button>
 
-    <!-- Notificações (ativar) -->
-    <button id="drawer-push-row" class="drawer-item" onclick="closeDrawer();setTimeout(enablePush,260)" style="display:none">
+    <button id="drawer-push-row" class="drawer-item" type="button" onclick="closeDrawer();setTimeout(enablePush,260)" style="display:none">
       <div class="drawer-item-icon" style="background:rgba(251,191,36,0.15);color:#FBB724">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
       </div>
@@ -233,7 +244,6 @@ body.modal-open #menu-btn{ opacity:0;pointer-events:none }
       <span style="font-size:11px;color:var(--muted);margin-left:auto">Ativar</span>
     </button>
 
-    <!-- Notificações (ativas) -->
     <div id="drawer-push-on" class="drawer-item" style="display:none;cursor:default;pointer-events:none">
       <div class="drawer-item-icon" style="background:rgba(251,191,36,0.15);color:#FBB724">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
@@ -244,8 +254,7 @@ body.modal-open #menu-btn{ opacity:0;pointer-events:none }
 
     <div class="drawer-divider"></div>
 
-    <!-- Sair -->
-    <button class="drawer-item" onclick="closeDrawer();setTimeout(()=>{if(confirm('Tens a certeza que queres sair?')){Auth.logout();}},260)" style="color:#FF6B5E">
+    <button class="drawer-item" type="button" onclick="closeDrawer();setTimeout(()=>{if(confirm('Tens a certeza que queres sair?')){Auth.logout();}},260)" style="color:#FF6B5E">
       <div class="drawer-item-icon" style="background:rgba(255,107,94,0.15);color:#FF6B5E">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
       </div>
@@ -317,7 +326,6 @@ body.modal-open #menu-btn{ opacity:0;pointer-events:none }
   function closeDrawer(){
     document.body.classList.remove('drawer-open');
   }
-  // Fechar com swipe para a esquerda
   (function(){
     let startX = 0;
     document.getElementById('drawer').addEventListener('touchstart', e => { startX = e.touches[0].clientX; }, {passive:true});
@@ -344,14 +352,12 @@ body.modal-open #menu-btn{ opacity:0;pointer-events:none }
     el.style.flexDirection = 'column';
     el.style.alignItems = 'center';
 
-    // Nome no drawer
     const name = Auth.getStoredUser();
     if(name) document.getElementById('drawer-username').textContent = name;
 
     if(window.Tickets) Tickets.refreshBadge();
     Push.init();
 
-    // Badge de tickets no drawer
     const origBadge = document.getElementById('dm-t-badge');
     const drawerBadge = document.getElementById('drawer-t-badge');
     if(origBadge && drawerBadge){
@@ -364,7 +370,6 @@ body.modal-open #menu-btn{ opacity:0;pointer-events:none }
       new MutationObserver(syncBadge).observe(origBadge, {attributes:true, childList:true});
     }
 
-    // Estado das notificações
     if(Push.isSupported()){
       if(Push.alreadyEnabled()){
         document.getElementById('drawer-push-on').style.display  = 'flex';
