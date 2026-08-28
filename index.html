@@ -77,6 +77,12 @@ button{
   transition:transform .22s, opacity .22s;
   pointer-events:none;
 }
+#menu-btn:focus,
+#menu-btn:focus-visible{
+  outline:none !important;
+  box-shadow:none !important;
+  -webkit-box-shadow:none !important;
+}
 body.drawer-open #menu-btn span:nth-child(1){ transform:translateY(7px) rotate(45deg); }
 body.drawer-open #menu-btn span:nth-child(2){ opacity:0; }
 body.drawer-open #menu-btn span:nth-child(3){ transform:translateY(-7px) rotate(-45deg); }
@@ -192,7 +198,7 @@ body.drawer-open #drawer{ transform:translateX(0); }
 <div id="app-content" style="display:none;width:100%;flex:1;flex-direction:column;align-items:center">
 
 <!-- Hamburger: div em vez de button para evitar shadow iOS -->
-<div id="menu-btn" role="button" aria-label="Menu" tabindex="0"
+<div id="menu-btn" role="button" aria-label="Menu" tabindex="-1"
      onclick="openDrawer()"
      onkeydown="if(event.key==='Enter'||event.key===' ')openDrawer()">
   <div style="display:flex;flex-direction:column;gap:5px;align-items:center;justify-content:center;border-radius:10px">
