@@ -34,10 +34,8 @@ body{
   display:flex;flex-direction:column;align-items:center;
   padding:calc(env(safe-area-inset-top)) 20px 0;
 }
-/* Reset iOS button styles globally */
 button{
-  -webkit-appearance:none;
-  appearance:none;
+  -webkit-appearance:none;appearance:none;
   -webkit-tap-highlight-color:transparent;
   outline:none;
 }
@@ -48,34 +46,39 @@ button{
 }
 .logo{display:block;width:min(300px,76vw);height:auto;margin:0 auto 6px}
 
-/* ── Hamburger button ── */
+/* ── Hamburger — usa div para evitar estilos iOS em buttons fixos ── */
 #menu-btn{
   position:fixed;
-  top:calc(10px + env(safe-area-inset-top));
+  top:calc(18px + env(safe-area-inset-top));
   left:16px;
   z-index:200;
-  -webkit-appearance:none;
-  appearance:none;
-  background:transparent;
-  border:none;
-  outline:none;
-  color:rgba(255,255,255,0.5);
+  /* sem background, sem border, sem box-shadow */
+  background:none !important;
+  border:none !important;
+  box-shadow:none !important;
+  -webkit-appearance:none !important;
+  appearance:none !important;
+  outline:none !important;
+  color:rgba(255,255,255,0.55);
   cursor:pointer;
   padding:8px;
-  line-height:0;
   display:flex;flex-direction:column;gap:5px;align-items:center;justify-content:center;
   border-radius:10px;
-  transition:color .15s;
-  -webkit-tap-highlight-color:transparent;
+  -webkit-tap-highlight-color:transparent !important;
   touch-action:manipulation;
+  user-select:none;
+  -webkit-user-select:none;
 }
 #menu-btn span{
   display:block;width:20px;height:2px;border-radius:2px;
-  background:currentColor;transition:transform .22s, opacity .22s;
+  background:currentColor;
+  transition:transform .22s, opacity .22s;
+  pointer-events:none;
 }
 body.drawer-open #menu-btn span:nth-child(1){ transform:translateY(7px) rotate(45deg); }
 body.drawer-open #menu-btn span:nth-child(2){ opacity:0; }
 body.drawer-open #menu-btn span:nth-child(3){ transform:translateY(-7px) rotate(-45deg); }
+body.modal-open #menu-btn{ opacity:0; pointer-events:none; }
 
 /* ── Drawer overlay ── */
 #drawer-overlay{
@@ -104,9 +107,7 @@ body.drawer-open #drawer-overlay{
   transition:transform .28s cubic-bezier(.4,0,.2,1);
   will-change:transform;
 }
-body.drawer-open #drawer{
-  transform:translateX(0);
-}
+body.drawer-open #drawer{ transform:translateX(0); }
 
 .drawer-header{
   display:flex;align-items:center;justify-content:space-between;
@@ -114,7 +115,6 @@ body.drawer-open #drawer{
   border-bottom:1px solid var(--border);
 }
 .drawer-close{
-  -webkit-appearance:none;appearance:none;
   background:transparent;border:none;outline:none;
   color:var(--muted);cursor:pointer;
   padding:6px;line-height:0;border-radius:8px;
@@ -161,9 +161,7 @@ body.drawer-open #drawer{
   display:none;align-items:center;justify-content:center;
   margin-left:auto;
 }
-.drawer-divider{
-  height:1px;background:var(--border);margin:8px 16px;
-}
+.drawer-divider{ height:1px;background:var(--border);margin:8px 16px; }
 
 /* ── Main tiles ── */
 .tiles{width:100%;max-width:420px;display:flex;flex-direction:column;gap:12px}
@@ -185,18 +183,18 @@ body.drawer-open #drawer{
 .tile-sub{font-size:12.5px;color:var(--muted);margin-top:2px}
 .tile-arrow{color:var(--muted2);font-size:18px;flex-shrink:0}
 .tile.disabled{opacity:.45;cursor:default;pointer-events:none}
-
-body.modal-open #menu-btn{ opacity:0;pointer-events:none }
 </style>
 </head>
 <body>
 
 <div id="app-content" style="display:none;width:100%;flex:1;flex-direction:column;align-items:center">
 
-<!-- Hamburger -->
-<button id="menu-btn" onclick="openDrawer()" aria-label="Menu" type="button">
+<!-- Hamburger: div em vez de button para evitar shadow iOS -->
+<div id="menu-btn" role="button" aria-label="Menu" tabindex="0"
+     onclick="openDrawer()"
+     onkeydown="if(event.key==='Enter'||event.key===' ')openDrawer()">
   <span></span><span></span><span></span>
-</button>
+</div>
 
 <!-- Drawer overlay -->
 <div id="drawer-overlay" onclick="closeDrawer()"></div>
@@ -320,12 +318,9 @@ body.modal-open #menu-btn{ opacity:0;pointer-events:none }
 <script src="garantias.js"></script>
 <script src="push.js"></script>
 <script>
-  function openDrawer(){
-    document.body.classList.add('drawer-open');
-  }
-  function closeDrawer(){
-    document.body.classList.remove('drawer-open');
-  }
+  function openDrawer(){ document.body.classList.add('drawer-open'); }
+  function closeDrawer(){ document.body.classList.remove('drawer-open'); }
+
   (function(){
     let startX = 0;
     document.getElementById('drawer').addEventListener('touchstart', e => { startX = e.touches[0].clientX; }, {passive:true});
@@ -358,16 +353,16 @@ body.modal-open #menu-btn{ opacity:0;pointer-events:none }
     if(window.Tickets) Tickets.refreshBadge();
     Push.init();
 
-    const origBadge = document.getElementById('dm-t-badge');
+    const origBadge  = document.getElementById('dm-t-badge');
     const drawerBadge = document.getElementById('drawer-t-badge');
     if(origBadge && drawerBadge){
-      const syncBadge = () => {
+      const sync = () => {
         const show = origBadge.style.display !== 'none' && origBadge.textContent;
         drawerBadge.style.display = show ? 'inline-flex' : 'none';
         drawerBadge.textContent = origBadge.textContent;
       };
-      syncBadge();
-      new MutationObserver(syncBadge).observe(origBadge, {attributes:true, childList:true});
+      sync();
+      new MutationObserver(sync).observe(origBadge, {attributes:true, childList:true});
     }
 
     if(Push.isSupported()){
