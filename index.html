@@ -372,17 +372,14 @@ body.modal-open #dm-logout-btn{ opacity:0; pointer-events:none; }
     const btn   = document.getElementById('dm-bug-submit');
     if (!title) { msg.textContent = 'Escreve um título.'; return; }
 
-    const user = Auth.getStoredUser() || 'desconhecido';
-    const body = (desc || '_(sem descrição)_') +
-      '\n\n---\n_Reportado por **' + user + '** via DC Family app_';
-
     btn.disabled = true; btn.textContent = 'A criar…';
     msg.textContent = '';
     try {
-      const r = await fetch(Auth.API_URL + '?action=createIssue&pin=' + encodeURIComponent(Auth.getStoredPin()||''), {
+      const pin = Auth.getStoredPin() || '';
+      const r = await fetch(Auth.API_URL + '?action=createIssue&pin=' + encodeURIComponent(pin), {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ action:'createIssue', pin: Auth.getStoredPin()||'', title, body }),
+        body: JSON.stringify({ action:'createIssue', pin, title, body: desc }),
       });
       const d = await r.json();
       if (d.ok && d.url) {
