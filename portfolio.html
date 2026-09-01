@@ -614,6 +614,7 @@ let portfolioCategoriasLoaded = false;
 
 function loadPortfolioCategorias(){
   if (portfolioCategoriasLoaded) return Promise.resolve();
+  portfolioCategoriasLoaded = true; // marca já, para evitar fetches paralelos
   const pin = Auth.getStoredPin() || '';
   return fetch(Auth.API_URL + '?action=portfolioCategorias&pin=' + encodeURIComponent(pin))
     .then(r => r.json())
@@ -623,7 +624,6 @@ function loadPortfolioCategorias(){
         if (d.tickers.length)     XTB_TICKERS     = d.tickers;
         if (d.instruments.length) XTB_INSTRUMENTS = d.instruments;
         if (d.owners.length)      XTB_OWNERS      = d.owners;
-        portfolioCategoriasLoaded = true;
       }
     })
     .catch(() => {});
