@@ -174,20 +174,20 @@ body.modal-open #dm-logout-btn{ opacity:0; pointer-events:none; }
 </div><!-- .tiles -->
 
 <!-- ── Debug ──────────────────────────────────────────────── -->
-<div id="dm-debug-wrap" style="width:100%;max-width:420px;margin-top:20px">
+<div id="dm-debug-wrap" style="width:100%;max-width:420px;margin-top:16px">
 
-  <!-- Deploy status pill -->
-  <div id="dm-deploy-row" style="display:flex;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px 14px;margin-bottom:10px;cursor:pointer" onclick="debugRefreshDeploy()">
+  <!-- Deploy status -->
+  <div id="dm-deploy-row" style="display:flex;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px 14px;margin-bottom:8px;cursor:pointer">
     <div style="display:flex;align-items:center;gap:8px;min-width:0">
       <span id="dm-deploy-dot" style="width:8px;height:8px;border-radius:50%;background:var(--muted2);flex-shrink:0"></span>
       <span style="font-size:12px;font-weight:600;color:var(--muted)">Deploy</span>
       <span id="dm-deploy-label" style="font-size:11px;color:var(--muted2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">a verificar…</span>
     </div>
-    <svg id="dm-deploy-spin" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--muted2)" stroke-width="2.5" stroke-linecap="round" style="flex-shrink:0;opacity:0;transition:opacity .2s"><path d="M21 12a9 9 0 1 1-3-6.7M21 4v5h-5"/></svg>
+    <svg id="dm-deploy-spin" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--muted2)" stroke-width="2.5" stroke-linecap="round" style="flex-shrink:0;opacity:0"><path d="M21 12a9 9 0 1 1-3-6.7M21 4v5h-5"/></svg>
   </div>
 
   <!-- Bug report toggle -->
-  <button onclick="debugToggleBug()" style="width:100%;display:flex;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px 14px;cursor:pointer;font-family:inherit;color:inherit;text-align:left;margin-bottom:0" id="dm-bug-toggle">
+  <button onclick="debugToggleBug()" id="dm-bug-toggle" style="width:100%;display:flex;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px 14px;cursor:pointer;font-family:inherit;color:inherit;text-align:left">
     <div style="display:flex;align-items:center;gap:8px">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
       <span style="font-size:12px;font-weight:600;color:var(--muted)">Reportar bug</span>
@@ -195,13 +195,13 @@ body.modal-open #dm-logout-btn{ opacity:0; pointer-events:none; }
     <span id="dm-bug-chevron" style="font-size:12px;color:var(--muted2);transition:transform .2s">▼</span>
   </button>
 
-  <!-- Bug form (collapsed by default) -->
+  <!-- Bug form (collapsed) -->
   <div id="dm-bug-form" style="display:none;background:var(--surface);border:1px solid var(--border);border-top:none;border-radius:0 0 12px 12px;padding:12px 14px 14px">
     <input id="dm-bug-title" type="text" placeholder="Título (ex: botão não funciona no iOS)" autocomplete="off"
       style="width:100%;padding:9px 11px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;font-family:inherit;margin-bottom:8px">
     <textarea id="dm-bug-desc" rows="3" placeholder="Descreve o que aconteceu e como reproduzir…"
       style="width:100%;padding:9px 11px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;font-family:inherit;resize:none;margin-bottom:10px"></textarea>
-    <div id="dm-bug-msg" style="font-size:11.5px;color:var(--coral);min-height:14px;margin-bottom:8px;text-align:center"></div>
+    <div id="dm-bug-msg" style="font-size:11.5px;color:#FF6B5E;min-height:14px;margin-bottom:8px;text-align:center"></div>
     <button onclick="debugSubmitBug()" id="dm-bug-submit"
       style="width:100%;padding:11px;border:none;border-radius:9px;background:var(--gold);color:#1a1305;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit">
       Criar issue no GitHub
@@ -295,63 +295,53 @@ body.modal-open #dm-logout-btn{ opacity:0; pointer-events:none; }
       }
     }).observe(document.body, { childList: true, subtree: false });
 
-    // Carrega o estado do deploy ao entrar
+    // Carrega estado do deploy ao entrar
     debugRefreshDeploy();
   });
 
-  /* ── Debug helpers ─────────────────────────────────────── */
-  const GH_REPO  = '7wzg6cdcvr-lab/7wzg6cdcvr-lab.github.io';
-  const GH_API   = 'https://api.github.com/repos/' + GH_REPO;
+  /* ── Debug ─────────────────────────────────────────────── */
+  const GH_REPO = '7wzg6cdcvr-lab/7wzg6cdcvr-lab.github.io';
 
   async function debugRefreshDeploy(){
     const dot   = document.getElementById('dm-deploy-dot');
     const label = document.getElementById('dm-deploy-label');
     const spin  = document.getElementById('dm-deploy-spin');
-    if (!dot) return;
     spin.style.opacity = '1';
     spin.style.animation = 'spin .7s linear infinite';
     try {
-      const r = await fetch(GH_API + '/actions/runs?per_page=1&event=push');
+      const r = await fetch('https://api.github.com/repos/' + GH_REPO + '/actions/runs?per_page=1');
       const d = await r.json();
       const run = d.workflow_runs && d.workflow_runs[0];
-      if (!run) { label.textContent = 'Sem runs'; dot.style.background = 'var(--muted2)'; return; }
-
-      const status     = run.status;      // queued | in_progress | completed
-      const conclusion = run.conclusion;  // success | failure | cancelled | null
-
+      if (!run) { label.textContent = 'Sem runs'; return; }
+      const { status, conclusion, updated_at, html_url } = run;
       let color = 'var(--muted2)', text = '';
       if (status === 'completed') {
-        if (conclusion === 'success') { color = 'var(--mint)'; }
-        else if (conclusion === 'failure') { color = 'var(--coral)'; }
-        else { color = 'var(--amber)'; }
-        const ago = debugTimeAgo(run.updated_at);
-        text = (conclusion === 'success' ? '✓ OK' : conclusion === 'failure' ? '✗ Falhou' : conclusion) + ' · ' + ago;
+        color = conclusion === 'success' ? '#34D399' : conclusion === 'failure' ? '#FF6B5E' : '#F0A93A';
+        text  = (conclusion === 'success' ? '✓ OK' : conclusion === 'failure' ? '✗ Falhou' : conclusion)
+              + ' · ' + debugTimeAgo(updated_at);
       } else {
-        color = 'var(--amber)';
-        text = status === 'in_progress' ? '⟳ A fazer deploy…' : '· Em fila…';
+        color = '#F0A93A';
+        text  = status === 'in_progress' ? '⟳ A fazer deploy…' : '· Em fila…';
       }
       dot.style.background = color;
       label.textContent = text;
-
-      // Adiciona link clicável para abrir o run
       const row = document.getElementById('dm-deploy-row');
-      row.setAttribute('data-url', run.html_url);
-      row.onclick = () => { if (status !== 'in_progress') window.open(run.html_url, '_blank'); else debugRefreshDeploy(); };
+      row.onclick = () => status !== 'in_progress' ? window.open(html_url, '_blank') : debugRefreshDeploy();
     } catch(e) {
       label.textContent = 'Erro ao verificar';
-      dot.style.background = 'var(--coral)';
+      dot.style.background = '#FF6B5E';
     } finally {
       spin.style.opacity = '0';
       spin.style.animation = '';
     }
   }
 
-  function debugTimeAgo(isoStr){
-    const diff = Math.floor((Date.now() - new Date(isoStr)) / 1000);
-    if (diff < 60)  return diff + 's atrás';
-    if (diff < 3600) return Math.floor(diff/60) + 'min atrás';
-    if (diff < 86400) return Math.floor(diff/3600) + 'h atrás';
-    return Math.floor(diff/86400) + 'd atrás';
+  function debugTimeAgo(iso){
+    const s = Math.floor((Date.now() - new Date(iso)) / 1000);
+    if (s < 60)   return s + 's atrás';
+    if (s < 3600) return Math.floor(s/60) + 'min atrás';
+    if (s < 86400) return Math.floor(s/3600) + 'h atrás';
+    return Math.floor(s/86400) + 'd atrás';
   }
 
   function debugToggleBug(){
@@ -371,27 +361,20 @@ body.modal-open #dm-logout-btn{ opacity:0; pointer-events:none; }
     const msg   = document.getElementById('dm-bug-msg');
     const btn   = document.getElementById('dm-bug-submit');
     if (!title) { msg.textContent = 'Escreve um título.'; return; }
-
-    btn.disabled = true; btn.textContent = 'A criar…';
-    msg.textContent = '';
+    btn.disabled = true; btn.textContent = 'A criar…'; msg.textContent = '';
     try {
       const pin = Auth.getStoredPin() || '';
       const r = await fetch(Auth.API_URL + '?action=createIssue&pin=' + encodeURIComponent(pin), {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ action:'createIssue', pin, title, body: desc }),
+        body: JSON.stringify({ action: 'createIssue', pin, title, body: desc }),
       });
       const d = await r.json();
-      if (d.ok && d.url) {
-        msg.style.color = 'var(--mint)';
-        msg.textContent = '✓ Issue criada!';
+      if (d.ok) {
+        msg.style.color = '#34D399'; msg.textContent = '✓ Issue criada!';
         document.getElementById('dm-bug-title').value = '';
         document.getElementById('dm-bug-desc').value  = '';
-        setTimeout(() => {
-          msg.textContent = '';
-          msg.style.color = 'var(--coral)';
-          debugToggleBug();
-        }, 2000);
+        setTimeout(() => { msg.textContent = ''; msg.style.color = '#FF6B5E'; debugToggleBug(); }, 2000);
       } else {
         msg.textContent = d.error || 'Erro desconhecido.';
       }
