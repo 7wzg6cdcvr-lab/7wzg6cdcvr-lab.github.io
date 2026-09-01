@@ -614,7 +614,6 @@ let portfolioCategoriasLoaded = false;
 
 function loadPortfolioCategorias(){
   if (portfolioCategoriasLoaded) return Promise.resolve();
-  portfolioCategoriasLoaded = true; // marca já, para evitar fetches paralelos
   const pin = Auth.getStoredPin() || '';
   return fetch(Auth.API_URL + '?action=portfolioCategorias&pin=' + encodeURIComponent(pin))
     .then(r => r.json())
@@ -624,6 +623,7 @@ function loadPortfolioCategorias(){
         if (d.tickers.length)     XTB_TICKERS     = d.tickers;
         if (d.instruments.length) XTB_INSTRUMENTS = d.instruments;
         if (d.owners.length)      XTB_OWNERS      = d.owners;
+        portfolioCategoriasLoaded = true;
       }
     })
     .catch(() => {});
@@ -724,8 +724,34 @@ function modalXTBHTML(t){
   </div>`;
 }
 
-function openAddXTB(){ loadPortfolioCategorias().then(() => document.body.insertAdjacentHTML('beforeend', modalXTBHTML(null))); }
-function openEditXTB(t){ loadPortfolioCategorias().then(() => document.body.insertAdjacentHTML('beforeend', modalXTBHTML(t))); }
+function openAddXTB(){
+  document.body.insertAdjacentHTML('beforeend', modalXTBHTML(null));
+  if (!portfolioCategoriasLoaded) {
+    loadPortfolioCategorias().then(() => {
+      const sel = {
+        'xtb-type':       XTB_TYPES.map(o=>`<option>${o}</option>`).join(''),
+        'xtb-ticker':     XTB_TICKERS.map(o=>`<option>${o}</option>`).join(''),
+        'xtb-instrument': XTB_INSTRUMENTS.map(o=>`<option>${o}</option>`).join(''),
+        'xtb-owner':      XTB_OWNERS.map(o=>`<option>${o}</option>`).join(''),
+      };
+      Object.entries(sel).forEach(([id, html]) => { const el=$(''+id); if(el) el.innerHTML=html; });
+    });
+  }
+}
+function openEditXTB(t){
+  document.body.insertAdjacentHTML('beforeend', modalXTBHTML(t));
+  if (!portfolioCategoriasLoaded) {
+    loadPortfolioCategorias().then(() => {
+      const sel = {
+        'xtb-type':       XTB_TYPES.map(o=>`<option${t.type===o?' selected':''}>${o}</option>`).join(''),
+        'xtb-ticker':     XTB_TICKERS.map(o=>`<option${t.ticker===o?' selected':''}>${o}</option>`).join(''),
+        'xtb-instrument': XTB_INSTRUMENTS.map(o=>`<option${t.instrument===o?' selected':''}>${o}</option>`).join(''),
+        'xtb-owner':      XTB_OWNERS.map(o=>`<option${t.owner===o?' selected':''}>${o}</option>`).join(''),
+      };
+      Object.entries(sel).forEach(([id, html]) => { const el=$(''+id); if(el) el.innerHTML=html; });
+    });
+  }
+}
 function closeXTBModal(){ const m=$('xtb-modal'); if(m) m.remove(); }
 
 async function submitXTB(isEdit){
