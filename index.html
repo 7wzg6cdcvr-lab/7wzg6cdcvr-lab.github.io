@@ -49,7 +49,7 @@ button{
 }
 .logo{display:block;width:min(300px,76vw);height:auto;margin:0 auto 6px}
 
-/* ── Hamburger — usa div para evitar estilos iOS em buttons fixos ── */
+/* ── Hamburger ── */
 #menu-btn{
   position:fixed;
   top:calc(30px + env(safe-area-inset-top));
@@ -202,7 +202,7 @@ body.drawer-open #drawer{ transform:translateX(0); }
 
 <div id="app-content" class="app-container">
 
-<!-- Hamburger: div em vez de button para evitar shadow iOS -->
+<!-- Hamburger -->
 <div id="menu-btn" role="button" aria-label="Menu" tabindex="-1">
   <div class="menu-inner">
     <span></span><span></span><span></span>
@@ -262,6 +262,17 @@ body.drawer-open #drawer{ transform:translateX(0); }
       Notificações
       <span style="font-size:11px;color:#34D399;margin-left:auto">Ativas ✓</span>
     </div>
+
+    <div class="drawer-divider"></div>
+
+    <!-- ── Debug no drawer ── -->
+    <button class="drawer-item" id="nav-debug" type="button">
+      <div class="drawer-item-icon" style="background:rgba(139,149,165,0.12);color:var(--muted)">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      </div>
+      Debug
+      <span id="nav-deploy-dot" style="width:7px;height:7px;border-radius:50%;background:var(--muted2);margin-left:auto;flex-shrink:0"></span>
+    </button>
 
     <div class="drawer-divider"></div>
 
@@ -326,6 +337,36 @@ body.drawer-open #drawer{ transform:translateX(0); }
 </div><!-- .main-content -->
 </div><!-- app-content -->
 
+<!-- ── Painel de Debug (modal de fundo) ── -->
+<div id="debug-panel" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.7);align-items:flex-end">
+  <div style="background:var(--surface);border-radius:20px 20px 0 0;width:100%;max-height:85vh;overflow-y:auto;padding:20px 16px calc(20px + env(safe-area-inset-bottom))">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <div style="font-size:16px;font-weight:700">Debug</div>
+      <button onclick="closeDebug()" style="background:none;border:none;color:var(--muted);font-size:24px;cursor:pointer;line-height:1;padding:0">×</button>
+    </div>
+
+    <!-- Deploy status -->
+    <div style="font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted2);margin-bottom:8px">Último deploy</div>
+    <div id="dbg-deploy-card" style="display:flex;align-items:center;gap:10px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:20px;cursor:pointer" onclick="debugRefreshDeploy()">
+      <span id="dbg-dot" style="width:9px;height:9px;border-radius:50%;background:var(--muted2);flex-shrink:0"></span>
+      <span id="dbg-deploy-label" style="font-size:13px;color:var(--text);flex:1">a verificar…</span>
+      <svg id="dbg-spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted2)" stroke-width="2.5" stroke-linecap="round" style="flex-shrink:0;opacity:0;transition:opacity .2s"><path d="M21 12a9 9 0 1 1-3-6.7M21 4v5h-5"/></svg>
+    </div>
+
+    <!-- Bug report -->
+    <div style="font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted2);margin-bottom:8px">Reportar bug</div>
+    <input id="dbg-title" type="text" placeholder="Título *" autocomplete="off"
+      style="width:100%;padding:10px 12px;border-radius:9px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:14px;font-family:inherit;margin-bottom:10px">
+    <textarea id="dbg-desc" rows="3" placeholder="Descreve o que aconteceu e como reproduzir…"
+      style="width:100%;padding:10px 12px;border-radius:9px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:14px;font-family:inherit;resize:none;margin-bottom:10px"></textarea>
+    <div id="dbg-msg" style="font-size:12px;color:#FF6B5E;min-height:14px;margin-bottom:10px;text-align:center"></div>
+    <button onclick="debugSubmitBug()" id="dbg-submit"
+      style="width:100%;padding:14px;border:none;border-radius:12px;background:var(--gold);color:#1a1305;font-weight:700;font-size:15px;cursor:pointer;font-family:inherit">
+      Criar issue no GitHub
+    </button>
+  </div>
+</div>
+
 <script src="auth.js"></script>
 <script src="tickets.js"></script>
 <script src="garantias.js"></script>
@@ -333,6 +374,18 @@ body.drawer-open #drawer{ transform:translateX(0); }
 <script>
   function openDrawer(){ document.body.classList.add('drawer-open'); }
   function closeDrawer(){ document.body.classList.remove('drawer-open'); }
+
+  function openDebug(){
+    closeDrawer();
+    setTimeout(()=>{
+      const p = document.getElementById('debug-panel');
+      p.style.display = 'flex';
+      debugRefreshDeploy();
+    }, 260);
+  }
+  function closeDebug(){
+    document.getElementById('debug-panel').style.display = 'none';
+  }
 
   (function(){
     let startX = 0;
@@ -360,7 +413,7 @@ body.drawer-open #drawer{ transform:translateX(0); }
     document.getElementById('menu-btn').addEventListener('keydown', e => {
       if(e.key === 'Enter' || e.key === ' ') openDrawer();
     });
-    
+
     document.getElementById('drawer-overlay').addEventListener('click', closeDrawer);
     document.getElementById('drawer-close-btn').addEventListener('click', closeDrawer);
 
@@ -396,12 +449,12 @@ body.drawer-open #drawer{ transform:translateX(0); }
       setTimeout(enablePush, 260);
     });
 
+    document.getElementById('nav-debug').addEventListener('click', openDebug);
+
     document.getElementById('nav-logout').addEventListener('click', () => {
       closeDrawer();
       setTimeout(()=>{
-        if(confirm('Tens a certeza que queres sair?')){
-          Auth.logout();
-        }
+        if(confirm('Tens a certeza que queres sair?')) Auth.logout();
       }, 260);
     });
   });
@@ -416,7 +469,7 @@ body.drawer-open #drawer{ transform:translateX(0); }
     if(window.Tickets) Tickets.refreshBadge();
     Push.init();
 
-    const origBadge  = document.getElementById('dm-t-badge');
+    const origBadge   = document.getElementById('dm-t-badge');
     const drawerBadge = document.getElementById('drawer-t-badge');
     if(origBadge && drawerBadge){
       const sync = () => {
@@ -445,6 +498,83 @@ body.drawer-open #drawer{ transform:translateX(0); }
       }
     }).observe(document.body, { childList:true, subtree:false });
   });
+
+  /* ── Debug ── */
+  const GH_REPO = '7wzg6cdcvr-lab/7wzg6cdcvr-lab.github.io';
+
+  async function debugRefreshDeploy(){
+    const dot   = document.getElementById('dbg-dot');
+    const label = document.getElementById('dbg-deploy-label');
+    const spin  = document.getElementById('dbg-spin');
+    const navDot = document.getElementById('nav-deploy-dot');
+    spin.style.opacity = '1';
+    spin.style.animation = 'spin .7s linear infinite';
+    try {
+      const r = await fetch('https://api.github.com/repos/' + GH_REPO + '/actions/runs?per_page=1');
+      const d = await r.json();
+      const run = d.workflow_runs && d.workflow_runs[0];
+      if(!run){ label.textContent = 'Sem runs'; return; }
+      const { status, conclusion, updated_at, html_url } = run;
+      let color = 'var(--muted2)', text = '';
+      if(status === 'completed'){
+        color = conclusion === 'success' ? '#34D399' : conclusion === 'failure' ? '#FF6B5E' : '#F0A93A';
+        text  = (conclusion === 'success' ? '✓ OK' : conclusion === 'failure' ? '✗ Falhou' : conclusion)
+              + ' · ' + debugTimeAgo(updated_at);
+      } else {
+        color = '#F0A93A';
+        text  = status === 'in_progress' ? '⟳ A fazer deploy…' : '· Em fila…';
+      }
+      dot.style.background = color;
+      if(navDot) navDot.style.background = color;
+      label.textContent = text;
+      const card = document.getElementById('dbg-deploy-card');
+      card.onclick = () => status !== 'in_progress' ? window.open(html_url, '_blank') : debugRefreshDeploy();
+    } catch(e) {
+      label.textContent = 'Erro ao verificar';
+      dot.style.background = '#FF6B5E';
+    } finally {
+      spin.style.opacity = '0';
+      spin.style.animation = '';
+    }
+  }
+
+  function debugTimeAgo(iso){
+    const s = Math.floor((Date.now() - new Date(iso)) / 1000);
+    if(s < 60)    return s + 's atrás';
+    if(s < 3600)  return Math.floor(s/60) + 'min atrás';
+    if(s < 86400) return Math.floor(s/3600) + 'h atrás';
+    return Math.floor(s/86400) + 'd atrás';
+  }
+
+  async function debugSubmitBug(){
+    const title = document.getElementById('dbg-title').value.trim();
+    const desc  = document.getElementById('dbg-desc').value.trim();
+    const msg   = document.getElementById('dbg-msg');
+    const btn   = document.getElementById('dbg-submit');
+    if(!title){ msg.textContent = 'Escreve um título.'; return; }
+    btn.disabled = true; btn.textContent = 'A criar…'; msg.textContent = '';
+    try {
+      const pin = Auth.getStoredPin() || '';
+      const r = await fetch(Auth.API_URL + '?action=createIssue&pin=' + encodeURIComponent(pin), {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action: 'createIssue', pin, title, body: desc }),
+      });
+      const d = await r.json();
+      if(d.ok){
+        msg.style.color = '#34D399'; msg.textContent = '✓ Issue criada!';
+        document.getElementById('dbg-title').value = '';
+        document.getElementById('dbg-desc').value  = '';
+        setTimeout(()=>{ msg.textContent = ''; msg.style.color = '#FF6B5E'; }, 2500);
+      } else {
+        msg.textContent = d.error || 'Erro desconhecido.';
+      }
+    } catch(e) {
+      msg.textContent = 'Erro de rede: ' + e.message;
+    } finally {
+      btn.disabled = false; btn.textContent = 'Criar issue no GitHub';
+    }
+  }
 </script>
 </body>
 </html>
