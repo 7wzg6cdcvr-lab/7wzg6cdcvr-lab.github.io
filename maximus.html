@@ -288,7 +288,7 @@ function renderRecentes(sessions){
       </div>
       <div style="text-align:right;flex-shrink:0">
         <div style="font-family:'DM Mono',monospace;font-size:13px;font-weight:600">${s.preco?eur(s.preco):'—'}</div>
-        ${s.desconto ? `<div style="font-size:10.5px;color:#34D399">-${eur(s.desconto)} desc.</div>` : '<div style="font-size:10.5px;color:var(--muted2)">✏️ editar</div>'}
+        <div style="font-size:10.5px;color:var(--muted2)">${s.precoKwh?'€'+s.precoKwh.toFixed(3)+'/kWh':'✏️ editar'}</div>
       </div>
     </div>`).join('');
 }
@@ -342,7 +342,6 @@ function modalHTML(s){
         <div>
           <label style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Preço (€)</label>
           <input id="cm-preco" type="number" step="0.01" value="${v.preco||''}" placeholder="0.00"
-            oninput="calcPrecoLiquido()"
             style="width:100%;padding:10px;margin-top:6px;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#181D26;color:#F2F4F7;font-size:14px;font-family:inherit">
         </div>
       </div>
@@ -381,12 +380,6 @@ function modalHTML(s){
         <span style="font-size:13px;color:#F2F4F7">Carga completa (100%)</span>
       </label>
 
-      <label style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Desconto (€)</label>
-      <input id="cm-desconto" type="number" step="0.01" min="0" value="${v.desconto||''}" placeholder="0.00 (opcional)"
-        oninput="calcPrecoLiquido()"
-        style="width:100%;padding:10px;margin:6px 0 8px;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#181D26;color:#F2F4F7;font-size:14px;font-family:inherit">
-      <div id="cm-preco-liquido" style="font-size:12px;color:var(--muted);margin-bottom:14px;min-height:16px;text-align:right"></div>
-
       <label style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Observações</label>
       <input id="cm-obs" type="text" value="${v.obs||''}" placeholder="opcional"
         style="width:100%;padding:10px;margin:6px 0 20px;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#181D26;color:#F2F4F7;font-size:14px;font-family:inherit">
@@ -405,20 +398,6 @@ function openEdit(s){ loadCarroCategorias().then(() => document.body.insertAdjac
 function closeModal(){ const m=$('carro-modal'); if(m) m.remove(); }
 
 function getVal(id){ return document.getElementById(id)?.value.trim()||''; }
-
-function calcPrecoLiquido(){
-  const preco    = parseFloat((getVal('cm-preco')||'0').replace(',','.')) || 0;
-  const desconto = parseFloat((getVal('cm-desconto')||'0').replace(',','.')) || 0;
-  const el = document.getElementById('cm-preco-liquido');
-  if (!el) return;
-  if (desconto > 0 && preco > 0) {
-    const liquido = Math.max(0, preco - desconto);
-    el.textContent = 'Preço líquido: €' + liquido.toLocaleString('pt-PT',{minimumFractionDigits:2,maximumFractionDigits:2});
-    el.style.color = '#34D399';
-  } else {
-    el.textContent = '';
-  }
-}
 
 async function submitModal(isEdit){
   const btn=$('cm-submit');
@@ -453,7 +432,6 @@ async function submitModal(isEdit){
     kms,
     obs: getVal('cm-obs'),
     cargaTotal: document.getElementById('cm-carga-total').checked,
-    desconto: getVal('cm-desconto').replace(',','.'),
   };
   if(isEdit) payload.row = parseInt(getVal('cm-row'));
 
