@@ -288,7 +288,9 @@ function renderRecentes(sessions){
       </div>
       <div style="text-align:right;flex-shrink:0">
         <div style="font-family:'DM Mono',monospace;font-size:13px;font-weight:600">${s.preco?eur(s.preco):'—'}</div>
-        <div style="font-size:10.5px;color:var(--muted2)">${s.precoKwh?'€'+s.precoKwh.toFixed(3)+'/kWh':'✏️ editar'}</div>
+        ${s.precoKwh ? `<div style="font-size:10.5px;font-weight:600;color:${s.precoKwh<0.49?'#34D399':s.precoKwh===0.49?'#F0A93A':'#FF6B5E'}">€${s.precoKwh.toFixed(3)}/kWh</div>` : ''}
+        ${s.desconto ? `<div style="font-size:10px;color:#34D399">-${eur(s.desconto)} desc.</div>` : ''}
+        <div style="font-size:10.5px;color:var(--muted2)">✏️ editar</div>
       </div>
     </div>`).join('');
 }
