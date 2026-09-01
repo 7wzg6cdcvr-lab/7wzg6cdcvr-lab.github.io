@@ -300,7 +300,6 @@ let carroCategoriasLoaded = false;
 
 function loadCarroCategorias(){
   if (carroCategoriasLoaded) return Promise.resolve();
-  carroCategoriasLoaded = true; // marca já, para evitar fetches paralelos
   const pin = Auth.getStoredPin() || '';
   return fetch(Auth.API_URL + '?action=carroCategorias&pin=' + encodeURIComponent(pin))
     .then(r => r.json())
@@ -308,6 +307,7 @@ function loadCarroCategorias(){
       if (d.ok) {
         if (d.tipos && d.tipos.length)      TIPOS      = d.tipos;
         if (d.operadores && d.operadores.length) OPERADORES = d.operadores;
+        carroCategoriasLoaded = true;
       }
     })
     .catch(() => {});
@@ -393,8 +393,28 @@ function modalHTML(s){
   </div>`;
 }
 
-function openAdd(){ loadCarroCategorias().then(() => document.body.insertAdjacentHTML('beforeend', modalHTML(null))); }
-function openEdit(s){ loadCarroCategorias().then(() => document.body.insertAdjacentHTML('beforeend', modalHTML(s))); }
+function openAdd(){
+  document.body.insertAdjacentHTML('beforeend', modalHTML(null));
+  if (!carroCategoriasLoaded) {
+    loadCarroCategorias().then(() => {
+      const tipo = document.getElementById('cm-tipo');
+      const op   = document.getElementById('cm-operador');
+      if (tipo) tipo.innerHTML = TIPOS.map(t=>`<option>${t}</option>`).join('');
+      if (op)   op.innerHTML   = OPERADORES.map(o=>`<option>${o}</option>`).join('');
+    });
+  }
+}
+function openEdit(s){
+  document.body.insertAdjacentHTML('beforeend', modalHTML(s));
+  if (!carroCategoriasLoaded) {
+    loadCarroCategorias().then(() => {
+      const tipo = document.getElementById('cm-tipo');
+      const op   = document.getElementById('cm-operador');
+      if (tipo) { tipo.innerHTML = TIPOS.map(t=>`<option${(s.tipo||'')==t?' selected':''}>${t}</option>`).join(''); }
+      if (op)   { op.innerHTML   = OPERADORES.map(o=>`<option${(s.operador||'')==o?' selected':''}>${o}</option>`).join(''); }
+    });
+  }
+}
 function closeModal(){ const m=$('carro-modal'); if(m) m.remove(); }
 
 function getVal(id){ return document.getElementById(id)?.value.trim()||''; }
