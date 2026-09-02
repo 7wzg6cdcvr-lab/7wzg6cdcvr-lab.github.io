@@ -423,19 +423,27 @@ Auth.protect(function(){
   showSkeleton();
   loadIndex();
 
-  // ── Partilha do banco via Shortcuts: ?add=1&valor=12.50&desc=Texto&col1=Categoria
-  const qp = new URLSearchParams(location.search);
-  if (qp.get('add') === '1') {
-    // Limpa a URL sem recarregar para não abrir o modal outra vez ao navegar
-    history.replaceState(null, '', location.pathname);
-    // Aguarda os dados carregarem antes de abrir o modal
-    setTimeout(() => {
-      openAddMov({
-        valor: qp.get('valor') || '',
-        desc:  qp.get('desc')  || '',
-        col1:  qp.get('col1')  || '',
-      });
-    }, 400);
+  // ── Detecção de clipboard do Shortcut ──────────────────────
+  // O Shortcut copia "DC:texto da notificação" e abre a app.
+  // Aqui extraímos o valor e a descrição do formato do ActivoBank.
+  if (navigator.clipboard && navigator.clipboard.readText) {
+    navigator.clipboard.readText().then(text => {
+      if (!text || !text.startsWith('DC:')) return;
+      const notif = text.slice(3).trim();
+      navigator.clipboard.writeText('').catch(()=>{});
+
+      // Extrai valor: "Pagou 45,00 EUR" ou "no valor de 9,99 euros"
+      const m = notif.match(/(\d+,\d{2})(?= EUR| euros)/i);
+      const valor = m ? m[1].replace(',', '.') : '';
+
+      // Extrai descrição: "Pagou X EUR" ou "Transferência..."
+      let desc = '';
+      if (/pagou/i.test(notif))        desc = notif.split('\n')[0].replace(/Da conta.*/i,'').trim();
+      else if (/transfer/i.test(notif)) desc = 'Transferência ' + (m ? m[1] + '€' : '');
+      else desc = notif.split('\n')[0];
+
+      setTimeout(() => openAddMov({ valor, desc }), 500);
+    }).catch(() => {});
   }
 });
 // ── Modal de adicionar movimento ──────────────────────────────
@@ -570,14 +578,8 @@ function modalMovHTML(s){
   </div>`;
 }
 
-function openAddMov(prefill){
-  document.body.insertAdjacentHTML('beforeend', modalMovHTML(null, prefill));
-  // Pré-preenche valor e descrição se vieram por URL ou prefill
-  if (prefill) {
-    if (prefill.valor && $('mv-valor'))   $('mv-valor').value   = prefill.valor;
-    if (prefill.desc  && $('mv-col2'))    $('mv-col2').value    = prefill.desc;
-    if (prefill.col1  && $('mv-col1'))    $('mv-col1').value    = prefill.col1;
-  }
+function openAddMov(){
+  document.body.insertAdjacentHTML('beforeend', modalMovHTML(null));
   // Carrega categorias em background — se chegarem antes de submeter, actualiza os selects
   if (!categoriasLoaded) {
     loadCategorias().then(() => {
@@ -586,14 +588,8 @@ function openAddMov(prefill){
         tipo: $('mv-tipo').value,
         dataISO: $('mv-data') ? $('mv-data').value : '',
         valor: $('mv-valor') ? $('mv-valor').value : '',
-        col1: prefill?.col1 || '', col2: prefill?.desc || '', pagamento: '',
+        col1: '', col2: '', pagamento: '',
       }, false);
-      // Re-aplica prefill após re-render dos fields
-      if (prefill) {
-        if (prefill.valor && $('mv-valor')) $('mv-valor').value = prefill.valor;
-        if (prefill.desc  && $('mv-col2')) $('mv-col2').value  = prefill.desc;
-        if (prefill.col1  && $('mv-col1')) $('mv-col1').value  = prefill.col1;
-      }
     });
   }
 }
