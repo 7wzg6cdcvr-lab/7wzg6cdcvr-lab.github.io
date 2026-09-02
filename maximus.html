@@ -332,11 +332,20 @@ function modalHTML(s){
         style="width:100%;padding:10px;margin:6px 0 14px;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#181D26;color:#F2F4F7;font-size:14px;font-family:inherit">
 
       <label style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Carregador</label>
-      <div style="display:flex;gap:8px;align-items:center;margin:6px 0 14px">
-        <input id="cm-carregador" type="text" value="${v.carregador||(!isEdit?'Continente S. Marcos':'')}" placeholder="ex: Continente S. Marcos"
+      <div style="display:flex;gap:8px;align-items:center;margin:6px 0 8px">
+        <input id="cm-carregador" type="text" value="${v.carregador||(!isEdit?getFavCarregador(0)||'':'')}" placeholder="ex: Continente S. Marcos"
           style="flex:1;padding:10px;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#181D26;color:#F2F4F7;font-size:14px;font-family:inherit">
-        <button type="button" title="Repor favorito" onclick="document.getElementById('cm-carregador').value='Continente S. Marcos'"
+        <button type="button" onclick="toggleFavPicker()" title="Favoritos"
           style="flex-shrink:0;background:#181D26;border:1px solid rgba(255,255,255,0.08);border-radius:9px;padding:10px 11px;cursor:pointer;font-size:15px;line-height:1">⭐</button>
+      </div>
+      <!-- Favoritos picker -->
+      <div id="cm-fav-picker" style="display:none;background:#12161D;border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:10px;margin-bottom:14px">
+        <div id="cm-fav-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px"></div>
+        <div style="display:flex;gap:6px">
+          <input id="cm-fav-new" type="text" placeholder="Adicionar favorito…"
+            style="flex:1;padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.08);background:#181D26;color:#F2F4F7;font-size:13px;font-family:inherit">
+          <button type="button" onclick="addFavCarregador()" style="padding:8px 12px;border:none;border-radius:8px;background:#D2A13A;color:#1a1305;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit">+</button>
+        </div>
       </div>
 
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:6px">
@@ -414,6 +423,66 @@ function modalHTML(s){
 function openAdd(){ loadCarroCategorias().then(() => document.body.insertAdjacentHTML('beforeend', modalHTML(null))); }
 function openEdit(s){ loadCarroCategorias().then(() => document.body.insertAdjacentHTML('beforeend', modalHTML(s))); }
 function closeModal(){ const m=$('carro-modal'); if(m) m.remove(); }
+
+/* ── Favoritos de carregador ─────────────────────────────── */
+const FAV_KEY = 'dm_carro_favs';
+
+function getFavs(){
+  try { return JSON.parse(localStorage.getItem(FAV_KEY)) || ['Continente S. Marcos']; }
+  catch(e){ return ['Continente S. Marcos']; }
+}
+function saveFavs(arr){ localStorage.setItem(FAV_KEY, JSON.stringify(arr)); }
+function getFavCarregador(i){ return getFavs()[i] || null; }
+
+function toggleFavPicker(){
+  const el = document.getElementById('cm-fav-picker');
+  if (!el) return;
+  const open = el.style.display === 'none';
+  el.style.display = open ? 'block' : 'none';
+  if (open) renderFavList();
+}
+
+function renderFavList(){
+  const list = document.getElementById('cm-fav-list');
+  if (!list) return;
+  const favs = getFavs();
+  if (!favs.length) {
+    list.innerHTML = '<div style="font-size:12px;color:var(--muted2);text-align:center;padding:4px 0">Sem favoritos</div>';
+    return;
+  }
+  list.innerHTML = favs.map((f, i) => `
+    <div style="display:flex;align-items:center;gap:6px">
+      <button type="button" onclick="selectFav('${f.replace(/'/g,"\\'")}');toggleFavPicker()"
+        style="flex:1;text-align:left;padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:#181D26;color:#F2F4F7;font-size:13px;cursor:pointer;font-family:inherit">
+        ⭐ ${f}
+      </button>
+      <button type="button" onclick="removeFav(${i})"
+        style="padding:8px 10px;border:none;border-radius:8px;background:rgba(255,107,94,0.15);color:#FF6B5E;font-size:13px;cursor:pointer;font-family:inherit;line-height:1">✕</button>
+    </div>`).join('');
+}
+
+function selectFav(name){
+  const el = document.getElementById('cm-carregador');
+  if (el) el.value = name;
+}
+
+function addFavCarregador(){
+  const input = document.getElementById('cm-fav-new');
+  if (!input) return;
+  const val = input.value.trim();
+  if (!val) return;
+  const favs = getFavs();
+  if (!favs.includes(val)) { favs.push(val); saveFavs(favs); }
+  input.value = '';
+  renderFavList();
+}
+
+function removeFav(i){
+  const favs = getFavs();
+  favs.splice(i, 1);
+  saveFavs(favs);
+  renderFavList();
+}
 
 function getVal(id){ return document.getElementById(id)?.value.trim()||''; }
 
