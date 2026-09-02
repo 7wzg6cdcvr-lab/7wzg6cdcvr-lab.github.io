@@ -332,8 +332,12 @@ function modalHTML(s){
         style="width:100%;padding:10px;margin:6px 0 14px;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#181D26;color:#F2F4F7;font-size:14px;font-family:inherit">
 
       <label style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Carregador</label>
-      <input id="cm-carregador" type="text" value="${v.carregador||''}" placeholder="ex: Continente S. Marcos"
-        style="width:100%;padding:10px;margin:6px 0 14px;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#181D26;color:#F2F4F7;font-size:14px;font-family:inherit">
+      <div style="display:flex;gap:8px;align-items:center;margin:6px 0 14px">
+        <input id="cm-carregador" type="text" value="${v.carregador||(!isEdit?'Continente S. Marcos':'')}" placeholder="ex: Continente S. Marcos"
+          style="flex:1;padding:10px;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#181D26;color:#F2F4F7;font-size:14px;font-family:inherit">
+        <button type="button" title="Repor favorito" onclick="document.getElementById('cm-carregador').value='Continente S. Marcos'"
+          style="flex-shrink:0;background:#181D26;border:1px solid rgba(255,255,255,0.08);border-radius:9px;padding:10px 11px;cursor:pointer;font-size:15px;line-height:1">⭐</button>
+      </div>
 
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:6px">
         <div>
