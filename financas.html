@@ -100,8 +100,6 @@ body{min-height:100vh;background:var(--bg);color:var(--text);font-family:'DM San
 </div>
 
 <button id="fab-add-month" onclick="openAddMonth()" style="display:none;position:fixed;bottom:calc(20px + env(safe-area-inset-bottom));right:16px;background:var(--surface3);color:var(--muted);border:1px solid var(--border);border-radius:50%;width:42px;height:42px;font-size:20px;cursor:pointer;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(0,0,0,.3);z-index:50;font-family:inherit;line-height:1">+</button>
-
-<!-- FAB entrada rápida -->
 <button id="fab-quick" onclick="openQuickEntry()" style="position:fixed;bottom:calc(20px + env(safe-area-inset-bottom));left:16px;background:var(--gold);color:#1a1305;border:none;border-radius:50%;width:52px;height:52px;font-size:26px;cursor:pointer;display:none;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(210,161,58,0.4);z-index:50;font-family:inherit;line-height:1;font-weight:700">€</button>
 </div>
 
@@ -425,27 +423,8 @@ Auth.protect(function(){
   // Força sempre carregar os meses — não depende de cache em memória
   showSkeleton();
   loadIndex();
-
-  // Mostra o FAB de entrada rápida
   const fabQ = document.getElementById('fab-quick');
   if (fabQ) fabQ.style.display = 'flex';
-
-  // ── Detecção de clipboard do Shortcut (ActivoBank) ─────────
-  if (navigator.clipboard && navigator.clipboard.readText) {
-    navigator.clipboard.readText().then(text => {
-      if (!text) return;
-      // Detecta notificações do ActivoBank: "Pagou X,XX EUR" ou "valor de X,XX euros"
-      const m = text.match(/(\d+,\d{2})(?= EUR| euros)/i);
-      if (!m) return;
-      const valor = m[1].replace(',', '.');
-      let desc = '';
-      if (/pagou/i.test(text))         desc = text.split('\n')[0].replace(/Da conta.*/i,'').trim();
-      else if (/transfer/i.test(text)) desc = 'Transferência ' + m[1] + '€';
-      else                             desc = text.split('\n')[0].trim();
-      navigator.clipboard.writeText('').catch(()=>{});
-      setTimeout(() => openAddMov({ valor, desc }), 500);
-    }).catch(() => {});
-  }
 });
 // ── Modal de adicionar movimento ──────────────────────────────
 // Listas de categorias — carregadas da aba "Categorias" da folha do mês
@@ -580,59 +559,68 @@ function modalMovHTML(s){
 }
 
 // ── Entrada rápida ────────────────────────────────────────────
+let _qeTipo = 'despesa';
 function openQuickEntry(){
   if (document.getElementById('quick-modal')) return;
-  _qeTipo = 'Despesa';
+  _qeTipo = 'despesa';
   document.body.insertAdjacentHTML('beforeend', `
   <div id="quick-modal" style="position:fixed;inset:0;z-index:9999;display:flex;align-items:flex-end;background:rgba(0,0,0,0.6)">
     <div style="background:var(--surface);border-radius:20px 20px 0 0;width:100%;padding:20px 16px calc(20px + env(safe-area-inset-bottom))">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
-        <div style="font-size:16px;font-weight:700">Despesa rápida</div>
+        <div style="font-size:16px;font-weight:700">Entrada rápida</div>
         <button onclick="document.getElementById('quick-modal').remove()" style="background:none;border:none;color:var(--muted);font-size:24px;cursor:pointer;line-height:1">×</button>
       </div>
       <div style="text-align:center;margin-bottom:20px">
-        <div style="font-size:13px;color:var(--muted);margin-bottom:6px">Valor</div>
-        <div style="display:flex;align-items:center;justify-content:center;gap:6px">
+        <div style="font-size:13px;color:var(--muted);margin-bottom:8px">Valor</div>
+        <div style="display:flex;align-items:center;justify-content:center;gap:4px">
           <span style="font-size:28px;font-weight:700;color:var(--gold)">€</span>
           <input id="qe-valor" type="number" inputmode="decimal" step="0.01" placeholder="0,00"
-            style="font-size:36px;font-weight:700;color:var(--text);background:none;border:none;outline:none;width:160px;text-align:center;font-family:inherit">
+            style="font-size:40px;font-weight:700;color:var(--text);background:none;border:none;outline:none;width:180px;text-align:center;font-family:'DM Mono',monospace">
         </div>
-        <div style="height:1px;background:var(--border);margin:10px 32px 0"></div>
+        <div style="height:1px;background:var(--border);margin:12px 24px 0"></div>
       </div>
       <input id="qe-desc" type="text" placeholder="Descrição (opcional)"
         style="width:100%;padding:10px 12px;border-radius:9px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:14px;font-family:inherit;margin-bottom:12px">
       <div style="display:flex;gap:8px;margin-bottom:16px">
-        <button onclick="qeSetTipo('Despesa')" id="qe-btn-desp"
+        <button onclick="qeSetTipo('despesa')" id="qe-btn-desp"
           style="flex:1;padding:10px;border-radius:10px;border:2px solid #FF6B5E;background:rgba(255,107,94,0.15);color:#FF6B5E;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit">
-          ↑ Despesa
+          Despesa
         </button>
-        <button onclick="qeSetTipo('Receita')" id="qe-btn-rec"
+        <button onclick="qeSetTipo('receita')" id="qe-btn-rec"
           style="flex:1;padding:10px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);font-weight:600;font-size:13px;cursor:pointer;font-family:inherit">
-          ↓ Receita
+          Receita
+        </button>
+        <button onclick="qeSetTipo('poupanca')" id="qe-btn-poup"
+          style="flex:1;padding:10px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);font-weight:600;font-size:13px;cursor:pointer;font-family:inherit">
+          Poupança
         </button>
       </div>
       <div id="qe-msg" style="font-size:12px;color:#FF6B5E;min-height:14px;margin-bottom:8px;text-align:center"></div>
-      <button onclick="submitQuickEntry()" id="qe-submit"
+      <button onclick="submitQuickEntry()"
         style="width:100%;padding:14px;border:none;border-radius:12px;background:var(--gold);color:#1a1305;font-weight:700;font-size:15px;cursor:pointer;font-family:inherit">
-        Adicionar
+        Continuar →
       </button>
     </div>
-  </div>`);
-  setTimeout(() => document.getElementById('qe-valor').focus(), 100);
+  </div>\`);
+  setTimeout(() => { const el = document.getElementById('qe-valor'); if(el) el.focus(); }, 100);
 }
 
-let _qeTipo = 'Despesa';
 function qeSetTipo(tipo){
   _qeTipo = tipo;
-  const d = document.getElementById('qe-btn-desp');
-  const r = document.getElementById('qe-btn-rec');
-  if (tipo === 'Despesa'){
-    d.style.border = '2px solid #FF6B5E'; d.style.background = 'rgba(255,107,94,0.15)'; d.style.color = '#FF6B5E';
-    r.style.border = '1px solid rgba(255,255,255,0.08)'; r.style.background = 'var(--surface2)'; r.style.color = 'var(--muted)';
-  } else {
-    r.style.border = '2px solid #34D399'; r.style.background = 'rgba(52,211,153,0.15)'; r.style.color = '#34D399';
-    d.style.border = '1px solid rgba(255,255,255,0.08)'; d.style.background = 'var(--surface2)'; d.style.color = 'var(--muted)';
-  }
+  const styles = {
+    despesa: { id:'qe-btn-desp', border:'2px solid #FF6B5E', bg:'rgba(255,107,94,0.15)', color:'#FF6B5E' },
+    receita: { id:'qe-btn-rec',  border:'2px solid #34D399', bg:'rgba(52,211,153,0.15)',  color:'#34D399' },
+    poupanca:{ id:'qe-btn-poup', border:'2px solid #5B8DEF', bg:'rgba(91,141,239,0.15)',  color:'#5B8DEF' },
+  };
+  ['despesa','receita','poupanca'].forEach(t => {
+    const el = document.getElementById(styles[t].id);
+    if (!el) return;
+    if (t === tipo) {
+      el.style.border = styles[t].border; el.style.background = styles[t].bg; el.style.color = styles[t].color;
+    } else {
+      el.style.border = '1px solid rgba(255,255,255,0.08)'; el.style.background = 'var(--surface2)'; el.style.color = 'var(--muted)';
+    }
+  });
 }
 
 function submitQuickEntry(){
@@ -646,16 +634,35 @@ function submitQuickEntry(){
 
 function openAddMov(prefill){
   document.body.insertAdjacentHTML('beforeend', modalMovHTML(null));
-  // Carrega categorias em background — se chegarem antes de submeter, actualiza os selects
+  // Aplica prefill (do quick entry ou clipboard)
+  if (prefill) {
+    setTimeout(() => {
+      if (prefill.valor && $('mv-valor')) $('mv-valor').value = prefill.valor;
+      if (prefill.desc  && $('mv-col2'))  $('mv-col2').value  = prefill.desc;
+      if (prefill.tipo) {
+        const t = prefill.tipo.toLowerCase();
+        if ($('mv-tipo')) { $('mv-tipo').value = t; updateMovFields(); }
+        setTimeout(() => {
+          if (prefill.valor && $('mv-valor')) $('mv-valor').value = prefill.valor;
+          if (prefill.desc  && $('mv-col2'))  $('mv-col2').value  = prefill.desc;
+        }, 50);
+      }
+    }, 50);
+  }
+  // Carrega categorias em background
   if (!categoriasLoaded) {
     loadCategorias().then(() => {
       const m = $('mv-fields');
-      if (m) $('mv-fields').innerHTML = renderMovFieldsHTML($('mv-tipo').value, {
-        tipo: $('mv-tipo').value,
-        dataISO: $('mv-data') ? $('mv-data').value : '',
-        valor: $('mv-valor') ? $('mv-valor').value : '',
-        col1: '', col2: '', pagamento: '',
+      if (!m) return;
+      const tipo = $('mv-tipo') ? $('mv-tipo').value : 'despesa';
+      const vAtual = $('mv-valor') ? $('mv-valor').value : (prefill?.valor || '');
+      const dAtual = $('mv-col2')  ? $('mv-col2').value  : (prefill?.desc  || '');
+      $('mv-fields').innerHTML = renderMovFieldsHTML(tipo, {
+        tipo, dataISO: $('mv-data') ? $('mv-data').value : '',
+        valor: vAtual, col1: '', col2: dAtual, pagamento: '',
       }, false);
+      if (vAtual && $('mv-valor')) $('mv-valor').value = vAtual;
+      if (dAtual && $('mv-col2'))  $('mv-col2').value  = dAtual;
     });
   }
 }
