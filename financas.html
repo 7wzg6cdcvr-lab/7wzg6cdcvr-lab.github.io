@@ -422,6 +422,21 @@ Auth.protect(function(){
   // Força sempre carregar os meses — não depende de cache em memória
   showSkeleton();
   loadIndex();
+
+  // ── Partilha do banco via Shortcuts: ?add=1&valor=12.50&desc=Texto&col1=Categoria
+  const qp = new URLSearchParams(location.search);
+  if (qp.get('add') === '1') {
+    // Limpa a URL sem recarregar para não abrir o modal outra vez ao navegar
+    history.replaceState(null, '', location.pathname);
+    // Aguarda os dados carregarem antes de abrir o modal
+    setTimeout(() => {
+      openAddMov({
+        valor: qp.get('valor') || '',
+        desc:  qp.get('desc')  || '',
+        col1:  qp.get('col1')  || '',
+      });
+    }, 400);
+  }
 });
 // ── Modal de adicionar movimento ──────────────────────────────
 // Listas de categorias — carregadas da aba "Categorias" da folha do mês
@@ -555,8 +570,14 @@ function modalMovHTML(s){
   </div>`;
 }
 
-function openAddMov(){
-  document.body.insertAdjacentHTML('beforeend', modalMovHTML(null));
+function openAddMov(prefill){
+  document.body.insertAdjacentHTML('beforeend', modalMovHTML(null, prefill));
+  // Pré-preenche valor e descrição se vieram por URL ou prefill
+  if (prefill) {
+    if (prefill.valor && $('mv-valor'))   $('mv-valor').value   = prefill.valor;
+    if (prefill.desc  && $('mv-col2'))    $('mv-col2').value    = prefill.desc;
+    if (prefill.col1  && $('mv-col1'))    $('mv-col1').value    = prefill.col1;
+  }
   // Carrega categorias em background — se chegarem antes de submeter, actualiza os selects
   if (!categoriasLoaded) {
     loadCategorias().then(() => {
@@ -565,8 +586,14 @@ function openAddMov(){
         tipo: $('mv-tipo').value,
         dataISO: $('mv-data') ? $('mv-data').value : '',
         valor: $('mv-valor') ? $('mv-valor').value : '',
-        col1: '', col2: '', pagamento: '',
+        col1: prefill?.col1 || '', col2: prefill?.desc || '', pagamento: '',
       }, false);
+      // Re-aplica prefill após re-render dos fields
+      if (prefill) {
+        if (prefill.valor && $('mv-valor')) $('mv-valor').value = prefill.valor;
+        if (prefill.desc  && $('mv-col2')) $('mv-col2').value  = prefill.desc;
+        if (prefill.col1  && $('mv-col1')) $('mv-col1').value  = prefill.col1;
+      }
     });
   }
 }
