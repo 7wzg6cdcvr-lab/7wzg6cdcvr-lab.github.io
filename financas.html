@@ -423,25 +423,19 @@ Auth.protect(function(){
   showSkeleton();
   loadIndex();
 
-  // ── Detecção de clipboard do Shortcut ──────────────────────
-  // O Shortcut copia "DC:texto da notificação" e abre a app.
-  // Aqui extraímos o valor e a descrição do formato do ActivoBank.
+  // ── Detecção de clipboard do Shortcut (ActivoBank) ─────────
   if (navigator.clipboard && navigator.clipboard.readText) {
     navigator.clipboard.readText().then(text => {
-      if (!text || !text.startsWith('DC:')) return;
-      const notif = text.slice(3).trim();
-      navigator.clipboard.writeText('').catch(()=>{});
-
-      // Extrai valor: "Pagou 45,00 EUR" ou "no valor de 9,99 euros"
-      const m = notif.match(/(\d+,\d{2})(?= EUR| euros)/i);
-      const valor = m ? m[1].replace(',', '.') : '';
-
-      // Extrai descrição: "Pagou X EUR" ou "Transferência..."
+      if (!text) return;
+      // Detecta notificações do ActivoBank: "Pagou X,XX EUR" ou "valor de X,XX euros"
+      const m = text.match(/(\d+,\d{2})(?= EUR| euros)/i);
+      if (!m) return;
+      const valor = m[1].replace(',', '.');
       let desc = '';
-      if (/pagou/i.test(notif))        desc = notif.split('\n')[0].replace(/Da conta.*/i,'').trim();
-      else if (/transfer/i.test(notif)) desc = 'Transferência ' + (m ? m[1] + '€' : '');
-      else desc = notif.split('\n')[0];
-
+      if (/pagou/i.test(text))         desc = text.split('\n')[0].replace(/Da conta.*/i,'').trim();
+      else if (/transfer/i.test(text)) desc = 'Transferência ' + m[1] + '€';
+      else                             desc = text.split('\n')[0].trim();
+      navigator.clipboard.writeText('').catch(()=>{});
       setTimeout(() => openAddMov({ valor, desc }), 500);
     }).catch(() => {});
   }
