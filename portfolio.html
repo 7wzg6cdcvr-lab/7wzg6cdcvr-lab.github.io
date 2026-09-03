@@ -143,6 +143,16 @@ body{
 .navbtn:active{opacity:.6}
 .nav-icon{font-size:19px;line-height:1}
 .nav-label{font-size:10px;font-weight:500}
+
+/* ── Threshold buttons ── */
+.thr-btn{
+  flex:1;padding:8px 0;border-radius:8px;
+  border:1px solid var(--border);background:var(--surface2);
+  color:var(--muted);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;
+  transition:background .15s,color .15s,border-color .15s;
+}
+.thr-btn.active{background:rgba(210,161,58,0.2);border-color:var(--gold);color:var(--gold-light)}
+.thr-btn:active{transform:scale(.96)}
 </style>
 </head>
 <body>
@@ -219,6 +229,71 @@ body{
       <div class="card"><div class="card-title">PREÇO DE COMPRA VS MÉDIA ACUMULADA</div><div class="chart-wrap"><canvas id="chart-btc-price"></canvas></div></div>
     </section>
 
+    <section id="tab-alertas" class="tab">
+      <div class="card">
+        <div class="card-title">ALERTAS DE PREÇO</div>
+        <p style="font-size:12.5px;color:var(--muted);margin-bottom:16px;line-height:1.5">
+          Recebe uma notificação push quando o preço actual de um ativo sobe ou desce além do teu preço médio de compra.
+        </p>
+
+        <!-- S&P 500 -->
+        <div style="border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+            <div style="display:flex;align-items:center;gap:8px">
+              <span style="font-size:18px">📈</span>
+              <span style="font-size:14px;font-weight:600">S&amp;P 500</span>
+            </div>
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+              <span style="font-size:12px;color:var(--muted)" id="sp500-toggle-label">Desativado</span>
+              <input type="checkbox" id="sp500-enabled" onchange="updateAlertToggle('sp500')"
+                style="width:18px;height:18px;accent-color:var(--gold);cursor:pointer">
+            </label>
+          </div>
+          <div style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted2);margin-bottom:8px">Threshold</div>
+          <div style="display:flex;gap:8px">
+            <button onclick="setThreshold('sp500',5)"  id="sp500-thr-5"  class="thr-btn">5%</button>
+            <button onclick="setThreshold('sp500',10)" id="sp500-thr-10" class="thr-btn">10%</button>
+            <button onclick="setThreshold('sp500',15)" id="sp500-thr-15" class="thr-btn">15%</button>
+          </div>
+          <div id="sp500-price-info" style="font-size:11px;color:var(--muted2);margin-top:10px"></div>
+        </div>
+
+        <!-- Bitcoin -->
+        <div style="border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:16px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+            <div style="display:flex;align-items:center;gap:8px">
+              <span style="font-size:18px">₿</span>
+              <span style="font-size:14px;font-weight:600">Bitcoin</span>
+            </div>
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+              <span style="font-size:12px;color:var(--muted)" id="btc-toggle-label">Desativado</span>
+              <input type="checkbox" id="btc-enabled" onchange="updateAlertToggle('btc')"
+                style="width:18px;height:18px;accent-color:var(--gold);cursor:pointer">
+            </label>
+          </div>
+          <div style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted2);margin-bottom:8px">Threshold</div>
+          <div style="display:flex;gap:8px">
+            <button onclick="setThreshold('btc',5)"  id="btc-thr-5"  class="thr-btn">5%</button>
+            <button onclick="setThreshold('btc',10)" id="btc-thr-10" class="thr-btn">10%</button>
+            <button onclick="setThreshold('btc',15)" id="btc-thr-15" class="thr-btn">15%</button>
+          </div>
+          <div id="btc-price-info" style="font-size:11px;color:var(--muted2);margin-top:10px"></div>
+        </div>
+
+        <div id="alerts-msg" style="font-size:12px;color:var(--coral);min-height:14px;margin-bottom:10px;text-align:center"></div>
+        <button onclick="saveAlerts()" id="alerts-save"
+          style="width:100%;padding:13px;border:none;border-radius:12px;background:var(--gold);color:#1a1305;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit">
+          Guardar alertas
+        </button>
+      </div>
+
+      <!-- Histórico -->
+      <div class="card">
+        <div class="card-title">HISTÓRICO DE ALERTAS</div>
+        <div id="alert-history-list" style="color:var(--muted);font-size:13px">A carregar…</div>
+      </div>
+    </section>
+
   </div>
 </div>
 
@@ -226,6 +301,7 @@ body{
   <button class="navbtn active" data-tab="global" onclick="setTab('global',this)"><span class="nav-icon">🌍</span><span class="nav-label">Global</span></button>
   <button class="navbtn" data-tab="sxr8" onclick="setTab('sxr8',this)"><span class="nav-icon">📈</span><span class="nav-label">S&amp;P 500</span></button>
   <button class="navbtn" data-tab="btc" onclick="setTab('btc',this)"><span class="nav-icon">₿</span><span class="nav-label">Bitcoin</span></button>
+  <button class="navbtn" data-tab="alertas" onclick="setTab('alertas',this);loadAlerts()"><span class="nav-icon">🔔</span><span class="nav-label">Alertas</span></button>
 </nav>
 </div>
 
@@ -724,34 +800,8 @@ function modalXTBHTML(t){
   </div>`;
 }
 
-function openAddXTB(){
-  document.body.insertAdjacentHTML('beforeend', modalXTBHTML(null));
-  if (!portfolioCategoriasLoaded) {
-    loadPortfolioCategorias().then(() => {
-      const sel = {
-        'xtb-type':       XTB_TYPES.map(o=>`<option>${o}</option>`).join(''),
-        'xtb-ticker':     XTB_TICKERS.map(o=>`<option>${o}</option>`).join(''),
-        'xtb-instrument': XTB_INSTRUMENTS.map(o=>`<option>${o}</option>`).join(''),
-        'xtb-owner':      XTB_OWNERS.map(o=>`<option>${o}</option>`).join(''),
-      };
-      Object.entries(sel).forEach(([id, html]) => { const el=$(''+id); if(el) el.innerHTML=html; });
-    });
-  }
-}
-function openEditXTB(t){
-  document.body.insertAdjacentHTML('beforeend', modalXTBHTML(t));
-  if (!portfolioCategoriasLoaded) {
-    loadPortfolioCategorias().then(() => {
-      const sel = {
-        'xtb-type':       XTB_TYPES.map(o=>`<option${t.type===o?' selected':''}>${o}</option>`).join(''),
-        'xtb-ticker':     XTB_TICKERS.map(o=>`<option${t.ticker===o?' selected':''}>${o}</option>`).join(''),
-        'xtb-instrument': XTB_INSTRUMENTS.map(o=>`<option${t.instrument===o?' selected':''}>${o}</option>`).join(''),
-        'xtb-owner':      XTB_OWNERS.map(o=>`<option${t.owner===o?' selected':''}>${o}</option>`).join(''),
-      };
-      Object.entries(sel).forEach(([id, html]) => { const el=$(''+id); if(el) el.innerHTML=html; });
-    });
-  }
-}
+function openAddXTB(){ loadPortfolioCategorias().then(() => document.body.insertAdjacentHTML('beforeend', modalXTBHTML(null))); }
+function openEditXTB(t){ loadPortfolioCategorias().then(() => document.body.insertAdjacentHTML('beforeend', modalXTBHTML(t))); }
 function closeXTBModal(){ const m=$('xtb-modal'); if(m) m.remove(); }
 
 async function submitXTB(isEdit){
@@ -808,6 +858,126 @@ Auth.protect(function(){
   if (window.Tickets) Tickets.refreshBadge();
   Push.init();
 });
+
+/* ── Alertas de preço ────────────────────────────────────────── */
+let _alertConfig = { sp500: { enabled: false, thresholds: [5] }, btc: { enabled: false, thresholds: [5] } };
+let _alertsLoaded = false;
+
+async function loadAlerts(){
+  if (_alertsLoaded) { renderAlertHistory(); return; }
+  const pin = Auth.getStoredPin() || '';
+  try {
+    const [cfgR, histR] = await Promise.all([
+      fetch(Auth.API_URL + '?action=getAlertConfig&pin=' + encodeURIComponent(pin)).then(r=>r.json()),
+      fetch(Auth.API_URL + '?action=getAlertHistory&pin=' + encodeURIComponent(pin)).then(r=>r.json()),
+    ]);
+    if (cfgR.ok) {
+      _alertConfig = { sp500: cfgR.sp500, btc: cfgR.btc };
+      applyAlertConfigToUI();
+    }
+    if (histR.ok) renderAlertHistory(histR.history);
+    _alertsLoaded = true;
+  } catch(e) {
+    $('alerts-msg').textContent = 'Erro a carregar: ' + e.message;
+  }
+}
+
+function applyAlertConfigToUI(){
+  ['sp500','btc'].forEach(asset => {
+    const cfg = _alertConfig[asset];
+    const cb = $(asset + '-enabled');
+    if (cb) cb.checked = cfg.enabled;
+    updateAlertToggle(asset);
+    // Activa os threshold buttons correspondentes
+    const thrs = asset === 'sp500' ? [5,10,15] : [5,10,15];
+    thrs.forEach(t => {
+      const btn = $(asset + '-thr-' + t);
+      if (btn) btn.classList.toggle('active', cfg.thresholds.includes(t));
+    });
+    // Mostra info de preço actual vs média
+    updatePriceInfo(asset);
+  });
+}
+
+function updateAlertToggle(asset){
+  const cb = $(asset + '-enabled');
+  const label = $(asset + '-toggle-label');
+  if (!cb || !label) return;
+  label.textContent = cb.checked ? 'Ativado' : 'Desativado';
+  label.style.color = cb.checked ? 'var(--mint)' : 'var(--muted)';
+}
+
+function setThreshold(asset, value){
+  const btn = $(asset + '-thr-' + value);
+  if (!btn) return;
+  const isActive = btn.classList.contains('active');
+  btn.classList.toggle('active', !isActive);
+  // Actualiza config local
+  const thrs = _alertConfig[asset].thresholds;
+  if (isActive) {
+    _alertConfig[asset].thresholds = thrs.filter(t => t !== value);
+  } else {
+    if (!thrs.includes(value)) thrs.push(value);
+  }
+}
+
+function updatePriceInfo(asset){
+  // Mostra dados do preço médio a partir dos dados já carregados
+  // (só disponíveis depois do loadData)
+}
+
+async function saveAlerts(){
+  const btn = $('alerts-save'), msg = $('alerts-msg');
+  btn.disabled = true; btn.textContent = 'A guardar…';
+  const pin = Auth.getStoredPin() || '';
+
+  _alertConfig.sp500.enabled = $('sp500-enabled').checked;
+  _alertConfig.btc.enabled   = $('btc-enabled').checked;
+
+  try {
+    const r = await fetch(Auth.API_URL + '?action=setAlertConfig&pin=' + encodeURIComponent(pin), {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'setAlertConfig', pin, sp500: _alertConfig.sp500, btc: _alertConfig.btc }),
+    });
+    const d = await r.json();
+    if (d.ok) {
+      msg.style.color = 'var(--mint)'; msg.textContent = '✓ Alertas guardados!';
+      setTimeout(() => { msg.textContent = ''; msg.style.color = 'var(--coral)'; }, 2500);
+    } else {
+      msg.textContent = d.error || 'Erro desconhecido.';
+    }
+  } catch(e) {
+    msg.textContent = 'Erro de rede: ' + e.message;
+  } finally {
+    btn.disabled = false; btn.textContent = 'Guardar alertas';
+  }
+}
+
+function renderAlertHistory(history){
+  const el = $('alert-history-list');
+  if (!el) return;
+  if (!history || !history.length) {
+    el.innerHTML = '<div style="color:var(--muted);font-size:13px">Sem alertas disparados ainda.</div>';
+    return;
+  }
+  el.innerHTML = history.map(h => {
+    const isUp = h.direction === 'up';
+    const dt = new Date(h.firedAt);
+    const dtStr = dt.toLocaleDateString('pt-PT') + ' ' + dt.toLocaleTimeString('pt-PT', {hour:'2-digit',minute:'2-digit'});
+    return `<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border-soft)">
+      <span style="font-size:18px">${isUp ? '▲' : '▼'}</span>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:500">${h.asset} ${isUp ? 'subiu' : 'desceu'} ${Math.abs(h.changePct).toFixed(1)}%</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px">${dtStr} · Threshold ${h.threshold}%</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        <div style="font-family:'DM Mono',monospace;font-size:12px;color:${isUp?'var(--mint)':'var(--coral)'}">€${h.currentPrice.toLocaleString('pt-PT',{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
+        <div style="font-size:10px;color:var(--muted2)">média €${h.avgPrice.toLocaleString('pt-PT',{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
 </script>
 </body>
 </html>
