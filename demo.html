@@ -151,7 +151,11 @@ body.drawer-open #menu-btn span:nth-child(3){transform:translateY(-7px) rotate(-
       <span class="pill" id="topbar-pill">Início</span>
     </div>
     <div class="topbar-right">
-      <div class="icon-btn" style="color:var(--muted)">
+      <button id="back-btn" onclick="goBack()" style="display:none;background:none;border:none;color:var(--muted);font-size:13px;cursor:pointer;font-family:inherit;display:none;align-items:center;gap:4px;padding:6px 10px;border-radius:9px;background:var(--surface3);border:1px solid var(--border)">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg>
+        Voltar
+      </button>
+      <div id="refresh-icon" class="icon-btn" style="color:var(--muted)">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-3-6.7M21 4v5h-5"/></svg>
       </div>
     </div>
@@ -614,19 +618,30 @@ const screens = ['index','financas','fin-detail','maximus','portfolio','tickets'
 const pills = { index:'Início', financas:'Finanças', 'fin-detail':'Finanças', maximus:'Maximus', portfolio:'Portfolio', tickets:'Tickets', garantias:'Garantias' };
 const navMap = { index:'index', financas:'financas', 'fin-detail':'financas', maximus:'maximus', portfolio:'portfolio', tickets:'index', garantias:'index' };
 
+let _history = ['index'];
+
 function openDrawer(){ document.body.classList.add('drawer-open'); }
 function closeDrawer(){ document.body.classList.remove('drawer-open'); }
 
-function goTo(id) {
+function goBack(){
+  if (_history.length > 1) { _history.pop(); goTo(_history[_history.length-1], true); }
+}
+
+function goTo(id, isBack) {
+  if (!isBack) {
+    if (_history[_history.length-1] !== id) _history.push(id);
+  }
   screens.forEach(s => {
     const el = document.getElementById('screen-' + s);
     if (el) el.classList.toggle('active', s === id);
   });
-  ['index','financas','maximus','portfolio'].forEach(n => {
-    const btn = document.getElementById('nav-' + n);
-    if (btn) btn.classList.toggle('active', n === (navMap[id] || id));
-  });
   document.getElementById('topbar-pill').textContent = pills[id] || id;
+  // Show/hide back button
+  const backBtn = document.getElementById('back-btn');
+  const refreshIcon = document.getElementById('refresh-icon');
+  const isHome = id === 'index';
+  if (backBtn)     { backBtn.style.display     = isHome ? 'none' : 'flex'; }
+  if (refreshIcon) { refreshIcon.style.display = isHome ? 'flex' : 'none'; }
   document.querySelector('.main').scrollTop = 0;
   if (id === 'maximus' && !chartsDone.maximus) drawMaximusChart();
   if (id === 'portfolio' && !chartsDone.portfolio) drawPortfolioCharts();
