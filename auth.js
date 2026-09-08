@@ -53,6 +53,10 @@ const Auth = (() => {
         </div>
       </div>
       <div id="dm-lock-error" style="color:#FF6B5E;font-size:12.5px;margin-top:14px;min-height:16px;text-align:center"></div>
+
+      <button onclick="window.location.href='./demo.html'" style="margin-top:20px;background:none;border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:#5C6576;font-size:12px;font-weight:500;padding:9px 20px;cursor:pointer;font-family:'DM Sans',sans-serif;letter-spacing:.02em;transition:color .15s,border-color .15s">
+        Ver demonstração →
+      </button>
     </div>`;
   }
 
