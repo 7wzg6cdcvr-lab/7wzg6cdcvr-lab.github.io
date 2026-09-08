@@ -3,10 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>DC Family — Demo</title>
+<title>X Family — Demo</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+@font-face{
+  font-family:'Cybertruck';
+  src:url('fonts/Cybertruck-Regular.ttf') format('truetype');
+  font-weight:400;font-style:normal;font-display:swap;
+}
 :root{
   --bg:#0A0D12;--surface:#12161D;--surface2:#181D26;--surface3:#212938;
   --border:rgba(255,255,255,0.08);--text:#F2F4F7;--muted:#8B95A5;--muted2:#5C6576;
@@ -30,7 +35,7 @@ body{display:flex;flex-direction:column}
 
 /* Main scrollable area */
 .main{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
-.screen{display:none;padding-bottom:90px}
+.screen{display:none;padding-bottom:24px}
 .screen.active{display:block}
 
 /* Bottom nav */
@@ -89,8 +94,8 @@ body{display:flex;flex-direction:column}
 .info-label{font-size:9px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted2);margin-bottom:3px}
 .info-value{font-family:'DM Mono',monospace;font-size:13px;font-weight:500}
 
-/* Logo text fallback */
-.logo-text{font-size:22px;font-weight:700;color:var(--gold);letter-spacing:.05em}
+/* Logo text */
+.logo-text{font-family:'Cybertruck',sans-serif;font-size:22px;color:var(--gold);letter-spacing:.06em}
 
 /* mes grid */
 .mes-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:16px}
@@ -100,17 +105,101 @@ body{display:flex;flex-direction:column}
 .mes-card:active{transform:scale(.97)}
 .mes-label{font-size:17px;font-weight:700}
 .mes-sub{font-size:11px;color:var(--muted);margin-top:4px}
+
+/* Drawer */
+--drawer-w:280px;
+#drawer-overlay{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,0);pointer-events:none;transition:background .25s}
+body.drawer-open #drawer-overlay{background:rgba(0,0,0,0.55);pointer-events:all}
+#drawer{position:fixed;top:0;left:0;bottom:0;width:280px;z-index:400;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;transform:translateX(-100%);transition:transform .28s cubic-bezier(.4,0,.2,1)}
+body.drawer-open #drawer{transform:translateX(0)}
+.drawer-header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 12px;border-bottom:1px solid var(--border)}
+.drawer-profile{display:flex;align-items:center;gap:12px;padding:20px 16px 16px;border-bottom:1px solid var(--border)}
+.drawer-avatar{width:46px;height:46px;border-radius:50%;background:var(--surface3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center}
+.drawer-nav{flex:1;overflow-y:auto;padding:8px 0}
+.drawer-item{display:flex;align-items:center;gap:13px;width:100%;padding:13px 16px;background:transparent;border:none;color:var(--text);font-family:inherit;font-size:14.5px;font-weight:500;cursor:pointer;text-align:left}
+.drawer-item:active{background:rgba(255,255,255,0.05)}
+.drawer-item-icon{width:32px;height:32px;border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.drawer-divider{height:1px;background:var(--border);margin:8px 16px}
+.drawer-badge{min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:#FF6B5E;color:#fff;font-size:10px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;margin-left:auto}
+
+/* Menu btn */
+#menu-btn{position:fixed;top:14px;left:16px;z-index:200;background:transparent;border:0;color:rgba(255,255,255,0.55);cursor:pointer;padding:8px;display:flex;flex-direction:column;gap:5px}
+#menu-btn span{display:block;width:20px;height:2px;border-radius:2px;background:currentColor;transition:transform .22s,opacity .22s}
+body.drawer-open #menu-btn span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+body.drawer-open #menu-btn span:nth-child(2){opacity:0}
+body.drawer-open #menu-btn span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+
+/* Ticket */
+.ticket-row{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px;cursor:pointer}
+.ticket-row:active{transform:scale(.98)}
+.t-status{display:inline-block;font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px;margin-bottom:8px}
+
+/* Garantia */
+.gar-row{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px}
 </style>
 </head>
 <body>
 
 <div class="demo-banner">✦ DEMONSTRAÇÃO — dados fictícios ✦</div>
 
+<!-- Menu button -->
+<div id="menu-btn" role="button" onclick="openDrawer()">
+  <span></span><span></span><span></span>
+</div>
+
+<!-- Drawer overlay -->
+<div id="drawer-overlay" onclick="closeDrawer()"></div>
+
+<!-- Drawer -->
+<div id="drawer">
+  <div class="drawer-header">
+    <span class="logo-text" style="font-size:20px">X Family</span>
+    <button onclick="closeDrawer()" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;line-height:1">×</button>
+  </div>
+  <div class="drawer-profile">
+    <div class="drawer-avatar">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--muted2)" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+    </div>
+    <div>
+      <div style="font-size:15px;font-weight:600">Diogo</div>
+      <div style="font-size:11.5px;color:var(--muted);margin-top:2px">Conta pessoal</div>
+    </div>
+  </div>
+  <nav class="drawer-nav">
+    <button class="drawer-item" onclick="closeDrawer();goTo('tickets')">
+      <div class="drawer-item-icon" style="background:rgba(99,102,241,0.15);color:#818CF8">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-4Z"/><path d="M13 5v2M13 17v2M13 11v2"/></svg>
+      </div>
+      Tickets
+      <span class="drawer-badge">2</span>
+    </button>
+    <button class="drawer-item" onclick="closeDrawer();goTo('garantias')">
+      <div class="drawer-item-icon" style="background:rgba(52,211,153,0.15);color:#34D399">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+      </div>
+      Garantias
+    </button>
+    <button class="drawer-item" style="opacity:.5;cursor:default">
+      <div class="drawer-item-icon" style="background:rgba(251,191,36,0.15);color:#FBB724">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      </div>
+      Notificações
+      <span style="font-size:11px;color:var(--muted);margin-left:auto">Ativas ✓</span>
+    </button>
+    <div class="drawer-divider"></div>
+    <button class="drawer-item" style="color:#FF6B5E;opacity:.5;cursor:default">
+      <div class="drawer-item-icon" style="background:rgba(255,107,94,0.15);color:#FF6B5E">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+      </div>
+      Sair
+    </button>
+  </nav>
+</div>
+
 <!-- TOPBAR -->
 <div class="topbar" id="topbar">
   <div class="topbar-row">
-    <div style="display:flex;align-items:center;gap:10px">
-      <span class="logo-text">DC</span>
+    <div style="display:flex;align-items:center;gap:10px;margin-left:44px">
       <span class="pill" id="topbar-pill">Início</span>
     </div>
     <div class="topbar-right">
@@ -127,7 +216,7 @@ body{display:flex;flex-direction:column}
   <!-- ── INÍCIO ── -->
   <div id="screen-index" class="screen active">
     <div style="padding:24px 16px 8px;text-align:center">
-      <div class="logo-text" style="font-size:36px;margin-bottom:4px">DC Family</div>
+      <div class="logo-text" style="font-size:36px;margin-bottom:4px">X Family</div>
       <div style="font-size:12px;color:var(--muted)">O teu espaço financeiro pessoal</div>
     </div>
     <div class="tiles">
@@ -420,34 +509,130 @@ body{display:flex;flex-direction:column}
     </div>
   </div>
 
+  <!-- ── TICKETS ── -->
+  <div id="screen-tickets" class="screen">
+    <div class="app">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <div style="font-size:16px;font-weight:700">Tickets</div>
+        <button style="background:#D2A13A;border:none;border-radius:8px;color:#1a1305;font-size:12px;font-weight:700;padding:7px 12px;cursor:pointer;font-family:inherit">+ Novo</button>
+      </div>
+
+      <div class="ticket-row">
+        <span class="t-status" style="background:rgba(240,169,58,0.15);color:#F0A93A">Em progresso</span>
+        <div style="font-size:14px;font-weight:600;margin-bottom:4px">Fuga de água na casa de banho</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:10px">#4 · Aberto por Marla · 05/09/2026</div>
+        <div style="font-size:13px;color:var(--text);line-height:1.5">O torneiro vem na quinta-feira às 10h. Já confirmei com o condomínio.</div>
+        <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-size:12px;color:var(--muted2)">2 respostas · última há 2h</div>
+      </div>
+
+      <div class="ticket-row">
+        <span class="t-status" style="background:rgba(255,107,94,0.15);color:#FF6B5E">Aberto</span>
+        <div style="font-size:14px;font-weight:600;margin-bottom:4px">Renovar seguro automóvel</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:10px">#5 · Aberto por Diogo · 07/09/2026</div>
+        <div style="font-size:13px;color:var(--text);line-height:1.5">Vence a 15 de Outubro. Comparar preços na Generali e Fidelidade.</div>
+        <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-size:12px;color:var(--muted2)">Sem respostas ainda</div>
+      </div>
+
+      <div class="ticket-row" style="opacity:.6">
+        <span class="t-status" style="background:rgba(52,211,153,0.15);color:#34D399">Resolvido</span>
+        <div style="font-size:14px;font-weight:600;margin-bottom:4px">Marcar consulta dentista</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:10px">#3 · Aberto por Marla · 20/08/2026</div>
+        <div style="font-size:13px;color:var(--text);line-height:1.5">Marcado para 12/09 às 14h30 na Clínica Dental Lisboa.</div>
+        <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-size:12px;color:var(--muted2)">Resolvido · 3 respostas</div>
+      </div>
+
+      <div class="ticket-row" style="opacity:.6">
+        <span class="t-status" style="background:rgba(52,211,153,0.15);color:#34D399">Resolvido</span>
+        <div style="font-size:14px;font-weight:600;margin-bottom:4px">Comprar presente aniversário mãe</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:10px">#2 · Aberto por Diogo · 10/08/2026</div>
+        <div style="font-size:13px;color:var(--text);line-height:1.5">Encomendado na Amazon, chegou a tempo.</div>
+        <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-size:12px;color:var(--muted2)">Resolvido · 1 resposta</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── GARANTIAS ── -->
+  <div id="screen-garantias" class="screen">
+    <div class="app">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <div style="font-size:16px;font-weight:700">Garantias</div>
+        <button style="background:#D2A13A;border:none;border-radius:8px;color:#1a1305;font-size:12px;font-weight:700;padding:7px 12px;cursor:pointer;font-family:inherit">+ Nova</button>
+      </div>
+
+      <div class="gar-row">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
+          <div>
+            <div style="font-size:15px;font-weight:700">Samsung TV 65"</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:2px">Eletrónica · Comprado em 12/01/2024 · 3 anos</div>
+          </div>
+          <div style="font-size:11px;color:var(--muted2)">até 12/01/2027</div>
+        </div>
+        <div style="font-size:12px;font-weight:600;color:#34D399;margin-bottom:6px">16 meses restantes</div>
+        <div style="height:6px;background:var(--surface3);border-radius:3px;overflow:hidden"><div style="height:6px;border-radius:3px;width:45%;background:#34D399"></div></div>
+      </div>
+
+      <div class="gar-row">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
+          <div>
+            <div style="font-size:15px;font-weight:700">MacBook Pro M3 <span style="font-size:11px;font-weight:500;color:#F0A93A;background:rgba(240,169,58,0.15);padding:2px 6px;border-radius:8px">Bateria</span></div>
+            <div style="font-size:12px;color:var(--muted);margin-top:2px">Eletrónica · Comprado em 08/06/2024 · 1 ano</div>
+          </div>
+          <div style="font-size:11px;color:var(--muted2)">até 08/06/2025</div>
+        </div>
+        <div style="font-size:12px;font-weight:600;color:#F0A93A;margin-bottom:6px">74d restantes</div>
+        <div style="height:6px;background:var(--surface3);border-radius:3px;overflow:hidden"><div style="height:6px;border-radius:3px;width:80%;background:#F0A93A"></div></div>
+      </div>
+
+      <div class="gar-row">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
+          <div>
+            <div style="font-size:15px;font-weight:700">Tesla Model Y</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:2px">Automóvel · Comprado em 03/03/2023 · 4 anos</div>
+          </div>
+          <div style="font-size:11px;color:var(--muted2)">até 03/03/2027</div>
+        </div>
+        <div style="font-size:12px;font-weight:600;color:#34D399;margin-bottom:6px">18 meses restantes</div>
+        <div style="height:6px;background:var(--surface3);border-radius:3px;overflow:hidden"><div style="height:6px;border-radius:3px;width:40%;background:#34D399"></div></div>
+      </div>
+
+      <div class="gar-row">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
+          <div>
+            <div style="font-size:15px;font-weight:700">LG Frigorífico</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:2px">Eletrodomésticos · Comprado em 15/09/2022 · 2 anos</div>
+          </div>
+          <div style="font-size:11px;color:var(--muted2)">até 15/09/2024</div>
+        </div>
+        <div style="font-size:12px;font-weight:600;color:#FF6B5E;margin-bottom:6px">Expirada</div>
+        <div style="height:6px;background:var(--surface3);border-radius:3px;overflow:hidden"><div style="height:6px;border-radius:3px;width:100%;background:#FF6B5E"></div></div>
+      </div>
+    </div>
+  </div>
+
 </div><!-- /main -->
 
-<!-- BOTTOM NAV -->
-<nav class="bottomnav">
-  <button class="navbtn active" id="nav-index" onclick="goTo('index')"><span class="nav-icon">🏠</span><span class="nav-label">Início</span></button>
-  <button class="navbtn" id="nav-financas" onclick="goTo('financas')"><span class="nav-icon">💰</span><span class="nav-label">Finanças</span></button>
-  <button class="navbtn" id="nav-maximus" onclick="goTo('maximus')"><span class="nav-icon">⚡</span><span class="nav-label">Maximus</span></button>
-  <button class="navbtn" id="nav-portfolio" onclick="goTo('portfolio')"><span class="nav-icon">📈</span><span class="nav-label">Portfolio</span></button>
-</nav>
 
 <script>
-const screens = ['index','financas','fin-detail','maximus','portfolio'];
-const pills = { index:'Início', financas:'Finanças', 'fin-detail':'Finanças', maximus:'Maximus', portfolio:'Portfolio' };
+const screens = ['index','financas','fin-detail','maximus','portfolio','tickets','garantias'];
+const pills = { index:'Início', financas:'Finanças', 'fin-detail':'Finanças', maximus:'Maximus', portfolio:'Portfolio', tickets:'Tickets', garantias:'Garantias' };
+const navMap = { index:'index', financas:'financas', 'fin-detail':'financas', maximus:'maximus', portfolio:'portfolio', tickets:'index', garantias:'index' };
+
+function openDrawer(){ document.body.classList.add('drawer-open'); }
+function closeDrawer(){ document.body.classList.remove('drawer-open'); }
 
 function goTo(id) {
   screens.forEach(s => {
     const el = document.getElementById('screen-' + s);
     if (el) el.classList.toggle('active', s === id);
   });
-  // nav buttons
   ['index','financas','maximus','portfolio'].forEach(n => {
     const btn = document.getElementById('nav-' + n);
-    if (btn) btn.classList.toggle('active', n === id || (id === 'fin-detail' && n === 'financas'));
+    if (btn) btn.classList.toggle('active', n === (navMap[id] || id));
   });
   document.getElementById('topbar-pill').textContent = pills[id] || id;
   document.querySelector('.main').scrollTop = 0;
   if (id === 'maximus' && !chartsDone.maximus) drawMaximusChart();
-  if (id === 'portfolio' && !chartsDone.portfolio) { drawPortfolioCharts(); }
+  if (id === 'portfolio' && !chartsDone.portfolio) drawPortfolioCharts();
 }
 
 function showFinDetail() {
