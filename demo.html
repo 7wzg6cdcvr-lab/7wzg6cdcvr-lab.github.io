@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>DC Family — Demo</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+:root{
+  --bg:#0A0D12;--surface:#12161D;--surface2:#181D26;--surface3:#212938;
+  --border:rgba(255,255,255,0.08);--text:#F2F4F7;--muted:#8B95A5;--muted2:#5C6576;
+  --gold:#D2A13A;--gold-light:#F4D27A;--mint:#34D399;--coral:#FF6B5E;
+  --sapphire:#5B8DEF;--amber:#F0A93A;--violet:#A78BFA;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;-webkit-font-smoothing:antialiased;overflow:hidden}
+body{display:flex;flex-direction:column}
+
+/* Demo banner */
+.demo-banner{background:linear-gradient(90deg,#D2A13A,#F4D27A,#D2A13A);color:#1a1305;font-size:11px;font-weight:700;text-align:center;padding:5px;letter-spacing:.05em;flex-shrink:0}
+
+/* Topbar */
+.topbar{background:#0D1117;border-bottom:1px solid var(--border);padding:14px 16px;flex-shrink:0}
+.topbar-row{display:flex;align-items:center;justify-content:space-between}
+.brand-logo{height:38px;width:auto}
+.topbar-right{display:flex;gap:8px;align-items:center}
+.icon-btn{background:var(--surface3);color:var(--text);border:1px solid var(--border);border-radius:10px;width:34px;height:34px;cursor:pointer;display:flex;align-items:center;justify-content:center;text-decoration:none;flex-shrink:0}
+.pill{background:var(--surface3);border:1px solid var(--border);padding:5px 12px;border-radius:20px;font-size:13px;font-weight:600}
+
+/* Main scrollable area */
+.main{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.screen{display:none;padding-bottom:90px}
+.screen.active{display:block}
+
+/* Bottom nav */
+.bottomnav{position:fixed;bottom:0;left:0;right:0;background:#12161D;border-top:1px solid var(--border);display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom)}
+.navbtn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:none;background:none;color:var(--muted2);cursor:pointer;padding:10px 0}
+.navbtn.active{color:var(--gold-light)}
+.nav-icon{font-size:20px;line-height:1}
+.nav-label{font-size:10px;font-weight:500}
+
+/* Cards & KPIs */
+.app{padding:16px}
+.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;position:relative;overflow:hidden}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--kc,var(--amber))}
+.kpi-label{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:6px}
+.kpi-value{font-family:'DM Mono',monospace;font-size:clamp(15px,4vw,20px);font-weight:500;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kpi-sub{font-size:11px;color:var(--muted);margin-top:4px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:12px}
+.card-title{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:14px}
+.chart-wrap{position:relative;width:100%;height:220px}
+
+/* Tiles (index) */
+.tiles{display:flex;flex-direction:column;gap:12px;padding:16px}
+.tile{display:flex;align-items:center;gap:14px;background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:18px;text-decoration:none;color:inherit;cursor:pointer}
+.tile:active{transform:scale(.98)}
+.tile-icon{width:56px;height:56px;border-radius:13px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:var(--surface3);border:1px solid var(--border);color:var(--muted)}
+.tile-text{flex:1}
+.tile-title{font-size:15px;font-weight:600}
+.tile-sub{font-size:12px;color:var(--muted);margin-top:2px}
+.tile-arrow{color:var(--muted2);font-size:20px}
+
+/* Operadores */
+.op-row{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid rgba(255,255,255,0.05)}
+.op-row:last-child{border:none}
+.op-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+
+/* Mov list */
+.mov-row{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid rgba(255,255,255,0.05)}
+.mov-row:last-child{border:none}
+
+/* cat bars */
+.cat-row{display:grid;grid-template-columns:100px 1fr 70px;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,0.05)}
+.cat-row:last-child{border:none}
+.cat-bar-bg{height:7px;background:var(--surface3);border-radius:4px;overflow:hidden}
+.cat-bar{height:7px;border-radius:4px;background:var(--amber)}
+
+/* Portfolio tab nav */
+.tab-nav{display:flex;border-bottom:1px solid var(--border);margin-bottom:16px}
+.tab-btn{flex:1;padding:10px 0;background:none;border:none;color:var(--muted2);font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;border-bottom:2px solid transparent;transition:color .15s,border-color .15s}
+.tab-btn.active{color:var(--gold-light);border-bottom-color:var(--gold)}
+.ptab{display:none}.ptab.active{display:block}
+
+/* info chips */
+.info-bar{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.info-chip{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:11px 12px}
+.info-label{font-size:9px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted2);margin-bottom:3px}
+.info-value{font-family:'DM Mono',monospace;font-size:13px;font-weight:500}
+
+/* Logo text fallback */
+.logo-text{font-size:22px;font-weight:700;color:var(--gold);letter-spacing:.05em}
+
+/* mes grid */
+.mes-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:16px}
+.mes-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px;cursor:pointer;position:relative;transition:border-color .15s}
+.mes-card.current{border-color:var(--amber)}
+.mes-card.current::after{content:'atual';position:absolute;top:8px;right:10px;font-size:9px;font-weight:700;text-transform:uppercase;color:var(--amber)}
+.mes-card:active{transform:scale(.97)}
+.mes-label{font-size:17px;font-weight:700}
+.mes-sub{font-size:11px;color:var(--muted);margin-top:4px}
+</style>
+</head>
+<body>
+
+<div class="demo-banner">✦ DEMONSTRAÇÃO — dados fictícios ✦</div>
+
+<!-- TOPBAR -->
+<div class="topbar" id="topbar">
+  <div class="topbar-row">
+    <div style="display:flex;align-items:center;gap:10px">
+      <span class="logo-text">DC</span>
+      <span class="pill" id="topbar-pill">Início</span>
+    </div>
+    <div class="topbar-right">
+      <div class="icon-btn" style="color:var(--muted)">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-3-6.7M21 4v5h-5"/></svg>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- ── INÍCIO ── -->
+  <div id="screen-index" class="screen active">
+    <div style="padding:24px 16px 8px;text-align:center">
+      <div class="logo-text" style="font-size:36px;margin-bottom:4px">DC Family</div>
+      <div style="font-size:12px;color:var(--muted)">O teu espaço financeiro pessoal</div>
+    </div>
+    <div class="tiles">
+      <div class="tile" onclick="goTo('financas')">
+        <div class="tile-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        </div>
+        <div class="tile-text">
+          <div class="tile-title">Finanças</div>
+          <div class="tile-sub">Receitas, despesas & poupanças</div>
+        </div>
+        <div class="tile-arrow">›</div>
+      </div>
+      <div class="tile" onclick="goTo('maximus')">
+        <div class="tile-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+        </div>
+        <div class="tile-text">
+          <div class="tile-title">Maximus</div>
+          <div class="tile-sub">Carregamentos & custos</div>
+        </div>
+        <div class="tile-arrow">›</div>
+      </div>
+      <div class="tile" onclick="goTo('portfolio')">
+        <div class="tile-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+        </div>
+        <div class="tile-text">
+          <div class="tile-title">Portfolio</div>
+          <div class="tile-sub">S&P 500 & Bitcoin</div>
+        </div>
+        <div class="tile-arrow">›</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── FINANÇAS ── -->
+  <div id="screen-financas" class="screen">
+    <div class="mes-grid">
+      <div class="mes-card current" onclick="showFinDetail()">
+        <div class="mes-label">Set 2026</div>
+        <div class="mes-sub">Mês atual</div>
+      </div>
+      <div class="mes-card" onclick="showFinDetail()">
+        <div class="mes-label">Ago 2026</div>
+        <div class="mes-sub">Ver detalhes</div>
+      </div>
+      <div class="mes-card" onclick="showFinDetail()">
+        <div class="mes-label">Jul 2026</div>
+        <div class="mes-sub">Ver detalhes</div>
+      </div>
+      <div class="mes-card" onclick="showFinDetail()">
+        <div class="mes-label">Jun 2026</div>
+        <div class="mes-sub">Ver detalhes</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── FINANÇAS DETALHE ── -->
+  <div id="screen-fin-detail" class="screen">
+    <div class="app">
+      <button onclick="goTo('financas')" style="background:none;border:none;color:var(--muted);font-size:13px;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:5px;margin-bottom:16px;padding:0">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg>
+        Todos os meses
+      </button>
+      <div style="font-size:18px;font-weight:700;margin-bottom:16px">Setembro 2026</div>
+
+      <div class="kpi-grid">
+        <div class="kpi" style="--kc:var(--mint)"><div class="kpi-label">Receitas</div><div class="kpi-value">€3.450,00</div></div>
+        <div class="kpi" style="--kc:var(--coral)"><div class="kpi-label">Despesas</div><div class="kpi-value">€1.892,40</div></div>
+        <div class="kpi" style="--kc:var(--sapphire)"><div class="kpi-label">Poupanças</div><div class="kpi-value">€800,00</div></div>
+        <div class="kpi" style="--kc:var(--mint)"><div class="kpi-label">Saldo Mensal</div><div class="kpi-value" style="color:var(--mint)">+€757,60</div></div>
+      </div>
+
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <div class="card-title" style="margin-bottom:0">ÚLTIMOS MOVIMENTOS</div>
+          <button style="background:#D2A13A;border:none;border-radius:8px;color:#1a1305;font-size:12px;font-weight:700;padding:6px 12px;cursor:pointer;font-family:inherit">+ Adicionar</button>
+        </div>
+        <div class="mov-row">
+          <span style="width:8px;height:8px;border-radius:50%;background:var(--coral);flex-shrink:0"></span>
+          <div style="flex:1"><div style="font-size:13px;font-weight:500">Supermercados · Continente</div><div style="font-size:11px;color:var(--muted);margin-top:2px">08/09/2026 · Despesa</div></div>
+          <div style="text-align:right"><div style="font-family:'DM Mono',monospace;font-size:13px;font-weight:600;color:var(--coral)">-€87,32</div><div style="font-size:10px;color:var(--muted2)">✏️ editar</div></div>
+        </div>
+        <div class="mov-row">
+          <span style="width:8px;height:8px;border-radius:50%;background:var(--coral);flex-shrink:0"></span>
+          <div style="flex:1"><div style="font-size:13px;font-weight:500">Restaurantes · Tasca do Zé</div><div style="font-size:11px;color:var(--muted);margin-top:2px">06/09/2026 · Despesa</div></div>
+          <div style="text-align:right"><div style="font-family:'DM Mono',monospace;font-size:13px;font-weight:600;color:var(--coral)">-€43,50</div><div style="font-size:10px;color:var(--muted2)">✏️ editar</div></div>
+        </div>
+        <div class="mov-row">
+          <span style="width:8px;height:8px;border-radius:50%;background:var(--mint);flex-shrink:0"></span>
+          <div style="flex:1"><div style="font-size:13px;font-weight:500">Vencimentos · Salário</div><div style="font-size:11px;color:var(--muted);margin-top:2px">01/09/2026 · Receita</div></div>
+          <div style="text-align:right"><div style="font-family:'DM Mono',monospace;font-size:13px;font-weight:600;color:var(--mint)">+€3.450,00</div><div style="font-size:10px;color:var(--muted2)">✏️ editar</div></div>
+        </div>
+        <div class="mov-row">
+          <span style="width:8px;height:8px;border-radius:50%;background:var(--sapphire);flex-shrink:0"></span>
+          <div style="flex:1"><div style="font-size:13px;font-weight:500">Poupanças · Fundo Emergência</div><div style="font-size:11px;color:var(--muted);margin-top:2px">01/09/2026 · Poupança</div></div>
+          <div style="text-align:right"><div style="font-family:'DM Mono',monospace;font-size:13px;font-weight:600;color:var(--sapphire)">€800,00</div><div style="font-size:10px;color:var(--muted2)">✏️ editar</div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">DESPESAS POR CATEGORIA</div>
+        <div class="cat-row"><div style="font-size:12px;color:var(--muted)">Habitação</div><div class="cat-bar-bg"><div class="cat-bar" style="width:100%"></div></div><div style="font-family:'DM Mono',monospace;font-size:11px;text-align:right">€750,00</div></div>
+        <div class="cat-row"><div style="font-size:12px;color:var(--muted)">Supermercados</div><div class="cat-bar-bg"><div class="cat-bar" style="width:58%"></div></div><div style="font-family:'DM Mono',monospace;font-size:11px;text-align:right">€312,40</div></div>
+        <div class="cat-row"><div style="font-size:12px;color:var(--muted)">Transportes</div><div class="cat-bar-bg"><div class="cat-bar" style="width:38%"></div></div><div style="font-family:'DM Mono',monospace;font-size:11px;text-align:right">€187,50</div></div>
+        <div class="cat-row"><div style="font-size:12px;color:var(--muted)">Restaurantes</div><div class="cat-bar-bg"><div class="cat-bar" style="width:25%"></div></div><div style="font-family:'DM Mono',monospace;font-size:11px;text-align:right">€143,50</div></div>
+        <div class="cat-row"><div style="font-size:12px;color:var(--muted)">Saúde</div><div class="cat-bar-bg"><div class="cat-bar" style="width:18%"></div></div><div style="font-family:'DM Mono',monospace;font-size:11px;text-align:right">€98,00</div></div>
+        <div class="cat-row"><div style="font-size:12px;color:var(--muted)">Outros</div><div class="cat-bar-bg"><div class="cat-bar" style="width:12%"></div></div><div style="font-family:'DM Mono',monospace;font-size:11px;text-align:right">€401,00</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MAXIMUS ── -->
+  <div id="screen-maximus" class="screen">
+    <div class="app">
+      <div class="kpi-grid">
+        <div class="kpi"><div class="kpi-label">Total Gasto</div><div class="kpi-value">€312,84</div><div class="kpi-sub">47 carregamentos</div></div>
+        <div class="kpi"><div class="kpi-label">Total kWh</div><div class="kpi-value">1.487,3 kWh</div></div>
+        <div class="kpi"><div class="kpi-label">Custo Médio /kWh</div><div class="kpi-value">€0,210</div></div>
+        <div class="kpi"><div class="kpi-label">Custo /100km</div><div class="kpi-value">€3,57</div><div class="kpi-sub">8.762 km percorridos</div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">GASTO MENSAL (€)</div>
+        <div class="chart-wrap"><canvas id="chart-maximus"></canvas></div>
+      </div>
+
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <div class="card-title" style="margin-bottom:0">ÚLTIMOS CARREGAMENTOS</div>
+          <button style="background:#D2A13A;border:none;border-radius:8px;color:#1a1305;font-size:12px;font-weight:700;padding:6px 12px;cursor:pointer;font-family:inherit">+ Adicionar</button>
+        </div>
+        <div class="mov-row">
+          <div style="flex:1"><div style="font-size:13px;font-weight:500">Continente S. Marcos</div><div style="font-size:11px;color:var(--muted);margin-top:2px">08/09/2026 · 38,4 kWh · TYPE 2</div></div>
+          <div style="text-align:right"><div style="font-family:'DM Mono',monospace;font-size:13px;font-weight:600">€8,06</div><div style="font-size:10px;font-weight:600;color:var(--mint)">€0,210/kWh</div><div style="font-size:10px;color:var(--muted2)">✏️ editar</div></div>
+        </div>
+        <div class="mov-row">
+          <div style="flex:1"><div style="font-size:13px;font-weight:500">Atlante · Saldanha</div><div style="font-size:11px;color:var(--muted);margin-top:2px">05/09/2026 · 22,1 kWh · CCS</div></div>
+          <div style="text-align:right"><div style="font-family:'DM Mono',monospace;font-size:13px;font-weight:600">€12,88</div><div style="font-size:10px;font-weight:600;color:var(--coral)">€0,583/kWh</div><div style="font-size:10px;color:var(--muted2)">✏️ editar</div></div>
+        </div>
+        <div class="mov-row">
+          <div style="flex:1"><div style="font-size:13px;font-weight:500">Casa</div><div style="font-size:11px;color:var(--muted);margin-top:2px">02/09/2026 · 45,0 kWh · TYPE 2</div></div>
+          <div style="text-align:right"><div style="font-family:'DM Mono',monospace;font-size:13px;font-weight:600">€7,65</div><div style="font-size:10px;font-weight:600;color:var(--mint)">€0,170/kWh</div><div style="font-size:10px;color:var(--muted2)">✏️ editar</div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">POR OPERADOR</div>
+        <div class="op-row">
+          <span class="op-dot" style="background:#F0A93A"></span>
+          <div style="flex:1"><div style="font-size:13px;font-weight:500">Continente</div><div style="font-size:11px;color:var(--muted2)">18 carregamentos · €0,210/kWh</div></div>
+          <div style="text-align:right"><div style="font-family:'DM Mono',monospace;font-size:13px;font-weight:600">€98,40</div><div style="font-size:11px;color:var(--muted)">468 kWh</div></div>
+        </div>
+        <div class="op-row">
+          <span class="op-dot" style="background:#5B8DEF"></span>
+          <div style="flex:1"><div style="font-size:13px;font-weight:500">Casa</div><div style="font-size:11px;color:var(--muted2)">15 carregamentos · €0,170/kWh</div></div>
+          <div style="text-align:right"><div style="font-family:'DM Mono',monospace;font-size:13px;font-weight:600">€91,80</div><div style="font-size:11px;color:var(--muted)">540 kWh</div></div>
+        </div>
+        <div class="op-row">
+          <span class="op-dot" style="background:#34D399"></span>
+          <div style="flex:1"><div style="font-size:13px;font-weight:500">Atlante</div><div style="font-size:11px;color:var(--muted2)">9 carregamentos · €0,583/kWh</div></div>
+          <div style="text-align:right"><div style="font-family:'DM Mono',monospace;font-size:13px;font-weight:600">€87,90</div><div style="font-size:11px;color:var(--muted)">151 kWh</div></div>
+        </div>
+        <div class="op-row">
+          <span class="op-dot" style="background:#A78BFA"></span>
+          <div style="flex:1"><div style="font-size:13px;font-weight:500">EVIO</div><div style="font-size:11px;color:var(--muted2)">5 carregamentos · €0,390/kWh</div></div>
+          <div style="text-align:right"><div style="font-family:'DM Mono',monospace;font-size:13px;font-weight:600">€34,74</div><div style="font-size:11px;color:var(--muted)">328 kWh</div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <div class="card-title" style="margin-bottom:0">COMPARAÇÃO COM GASOLINA</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+          <div style="background:var(--surface2);border-radius:10px;padding:12px;text-align:center">
+            <div style="font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:5px">Elétrico (real)</div>
+            <div style="font-family:'DM Mono',monospace;font-size:20px;font-weight:600;color:var(--mint)">€3,57</div>
+            <div style="font-size:10px;color:var(--muted);margin-top:3px">por 100 km</div>
+          </div>
+          <div style="background:var(--surface2);border-radius:10px;padding:12px;text-align:center">
+            <div style="font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:5px">Gasolina (est.)</div>
+            <div style="font-family:'DM Mono',monospace;font-size:20px;font-weight:600;color:var(--coral)">€11,38</div>
+            <div style="font-size:10px;color:var(--muted);margin-top:3px">por 100 km</div>
+          </div>
+        </div>
+        <div style="background:rgba(52,211,153,0.08);border:1px solid rgba(52,211,153,0.2);border-radius:12px;padding:14px;text-align:center">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:4px">Poupança total estimada</div>
+          <div style="font-family:'DM Mono',monospace;font-size:26px;font-weight:700;color:var(--mint)">€686,42</div>
+          <div style="font-size:11px;color:var(--muted2);margin-top:4px">69% mais barato que gasolina · 8.762 km</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── PORTFOLIO ── -->
+  <div id="screen-portfolio" class="screen">
+    <div class="app">
+      <div class="tab-nav">
+        <button class="tab-btn active" onclick="setPTab('global',this)">Global</button>
+        <button class="tab-btn" onclick="setPTab('sp500',this)">S&P 500</button>
+        <button class="tab-btn" onclick="setPTab('btc',this)">Bitcoin</button>
+        <button class="tab-btn" onclick="setPTab('alertas',this)">🔔</button>
+      </div>
+
+      <div id="ptab-global" class="ptab active">
+        <div class="kpi-grid">
+          <div class="kpi" style="--kc:var(--sapphire)"><div class="kpi-label">Total Investido</div><div class="kpi-value">€18.420,00</div></div>
+          <div class="kpi" style="--kc:var(--sapphire)"><div class="kpi-label">Valor Atual</div><div class="kpi-value">€24.183,70</div></div>
+          <div class="kpi" style="--kc:var(--mint)"><div class="kpi-label">Lucro / Perda</div><div class="kpi-value" style="color:var(--mint)">+€5.763,70</div><div class="kpi-sub" style="color:var(--mint)">+31,29%</div></div>
+          <div class="kpi" style="--kc:var(--sapphire)"><div class="kpi-label">Alocação</div>
+            <div style="display:flex;justify-content:space-between;font-size:13px;margin-top:6px"><span style="color:var(--muted)">S&P 500</span><span style="font-family:'DM Mono',monospace;font-weight:600">+68%</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:13px;margin-top:4px"><span style="color:var(--muted)">Bitcoin</span><span style="font-family:'DM Mono',monospace;font-weight:600">+32%</span></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">ALOCAÇÃO POR POSIÇÃO</div>
+          <div class="chart-wrap"><canvas id="chart-portfolio-gauge"></canvas></div>
+        </div>
+      </div>
+
+      <div id="ptab-sp500" class="ptab">
+        <div class="info-bar">
+          <div class="info-chip"><div class="info-label">Investido</div><div class="info-value">€12.540,00</div></div>
+          <div class="info-chip"><div class="info-label">Valor Atual</div><div class="info-value">€16.482,30</div></div>
+          <div class="info-chip"><div class="info-label">P&L</div><div class="info-value" style="color:var(--mint)">+€3.942,30 (+31.4%)</div></div>
+          <div class="info-chip"><div class="info-label">Preço Médio</div><div class="info-value">€498,42</div></div>
+        </div>
+        <div class="card">
+          <div class="card-title">MENSAL POR OWNER (€)</div>
+          <div class="chart-wrap"><canvas id="chart-sp-bar"></canvas></div>
+        </div>
+      </div>
+
+      <div id="ptab-btc" class="ptab">
+        <div class="info-bar">
+          <div class="info-chip"><div class="info-label">Investido</div><div class="info-value">€5.880,00</div></div>
+          <div class="info-chip"><div class="info-label">Valor Atual</div><div class="info-value">€7.701,40</div></div>
+          <div class="info-chip"><div class="info-label">P&L</div><div class="info-value" style="color:var(--mint)">+€1.821,40 (+31.0%)</div></div>
+          <div class="info-chip"><div class="info-label">Preço Médio</div><div class="info-value">€61.250</div></div>
+        </div>
+        <div class="card">
+          <div class="card-title">PREÇO DE COMPRA VS MÉDIA ACUMULADA</div>
+          <div class="chart-wrap"><canvas id="chart-btc-price"></canvas></div>
+        </div>
+      </div>
+
+      <div id="ptab-alertas" class="ptab">
+        <div class="card">
+          <div class="card-title">ALERTAS DE PREÇO</div>
+          <p style="font-size:12.5px;color:var(--muted);margin-bottom:16px;line-height:1.5">Recebe uma notificação push quando o preço sobe ou desce além do teu preço médio de compra.</p>
+          <div style="border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+              <div style="display:flex;align-items:center;gap:8px"><span style="font-size:18px">📈</span><span style="font-size:14px;font-weight:600">S&P 500</span></div>
+              <span style="font-size:12px;color:var(--mint);font-weight:600">Ativado</span>
+            </div>
+            <div style="display:flex;gap:8px">
+              <div style="flex:1;padding:8px 0;border-radius:8px;background:rgba(210,161,58,0.2);border:1px solid var(--gold);color:var(--gold-light);font-size:13px;font-weight:600;text-align:center">5%</div>
+              <div style="flex:1;padding:8px 0;border-radius:8px;background:var(--surface2);border:1px solid var(--border);color:var(--muted);font-size:13px;font-weight:600;text-align:center">10%</div>
+              <div style="flex:1;padding:8px 0;border-radius:8px;background:rgba(210,161,58,0.2);border:1px solid var(--gold);color:var(--gold-light);font-size:13px;font-weight:600;text-align:center">15%</div>
+            </div>
+          </div>
+          <div style="border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:16px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+              <div style="display:flex;align-items:center;gap:8px"><span style="font-size:18px">₿</span><span style="font-size:14px;font-weight:600">Bitcoin</span></div>
+              <span style="font-size:12px;color:var(--mint);font-weight:600">Ativado</span>
+            </div>
+            <div style="display:flex;gap:8px">
+              <div style="flex:1;padding:8px 0;border-radius:8px;background:rgba(210,161,58,0.2);border:1px solid var(--gold);color:var(--gold-light);font-size:13px;font-weight:600;text-align:center">5%</div>
+              <div style="flex:1;padding:8px 0;border-radius:8px;background:rgba(210,161,58,0.2);border:1px solid var(--gold);color:var(--gold-light);font-size:13px;font-weight:600;text-align:center">10%</div>
+              <div style="flex:1;padding:8px 0;border-radius:8px;background:var(--surface2);border:1px solid var(--border);color:var(--muted);font-size:13px;font-weight:600;text-align:center">15%</div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">HISTÓRICO DE ALERTAS</div>
+          <div class="mov-row">
+            <span style="font-size:18px">▲</span>
+            <div style="flex:1"><div style="font-size:13px;font-weight:500">S&P 500 subiu 5.2%</div><div style="font-size:11px;color:var(--muted);margin-top:2px">03/09/2026 09:12 · Threshold 5%</div></div>
+            <div style="text-align:right"><div style="font-family:'DM Mono',monospace;font-size:12px;color:var(--mint)">€524,81</div><div style="font-size:10px;color:var(--muted2)">média €498,42</div></div>
+          </div>
+          <div class="mov-row">
+            <span style="font-size:18px">▲</span>
+            <div style="flex:1"><div style="font-size:13px;font-weight:500">Bitcoin subiu 8.1%</div><div style="font-size:11px;color:var(--muted);margin-top:2px">28/08/2026 14:00 · Threshold 5%</div></div>
+            <div style="text-align:right"><div style="font-family:'DM Mono',monospace;font-size:12px;color:var(--mint)">€66.212</div><div style="font-size:10px;color:var(--muted2)">média €61.250</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<!-- BOTTOM NAV -->
+<nav class="bottomnav">
+  <button class="navbtn active" id="nav-index" onclick="goTo('index')"><span class="nav-icon">🏠</span><span class="nav-label">Início</span></button>
+  <button class="navbtn" id="nav-financas" onclick="goTo('financas')"><span class="nav-icon">💰</span><span class="nav-label">Finanças</span></button>
+  <button class="navbtn" id="nav-maximus" onclick="goTo('maximus')"><span class="nav-icon">⚡</span><span class="nav-label">Maximus</span></button>
+  <button class="navbtn" id="nav-portfolio" onclick="goTo('portfolio')"><span class="nav-icon">📈</span><span class="nav-label">Portfolio</span></button>
+</nav>
+
+<script>
+const screens = ['index','financas','fin-detail','maximus','portfolio'];
+const pills = { index:'Início', financas:'Finanças', 'fin-detail':'Finanças', maximus:'Maximus', portfolio:'Portfolio' };
+
+function goTo(id) {
+  screens.forEach(s => {
+    const el = document.getElementById('screen-' + s);
+    if (el) el.classList.toggle('active', s === id);
+  });
+  // nav buttons
+  ['index','financas','maximus','portfolio'].forEach(n => {
+    const btn = document.getElementById('nav-' + n);
+    if (btn) btn.classList.toggle('active', n === id || (id === 'fin-detail' && n === 'financas'));
+  });
+  document.getElementById('topbar-pill').textContent = pills[id] || id;
+  document.querySelector('.main').scrollTop = 0;
+  if (id === 'maximus' && !chartsDone.maximus) drawMaximusChart();
+  if (id === 'portfolio' && !chartsDone.portfolio) { drawPortfolioCharts(); }
+}
+
+function showFinDetail() {
+  goTo('fin-detail');
+}
+
+function setPTab(name, el) {
+  document.querySelectorAll('.ptab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('ptab-' + name).classList.add('active');
+  el.classList.add('active');
+  if (name === 'sp500' && !chartsDone.sp500) drawSP500Chart();
+  if (name === 'btc'   && !chartsDone.btc)   drawBTCChart();
+}
+
+const chartsDone = {};
+Chart.defaults.color = '#8B95A5';
+Chart.defaults.font.family = "'DM Sans',sans-serif";
+const GRID = 'rgba(255,255,255,0.06)';
+
+function drawMaximusChart() {
+  chartsDone.maximus = true;
+  const labels = ['Mar','Abr','Mai','Jun','Jul','Ago','Set'];
+  const data   = [28.4, 31.2, 42.1, 38.7, 51.3, 55.8, 65.3];
+  new Chart(document.getElementById('chart-maximus'), {
+    type:'bar',
+    data:{ labels, datasets:[{ label:'Gasto', data, backgroundColor:'#F0A93Acc', borderRadius:4 }] },
+    options:{ responsive:true, maintainAspectRatio:false,
+      scales:{ x:{ticks:{color:'#8B95A5',font:{size:9}},grid:{display:false}}, y:{ticks:{color:'#8B95A5',font:{family:"'DM Mono'",size:9},callback:v=>'€'+v},grid:{color:GRID}} },
+      plugins:{ legend:{display:false}, tooltip:{backgroundColor:'#212938',borderColor:'rgba(255,255,255,0.1)',borderWidth:1,titleColor:'#8B95A5',bodyColor:'#F2F4F7'} }
+    }
+  });
+}
+
+function drawPortfolioCharts() {
+  chartsDone.portfolio = true;
+  new Chart(document.getElementById('chart-portfolio-gauge'), {
+    type:'doughnut',
+    data:{ labels:['S&P 500 DM','S&P 500 LCD','S&P 500 RCD','Bitcoin'],
+      datasets:[{ data:[5840,5120,5522,7702], backgroundColor:['#5B8DEF','#34D399','#A78BFA','#F0A93A'], borderWidth:0, hoverOffset:4 }] },
+    options:{ responsive:true, maintainAspectRatio:false, cutout:'62%',
+      plugins:{ legend:{ position:'bottom', labels:{color:'#8B95A5',font:{size:11},boxWidth:10,padding:14} }, tooltip:{backgroundColor:'#212938',borderColor:'rgba(255,255,255,0.1)',borderWidth:1,titleColor:'#8B95A5',bodyColor:'#F2F4F7',callbacks:{label:c=>' '+c.label+': €'+c.raw.toLocaleString('pt-PT')}} }
+    }
+  });
+}
+
+function drawSP500Chart() {
+  chartsDone.sp500 = true;
+  const labels = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set'];
+  new Chart(document.getElementById('chart-sp-bar'), {
+    type:'bar',
+    data:{ labels, datasets:[
+      { label:'DM',  data:[800,800,800,800,800,800,800,800,800], backgroundColor:'#5B8DEFcc', borderRadius:3 },
+      { label:'LCD', data:[700,700,700,700,700,700,700,700,700], backgroundColor:'#34D399cc', borderRadius:3 },
+      { label:'RCD', data:[540,540,540,540,540,540,540,540,540], backgroundColor:'#A78BFAcc', borderRadius:3 },
+    ]},
+    options:{ responsive:true, maintainAspectRatio:false,
+      scales:{ x:{stacked:true,ticks:{color:'#8B95A5',font:{size:9}},grid:{display:false}}, y:{stacked:true,ticks:{color:'#8B95A5',font:{family:"'DM Mono'",size:9},callback:v=>'€'+v},grid:{color:GRID}} },
+      plugins:{ legend:{labels:{color:'#8B95A5',font:{size:11},boxWidth:9,usePointStyle:true,padding:12}}, tooltip:{backgroundColor:'#212938',borderColor:'rgba(255,255,255,0.1)',borderWidth:1,titleColor:'#8B95A5',bodyColor:'#F2F4F7'} }
+    }
+  });
+}
+
+function drawBTCChart() {
+  chartsDone.btc = true;
+  const labels = ['Nov 24','Jan 25','Mar 25','Mai 25','Jul 25','Set 25','Nov 25','Jan 26','Mar 26','Mai 26','Jul 26','Set 26'];
+  const paid   = [42100,45200,58300,62100,55400,61200,68900,72400,65800,71200,78900,80100];
+  const avg    = [42100,43650,48533,51925,52620,54383,56043,58088,59244,60800,62527,63633];
+  new Chart(document.getElementById('chart-btc-price'), {
+    type:'line',
+    data:{ labels, datasets:[
+      { label:'Preço Pago', data:paid, borderColor:'#F0A93A88', borderWidth:1.5, pointRadius:3, pointBackgroundColor:'#F0A93A', tension:0.15, backgroundColor:'transparent' },
+      { label:'Média Acumulada', data:avg, borderColor:'#FF6B5E', borderWidth:2, pointRadius:0, borderDash:[5,3], tension:0.3, backgroundColor:'transparent' },
+    ]},
+    options:{ responsive:true, maintainAspectRatio:false,
+      scales:{ x:{ticks:{color:'#8B95A5',font:{size:9},maxRotation:55},grid:{display:false}}, y:{ticks:{color:'#8B95A5',font:{family:"'DM Mono'",size:9},callback:v=>'€'+(v/1000).toFixed(0)+'k'},grid:{color:GRID}} },
+      plugins:{ legend:{labels:{color:'#8B95A5',font:{size:11},boxWidth:16,padding:12}}, tooltip:{backgroundColor:'#212938',borderColor:'rgba(255,255,255,0.1)',borderWidth:1,titleColor:'#8B95A5',bodyColor:'#F2F4F7',callbacks:{label:c=>' '+c.dataset.label+': €'+c.raw.toLocaleString('pt-PT')}} }
+    }
+  });
+}
+</script>
+</body>
+</html>
