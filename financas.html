@@ -517,11 +517,12 @@ function movBlockHTML(token, cfg, vals, isEdit){
   const fcfg = cfg[token];
   const currentVal = vals[token];
   const hasVal = currentVal && (fcfg.options||[]).includes(currentVal);
+  const forceEmpty = !hasVal && !isEdit ? `setTimeout(()=>{const s=document.getElementById('mv-${token}');if(s)s.value='';},0)` : '';
   const field = fcfg.type==='select'
     ? `<select id="mv-${token}" style="${FIELD_STYLE}">
-        <option value=""${!hasVal&&!isEdit?' selected':''} style="color:#5C6576">— Seleciona —</option>
+        <option value="" style="color:#5C6576">— Seleciona —</option>
         ${(fcfg.options||[]).map(c=>`<option value="${c}"${c===currentVal?' selected':''}>${c}</option>`).join('')}
-      </select>`
+      </select>${forceEmpty ? `<script>${forceEmpty}<\/script>` : ''}`
     : `<input id="mv-${token}" type="text" value="${currentVal||''}" placeholder="${fcfg.placeholder||''}" style="${FIELD_STYLE}">`;
   const reqMark = fcfg.required ? ' <span style="color:var(--coral)">*</span>' : '';
   return `
@@ -673,11 +674,13 @@ function openAddMov(prefill){
       const m = $('mv-fields');
       if (!m) return;
       const tipo = $('mv-tipo') ? $('mv-tipo').value : 'despesa';
-      const vAtual = $('mv-valor') ? $('mv-valor').value : (prefill?.valor || '');
-      const dAtual = $('mv-col2')  ? $('mv-col2').value  : (prefill?.desc  || '');
+      const vAtual  = $('mv-valor')    ? $('mv-valor').value    : (prefill?.valor || '');
+      const dAtual  = $('mv-col2')     ? $('mv-col2').value     : (prefill?.desc  || '');
+      const c1Atual = $('mv-col1')     ? $('mv-col1').value     : '';
+      const pgAtual = $('mv-pagamento')? $('mv-pagamento').value: '';
       $('mv-fields').innerHTML = renderMovFieldsHTML(tipo, {
         tipo, dataISO: $('mv-data') ? $('mv-data').value : '',
-        valor: vAtual, col1: '', col2: dAtual, pagamento: '',
+        valor: vAtual, col1: c1Atual, col2: dAtual, pagamento: pgAtual,
       }, false);
       if (vAtual && $('mv-valor')) $('mv-valor').value = vAtual;
       if (dAtual && $('mv-col2'))  $('mv-col2').value  = dAtual;
