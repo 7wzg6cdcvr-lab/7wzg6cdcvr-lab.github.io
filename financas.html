@@ -655,6 +655,19 @@ function submitQuickEntry(){
 
 function openAddMov(prefill){
   document.body.insertAdjacentHTML('beforeend', modalMovHTML(null));
+  // Força selects a começar vazios (browser selecciona o primeiro por defeito)
+  setTimeout(() => {
+    ['mv-col1','mv-col2','mv-pagamento'].forEach(id => {
+      const el = $(id);
+      if (el && !el.value) el.value = '';
+      else if (el && el.querySelector('option[value=""]')) {
+        // só força vazio se não há valor pré-definido
+        if (!prefill || (id === 'mv-col1' && !prefill.col1) || (id === 'mv-pagamento')) {
+          el.value = '';
+        }
+      }
+    });
+  }, 10);
   if (prefill) {
     setTimeout(() => {
       if (prefill.valor && $('mv-valor')) $('mv-valor').value = prefill.valor;
@@ -671,19 +684,34 @@ function openAddMov(prefill){
   }
   if (!categoriasLoaded) {
     loadCategorias().then(() => {
-      const m = $('mv-fields');
-      if (!m) return;
+      // Actualiza só as opções dos selects, sem re-render completo
+      // Isso preserva o "— Seleciona —" já seleccionado
+      const col1 = $('mv-col1');
+      const col2 = $('mv-col2');
+      const pag  = $('mv-pagamento');
       const tipo = $('mv-tipo') ? $('mv-tipo').value : 'despesa';
-      const vAtual  = $('mv-valor')    ? $('mv-valor').value    : (prefill?.valor || '');
-      const dAtual  = $('mv-col2')     ? $('mv-col2').value     : (prefill?.desc  || '');
-      const c1Atual = $('mv-col1')     ? $('mv-col1').value     : '';
-      const pgAtual = $('mv-pagamento')? $('mv-pagamento').value: '';
-      $('mv-fields').innerHTML = renderMovFieldsHTML(tipo, {
-        tipo, dataISO: $('mv-data') ? $('mv-data').value : '',
-        valor: vAtual, col1: c1Atual, col2: dAtual, pagamento: pgAtual,
-      }, false);
-      if (vAtual && $('mv-valor')) $('mv-valor').value = vAtual;
-      if (dAtual && $('mv-col2'))  $('mv-col2').value  = dAtual;
+      const cfg  = movFieldsConfig(tipo);
+      if (col1 && cfg.col1 && cfg.col1.type === 'select') {
+        const cur = col1.value;
+        col1.innerHTML = '<option value="" style="color:#5C6576">— Seleciona —</option>' +
+          cfg.col1.options.map(o => `<option value="${o}"${o===cur?' selected':''}>${o}</option>`).join('');
+        if (!cur) col1.value = '';
+      }
+      if (col2 && cfg.col2 && cfg.col2.type === 'select') {
+        const cur = col2.value;
+        col2.innerHTML = '<option value="" style="color:#5C6576">— Seleciona —</option>' +
+          cfg.col2.options.map(o => `<option value="${o}"${o===cur?' selected':''}>${o}</option>`).join('');
+        if (!cur) col2.value = '';
+      }
+      if (pag && cfg.pagamento) {
+        const cur = pag.value;
+        pag.innerHTML = '<option value="" style="color:#5C6576">— Seleciona —</option>' +
+          cfg.pagamento.options.map(o => `<option value="${o}"${o===cur?' selected':''}>${o}</option>`).join('');
+        if (!cur) pag.value = '';
+      }
+      // Aplica prefill se veio do quick entry
+      if (prefill?.valor && $('mv-valor')) $('mv-valor').value = prefill.valor;
+      if (prefill?.desc  && $('mv-col2'))  $('mv-col2').value  = prefill.desc;
     });
   }
 }
