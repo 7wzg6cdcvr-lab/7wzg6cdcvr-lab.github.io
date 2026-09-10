@@ -100,7 +100,7 @@ body{min-height:100vh;background:var(--bg);color:var(--text);font-family:'DM San
 </div>
 
 <button id="fab-add-month" onclick="openAddMonth()" style="display:none;position:fixed;bottom:calc(20px + env(safe-area-inset-bottom));right:16px;background:var(--surface3);color:var(--muted);border:1px solid var(--border);border-radius:50%;width:42px;height:42px;font-size:20px;cursor:pointer;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(0,0,0,.3);z-index:50;font-family:inherit;line-height:1">+</button>
-<button id="fab-quick" onclick="openQuickEntry()" style="position:fixed;bottom:calc(20px + env(safe-area-inset-bottom));left:16px;background:var(--gold);color:#1a1305;border:none;border-radius:50%;width:52px;height:52px;font-size:26px;cursor:pointer;display:none;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(210,161,58,0.4);z-index:50;font-family:inherit;line-height:1;font-weight:700">€</button>
+<button id="fab-quick" onclick="openQuickEntry()" style="position:fixed;bottom:calc(20px + env(safe-area-inset-bottom));left:16px;background:var(--gold-light);color:#1a1305;border:none;border-radius:50%;width:52px;height:52px;font-size:26px;cursor:pointer;display:none;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(244,210,122,0.5);z-index:50;font-family:inherit;line-height:1;font-weight:700">€</button>
 </div>
 
 <script src="auth.js"></script>
@@ -478,8 +478,8 @@ function movFieldsConfig(tipo){
   };
   if (tipo==='poupanca') return {
     order: ['tipo','data','valor','col1','col2'],
-    col1: { label:'Tipo',      type:'text', placeholder:'ex: Fundo Emergência' },
-    col2: { label:'Descrição', type:'text', placeholder:'opcional' }
+    col1: { label:'Tipo', type:'select', options: ['Fundo Emergência','Poupança Geral','Outros'], placeholder:'ex: Fundo Emergência' },
+    col2: { label:'Descrição', type:'select', options: ['Revolut_MC','Revolut_DD'], placeholder:'Revolut_MC' }
   };
   return { // despesa
     order: ['tipo','data','col1','col2','valor','pagamento'],
