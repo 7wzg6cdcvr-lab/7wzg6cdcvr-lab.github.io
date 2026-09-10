@@ -516,8 +516,12 @@ function movBlockHTML(token, cfg, vals, isEdit){
   // qualquer campo dinâmico definido no cfg (col1, col2, pagamento, ...)
   const fcfg = cfg[token];
   const currentVal = vals[token];
+  const hasVal = currentVal && (fcfg.options||[]).includes(currentVal);
   const field = fcfg.type==='select'
-    ? `<select id="mv-${token}" style="${FIELD_STYLE}">${token==='col1'||token==='col2'?'<option value="" disabled selected>Seleciona…</option>':''}${(fcfg.options||[]).map(c=>`<option${c===currentVal?' selected':''}>${c}</option>`).join('')}</select>`
+    ? `<select id="mv-${token}" style="${FIELD_STYLE}">
+        <option value=""${!hasVal&&!isEdit?' selected':''} style="color:#5C6576">— Seleciona —</option>
+        ${(fcfg.options||[]).map(c=>`<option value="${c}"${c===currentVal?' selected':''}>${c}</option>`).join('')}
+      </select>`
     : `<input id="mv-${token}" type="text" value="${currentVal||''}" placeholder="${fcfg.placeholder||''}" style="${FIELD_STYLE}">`;
   const reqMark = fcfg.required ? ' <span style="color:var(--coral)">*</span>' : '';
   return `
@@ -719,9 +723,9 @@ async function submitMov(isEdit){
     }
   }
   // Categoria (col1) obrigatória em todos os tipos
-  if (!col1) { msg.textContent = 'Indica a categoria.'; restore(); return; }
+  if (!col1 || col1 === '') { msg.textContent = 'Indica a categoria.'; restore(); return; }
   // Pagamento obrigatório só nas despesas
-  if (tipo === 'despesa' && !pagamento) { msg.textContent = 'Indica o pagamento.'; restore(); return; }
+  if (tipo === 'despesa' && (!pagamento || pagamento === '')) { msg.textContent = 'Indica o pagamento.'; restore(); return; }
 
   const payload = { action: isEdit?'despesasEdit':'despesasAdd', pin:Auth.getStoredPin()||'', tipo, data, valor, col1, col2, pagamento };
   if (isEdit) payload.row = parseInt($('mv-row').value);
