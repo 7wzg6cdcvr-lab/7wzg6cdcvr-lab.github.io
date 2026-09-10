@@ -517,7 +517,7 @@ function movBlockHTML(token, cfg, vals, isEdit){
   const fcfg = cfg[token];
   const currentVal = vals[token];
   const field = fcfg.type==='select'
-    ? `<select id="mv-${token}" style="${FIELD_STYLE}">${(fcfg.options||[]).map(c=>`<option${c===currentVal?' selected':''}>${c}</option>`).join('')}</select>`
+    ? `<select id="mv-${token}" style="${FIELD_STYLE}">${token==='col1'||token==='col2'?'<option value="" disabled selected>Seleciona…</option>':''}${(fcfg.options||[]).map(c=>`<option${c===currentVal?' selected':''}>${c}</option>`).join('')}</select>`
     : `<input id="mv-${token}" type="text" value="${currentVal||''}" placeholder="${fcfg.placeholder||''}" style="${FIELD_STYLE}">`;
   const reqMark = fcfg.required ? ' <span style="color:var(--coral)">*</span>' : '';
   return `
