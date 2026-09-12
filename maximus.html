@@ -223,7 +223,7 @@ function onData(d){
 
   renderChart(d.monthly);
   renderOperadores(d.operadores);
-}
+  renderGasolina(d);
 
 function renderChart(monthly){
   const labels=monthly.map(m=>m.label);
